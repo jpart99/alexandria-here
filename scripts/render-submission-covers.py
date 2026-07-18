@@ -270,7 +270,9 @@ def write_devpost_manifest() -> None:
         f"{sha256((ASSETS / name).read_bytes()).hexdigest().upper()}  {name}"
         for name in names
     ]
-    (ASSETS / "devpost-media.sha256").write_text("\n".join(lines) + "\n", encoding="ascii")
+    # Write explicit LF bytes so the checksum manifest is identical on Windows,
+    # in Git, and when fetched from the public repository.
+    (ASSETS / "devpost-media.sha256").write_bytes(("\n".join(lines) + "\n").encode("ascii"))
 
 
 if __name__ == "__main__":
