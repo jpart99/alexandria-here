@@ -1,0 +1,13 @@
+The web forgets by accident. Alexandria Here is a witnessed restoration engine for the lost web. It does not generate the past; it reconciles surviving witnesses. This is iExile, the literary community I founded in 2007, returned from public archive evidence.
+
+Give Alexandria one public URL. When connected evidence is sufficient, it opens directly into a coherent returned site—not a screenshot gallery. This edition passed through the same bounded live-recovery pipeline available to every visitor. It returns five visible pages from eight capture records spanning August through November 2009.
+
+Its centerpiece is challengeability. Show the Seams exposes block-level provenance. Every rendered historical block resolves to archived evidence and a content hash. Alexandria may reconstruct placement, but it cannot display unsupported historical content. If a page is known only through surviving links, the absence remains visible.
+
+The Temporal Evidence Graph reconciles capture dates, URL variants, conflicts, and source relationships into one supported edition. The Ghost Map reveals the shape of survival: returned pages, inferred connections, and eight known absences—paths witnessed by the archive, but not faithfully recoverable.
+
+Every recovery ends with a mechanical receipt. This one discloses planner GPT-5.6, model GPT-5.6-sol, 946 source hashes, 347 rendered blocks, and ten of ten passing validations. The model proposes consequential evidence choices; deterministic code derives the cited structure and decides what may be rendered. Failure stays visible. Silence is never filled with fiction.
+
+Codex served as the build integrator across architecture, archive retrieval, hostile HTML handling, temporal reasoning, security, tests, deployment, and browser audits. Inside the shipped product, GPT-5.6 is the Chronologist. It receives a bounded evidence packet and returns only a strict schema: visible-page order and primary witness IDs. It is consequential, but never allowed to write history.
+
+Alexandria Here returns a place—with witnesses. The lost web, present again, without pretending the gaps were never there.

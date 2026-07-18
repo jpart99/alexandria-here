@@ -38,6 +38,10 @@ The repository is public for Build Week judging under the terms in [LICENSE](LIC
 - OpenAI Responses API with strict structured output when `OPENAI_API_KEY` is present
 - Deterministic planner and validator as the safe fallback
 
+## How we used Codex
+
+Codex served as the build integrator across architecture, archive retrieval, hostile-HTML handling, temporal reconciliation, evidence invariants, security, testing, deployment, and browser QA. It accelerated the work by splitting bounded archive, chronology, witness, reliability, and release tracks, then auditing each merged phase against explicit evidence-only gates. Key decisions made through that workflow include keeping general live recovery, making insufficient evidence a first-class result, constraining GPT-5.6 to page ordering and primary-witness selection, and requiring deterministic validation before any historical block may render. GPT-5.6 is the shipped Chronologist; Codex helped design, implement, harden, and prove that runtime contract through the ordinary production recovery path.
+
 ## Run locally
 
 Requirements: Node.js 22.13 or newer.

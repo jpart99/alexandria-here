@@ -79,7 +79,7 @@ The same production pipeline explicitly requested iExile's 2009 edition and retu
 
 ## Current build boundary
 
-Production version 3 runs commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8`. It adds a parallel year-scoped CDX query, merges and deduplicates those rows with the general inventory, and keeps supported alternatives when the requested year is unavailable. The deployed correction is proven by ordinary hosted 2007 and 2009 iExile recoveries.
+Production version 6 runs runtime commit `f434249d673911bb5de89689313248b68a389b52`. It retains the requested-year CDX discovery correction, adds durable per-client cooldown enforcement and sensitive-query rejection, and constrains GPT-5.6 to a complete visible-page order plus one primary witness per page. Supporting witnesses, navigation, citations, and receipt decisions are derived mechanically before validation. The deployed release is proven by the ordinary hosted 2007 and 2009 iExile recoveries and the receipt-linked GPT-5.6 run above.
 
 ## Challenges
 
@@ -129,7 +129,7 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 - [x] Publish the public judging repository with setup instructions and reference details: https://github.com/jpart99/alexandria-here
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
 - [x] Produce and link one receipt-proven GPT-5.6 recovery.
-- [x] Clean-build, package, deploy, and verify the requested-year discovery fixes in production version 3.
+- [x] Clean-build, package, deploy, and verify the requested-year discovery and model-contract fixes in production version 6.
 - [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
