@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: copy-ready draft. Do not submit until the repository URL, public video URL, `/feedback` Codex Session ID, final access mode, and receipt-proven GPT-5.6 run are filled in.
+Status: copy-ready draft. Public access is confirmed. Do not submit until the repository URL, public video URL, `/feedback` Codex Session ID, and receipt-proven GPT-5.6 run are filled in.
 
 ## Project
 
@@ -50,7 +50,7 @@ Its signature interaction is not generation; it is challengeability. A beautiful
 
 ## How we used Codex
 
-Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. The final local candidate passed 27 tests, TypeScript, lint, production build, ten release-contract checks, a seven-scenario failure matrix, receipt validation, mobile/browser regression, and a zero-vulnerability production dependency audit before deployment.
+Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 3 at commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8` passes 29 tests, TypeScript, lint, a clean production build, ten release-contract checks, a seven-scenario failure matrix, receipt validation, and a zero-vulnerability production dependency audit. Codex also localized and repaired a real hosted regression where older requested years fell outside Wayback's general 400-row response, then proved the correction through the ordinary public recovery endpoint.
 
 ## How GPT-5.6 is used
 
@@ -58,7 +58,11 @@ GPT-5.6 is the Chronologist, not the historian. Code mechanically selects the ev
 
 **Submission gate:** replace this paragraph with a link to a production receipt only after it records `planner: "gpt-5.6"`, a populated model, and ten passing deterministic checks. The current production reference correctly records deterministic fallback because the configured OpenAI project returned a quota error.
 
-## Production evidence
+## Verified historical context: iExile
+
+[Trish Hopkinson's June 19, 2026 editor interview](https://trishhopkinson.com/2026/06/19/no-fee-submission-call-editor-interview-iexile-deadline-always-open/) identifies Jaia Papitz as iExile's founder and records that iExile was founded in 2007. This independent source establishes founder/year context only. It is not an Alexandria capture, recovery witness, receipt, or evidence for any hosted recovery metric.
+
+## Hosted production evidence (separate from historical sourcing)
 
 The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` into a coherent edition spanning April 13 through October 28, 2003:
 
@@ -70,6 +74,12 @@ The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` i
 - durable managed-D1 path: `/r/de5bb377-5b53-4ea4-b074-feb106e02113`
 
 The reference is persisted as an ordinary recovery row and linked from the landing page. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine.
+
+The same production pipeline explicitly requested iExile's 2009 edition and returned [a witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/2db0d8a7-49da-4296-961e-c6f9f40a621b) with 8 pages, 347 rendered blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing. Its receipt records the deterministic Chronologist fallback while API credit is unavailable; it is not presented as a GPT-5.6-planned recovery.
+
+## Current build boundary
+
+Production version 3 runs commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8`. It adds a parallel year-scoped CDX query, merges and deduplicates those rows with the general inventory, and keeps supported alternatives when the requested year is unavailable. The deployed correction is proven by ordinary hosted 2007 and 2009 iExile recoveries.
 
 ## Challenges
 
@@ -114,10 +124,11 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 
 - [ ] Join the OpenAI Build Week challenge on Devpost and accept the official rules.
 - [ ] Select Education, unless the final positioning changes.
-- [ ] Decide whether the Sites deployment is public or provide judge/test access instructions.
-- [ ] Publish or share the judging repository; include setup instructions and sample/reference details.
-- [ ] Add the `/feedback` Codex Session ID.
+- [x] Confirm that the Sites deployment is publicly reachable without an authenticated session (`200 OK` verified July 17, 2026 Pacific / July 18 UTC).
+- [x] Publish the public judging repository with setup instructions and reference details: https://github.com/jpart99/alexandria-here
+- [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
 - [ ] Produce and link one receipt-proven GPT-5.6 recovery.
+- [x] Clean-build, package, deploy, and verify the requested-year discovery fixes in production version 3.
 - [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
 - [ ] Replace every bracketed placeholder.
 - [ ] Confirm the production URL, reference recovery, receipt download, mobile layout, and console immediately before submission.

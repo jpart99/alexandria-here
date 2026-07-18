@@ -6,9 +6,13 @@ Alexandria Here is a witnessed restoration engine for the lost web. Give it one 
 
 ## Live product
 
-The owner-only production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path.
+The public production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). An unauthenticated request returned `200 OK` on July 17, 2026 Pacific / July 18 UTC. Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path.
 
 The deployed engine remains operational when the model provider is unavailable: it records the provider failure in the receipt, uses the deterministic reconciliation path, and never substitutes generated historical content. A submission claim that GPT-5.6 performed a recovery is valid only when that recovery's receipt names the GPT-5.6 planner and model.
+
+## Evidence boundary
+
+[Trish Hopkinson's June 19, 2026 editor interview](https://trishhopkinson.com/2026/06/19/no-fee-submission-call-editor-interview-iexile-deadline-always-open/) independently identifies Jaia Papitz as iExile's founder and records a 2007 founding. That source supports historical founder/year context only. It is not an Alexandria capture, recovery witness, receipt, or source for hosted recovery metrics; those claims must come from the relevant Recovery Receipt.
 
 ## Product boundary
 
@@ -71,6 +75,8 @@ npm run qa:release
 ```
 
 This non-mutating local gate runs tests, TypeScript, lint, and the release-manifest audit. It deliberately does not build, deploy, contact the archive, create recoveries, or treat unapproved external work as a local failure.
+
+Production version 3 runs commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8`. It preserves a requested year inside the bounded inventory and issues an explicit year-scoped CDX query so that older evidence can be discovered even when it falls outside the archive's general 400-row response. The release passes 29/29 tests, TypeScript, lint, and a clean production build. A public hosted recovery requested iExile's 2009 edition through the ordinary endpoint and returned 8 pages, 347 rendered blocks, 36 inferred edges, 8 known absences, and all 10 receipt validations passing: [open the witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/2db0d8a7-49da-4296-961e-c6f9f40a621b).
 
 After producing a clean build and starting its Wrangler preview, run:
 
