@@ -46,8 +46,14 @@ if (buffer.trim()) {
   if (event.completed) completed = true;
 }
 
-if (!recoveryId || !completed) {
-  throw new Error("Recovery stream ended without a completed recovery ID.");
+if (!recoveryId) {
+  throw new Error("Recovery stream ended without a persisted recovery ID.");
+}
+if (!completed) {
+  const failedResponse = await fetch(`${baseUrl}/api/recover/${encodeURIComponent(recoveryId)}`);
+  const failedState = failedResponse.ok ? await failedResponse.json() : null;
+  const reason = failedState?.error || failedState?.detail || "the stream ended before completion";
+  throw new Error(`Recovery ${recoveryId} ended as ${failedState?.status || "unknown"}: ${reason}`);
 }
 
 const receiptResponse = await fetch(`${baseUrl}/api/recover/${encodeURIComponent(recoveryId)}/receipt`);
@@ -58,6 +64,22 @@ const receipt = await receiptResponse.json();
 const resultResponse = await fetch(`${baseUrl}/api/recover/${encodeURIComponent(recoveryId)}`);
 const persisted = resultResponse.ok ? await resultResponse.json() : null;
 const failed = receipt.validationResults.filter((check) => !check.passed);
+const acceptedDecisions = receipt.decisions.filter((decision) => decision.result === "accepted");
+const eraDecision = acceptedDecisions.find((decision) => decision.kind === "era_selection");
+const pageOrderDecision = acceptedDecisions.find((decision) => decision.kind === "page_order");
+const primaryWitnessDecisions = acceptedDecisions.filter((decision) => decision.kind === "primary_witness");
+const gptDecisionKinds = [...new Set(
+  acceptedDecisions.filter((decision) => decision.proposedBy === "gpt-5.6").map((decision) => decision.kind),
+)].sort();
+const provenancePassed = Boolean(
+  eraDecision?.proposedBy === "deterministic"
+  && eraDecision.validatorRule === "deterministic_temporal_score"
+  && pageOrderDecision?.proposedBy === "gpt-5.6"
+  && pageOrderDecision.targetIds.length > 0
+  && primaryWitnessDecisions.length === pageOrderDecision.targetIds.length
+  && primaryWitnessDecisions.every((decision) => decision.proposedBy === "gpt-5.6")
+  && JSON.stringify(gptDecisionKinds) === JSON.stringify(["page_order", "primary_witness"])
+);
 const proof = {
   recoveryUrl: `${baseUrl}/r/${recoveryId}`,
   receiptUrl: `${baseUrl}/api/recover/${recoveryId}/receipt`,
@@ -65,11 +87,14 @@ const proof = {
   model: receipt.model,
   validations: receipt.validationResults.length,
   failed: failed.length,
+  provenancePassed,
+  gptDecisionKinds,
+  primaryWitnessDecisions: primaryWitnessDecisions.length,
   warnings: persisted?.result?.warnings || [],
   manifestHash: receipt.manifestHash,
 };
 console.log(JSON.stringify({ proof }));
 
-if (receipt.planner !== "gpt-5.6" || !receipt.model || failed.length) {
+if (receipt.planner !== "gpt-5.6" || !receipt.model || failed.length || !provenancePassed) {
   throw new Error(`Model proof failed: ${JSON.stringify(proof)}`);
 }
