@@ -259,7 +259,11 @@ if (process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH) {
     && !deployedReferenceUrl.hash, "The operator reference path does not match the deployed landing link.");
   const response = await request(`/r/${recoveryId}`);
   const body = (await readBounded(response, 2_000_000)).toString("utf8");
-  assert(response.status === 200 && /Recovery Atlas/iu.test(body), "Reference recovery page did not render its Atlas.");
+  const normalizedAtlasBody = body.toLowerCase();
+  const restoredAtlasLabels = ["returned site", "timeline", "what survived", "witnesses", "recovery receipt", "show the seams"];
+  assert(response.status === 200
+    && body.includes(recoveryId)
+    && restoredAtlasLabels.every((label) => normalizedAtlasBody.includes(label)), "Reference recovery page did not render the complete restored Atlas.");
 
   const recordResponse = await request(`/api/recover/${recoveryId}`);
   const record = JSON.parse((await readBounded(recordResponse, 2_000_000)).toString("utf8"));
@@ -267,7 +271,7 @@ if (process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH) {
     && record.id === recoveryId
     && record.status === "complete"
     && record.result?.id === recoveryId
-    && new Set(["restored", "insufficient_evidence"]).has(record.result?.outcome), "Reference recovery is not a complete durable result.");
+    && record.result?.outcome === "restored", "Reference recovery is not a complete durable restored result.");
 
   const referenceReceiptResponse = await request(`/api/recover/${recoveryId}/receipt`);
   const referenceReceipt = JSON.parse((await readBounded(referenceReceiptResponse, 2_000_000)).toString("utf8"));
