@@ -1,6 +1,7 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { APPLICATION_WORKER_ROUTE_MARKER, fetchFontAsset } from "../lib/font-delivery";
 
 interface Env {
   ASSETS: Fetcher;
@@ -29,8 +30,15 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     let response: Response;
+    const fontAsset = await fetchFontAsset(request, env.ASSETS);
 
-    if (url.pathname === "/_vinext/image") {
+    if (fontAsset) {
+      // `run_worker_first` is intentionally limited to the two shipped fonts.
+      // The asset
+      // binding still owns bytes, ranges, validators, and HEAD semantics; this
+      // Worker only supplies the response metadata Sites omitted in production.
+      response = fontAsset;
+    } else if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       response = await handleImageOptimization(request, {
         fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
@@ -48,6 +56,7 @@ const worker = {
     headers.set("Referrer-Policy", "no-referrer");
     headers.set("X-Frame-Options", "DENY");
     headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    headers.set("X-Alexandria-Worker-Route", APPLICATION_WORKER_ROUTE_MARKER);
     if (headers.get("content-type")?.toLowerCase().includes("text/html")) {
       headers.set("Cache-Control", "no-store");
     }

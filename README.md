@@ -37,6 +37,8 @@ The repository is public for Build Week judging under the terms in [LICENSE](LIC
 
 The self-hosted Geist and Cormorant Garamond webfont subsets remain under the SIL Open Font License 1.1; their copyright and license notices ship beside the binaries in [`public/fonts`](public/fonts).
 
+The release candidate routes only those two exact font paths Worker-first. Their bytes still come from the managed `ASSETS` binding, while the Worker enforces `font/woff2`, `nosniff`, bounded public caching, and a route-proof header. All ordinary compiled assets remain asset-first. `public/_headers` is retained as a portable hosting fallback; it is not treated as proof of Sites production behavior. This paragraph becomes a production claim only after the hosted smoke passes on the deployed version.
+
 ## Stack
 
 - Vinext / Next App Router and TypeScript
@@ -85,7 +87,7 @@ RECOVERY_RATE_LIMIT_SECRET=required-random-hosted-secret
 
 Do not expose the API key to browser code. The model receives normalized evidence records only and has no browsing tools.
 
-For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL`, `ALEXANDRIA_REFERENCE_URL`, `ALEXANDRIA_PROOF_URL`, and `ALEXANDRIA_PROOF_YEAR` are release-operator variables only.
+For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL`, `ALEXANDRIA_REFERENCE_URL` (the vanished target), `ALEXANDRIA_REFERENCE_RECOVERY_PATH` (an existing `/r/<UUID>`), `ALEXANDRIA_PROOF_URL`, and `ALEXANDRIA_PROOF_YEAR` are release-operator variables only.
 
 ## Verification
 
@@ -107,6 +109,14 @@ npm run qa:failure-matrix
 ```
 
 The compiled check is loopback-only and never starts, stops, or rebuilds the Worker. The failure matrix separately exercises live local persistence, cancellation, concurrency, and honest insufficient-evidence behavior. The complete operator sequence and the explicit Sites/model/reference authority boundary are in `RELEASE_OPERATIONS.md`.
+
+After deploying, prove the hosted boundary separately:
+
+```bash
+ALEXANDRIA_BASE_URL=https://alexandria-here.cinemaexile.chatgpt.site npm run qa:production
+```
+
+The hosted smoke intentionally admits no recovery: it verifies landing and ordinary-asset delivery, exact bounded font bytes plus GET/HEAD/Range/ETag behavior through the selective Worker route, unsafe-URL rejection before persistence, and fail-closed receipt lookup. It is pinned to Alexandria's audited Sites hostname and also refuses credentials, nonstandard ports, non-HTTPS origins, reserved hostnames, and resolved non-public addresses. Its application-Worker marker proves that ordinary CSS remains asset-first and that missing assets fall through to a safe app `404` without font labeling. On PowerShell, set `$env:ALEXANDRIA_BASE_URL` before running the command. Optionally set `ALEXANDRIA_REFERENCE_RECOVERY_PATH=/r/<UUID>` to require the deployed landing link, complete durable row, embedded receipt, receipt endpoint, and validation results to agree; `ALEXANDRIA_REFERENCE_URL` has a different meaning and remains the vanished source target for `reference:produce`.
 
 ## Produce a durable reference recovery
 

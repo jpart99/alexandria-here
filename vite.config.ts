@@ -2,6 +2,7 @@ import vinext from "vinext";
 import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
+import { FONT_ASSET_PATHS } from "./lib/font-delivery";
 
 const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
   "00000000-0000-4000-8000-000000000000";
@@ -14,6 +15,13 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  // Sites serves static assets before the Worker by default. Fonts are the
+  // narrow exception so the Worker can enforce their exact MIME contract even
+  // on hosts that do not apply a packaged `_headers` file.
+  assets: {
+    binding: "ASSETS",
+    run_worker_first: [...FONT_ASSET_PATHS],
+  },
   d1_databases: d1
     ? [
         {

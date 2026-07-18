@@ -16,6 +16,7 @@ import {
   writeExclusivePreviewConfig,
 } from "../scripts/compiled-preview-files.mjs";
 import { forbiddenArtifactReason, isForbiddenArtifactPath } from "../scripts/release-artifact-contract.mjs";
+import { FONT_ASSET_PATHS, FONT_CACHE_CONTROL } from "../lib/font-delivery";
 
 import {
   assertCanonicalTiming,
@@ -119,6 +120,8 @@ test("the sealed submission package passes locally and exposes only authority-ga
   const layout = await readFile(path.join(root, "app", "layout.tsx"), "utf8");
   const css = await readFile(path.join(root, "app", "globals.css"), "utf8");
   const staticHeaders = await readFile(path.join(root, "public", "_headers"), "utf8");
+  const viteSource = await readFile(path.join(root, "vite.config.ts"), "utf8");
+  const workerSource = await readFile(path.join(root, "worker", "index.ts"), "utf8");
   const releaseReadiness = await readFile(path.join(root, "scripts", "release-readiness.mjs"), "utf8");
   const packageContract = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   assert.match("file:///C:/build/font.woff2", unsafeFontReference);
@@ -139,9 +142,13 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.doesNotMatch(layout, /from\s+["']next\/font(?:\/google|\/local)?["']/u);
   assert.doesNotMatch(`${layout}\n${css}`, unsafeFontReference);
   assert.match(staticHeaders, /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/u);
-  assert.match(staticHeaders, /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/u);
+  assert.match(staticHeaders, /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+Cache-Control:\s*public,\s*max-age=86400\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/u);
+  assert.match(viteSource, /binding:\s*["']ASSETS["'][\s\S]*run_worker_first:\s*\[\.\.\.FONT_ASSET_PATHS\]/u);
+  assert.match(workerSource, /await\s+fetchFontAsset\(request,\s*env\.ASSETS\)/u);
+  assert.equal(FONT_CACHE_CONTROL, "public, max-age=86400");
   assert.match(releaseReadiness, /forbiddenGeneratedArtifacts\("dist"\)/u);
   assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
+  assert.equal(packageContract.scripts["qa:production"], "node scripts/production-smoke.mjs");
   const normalizedPreviewArguments = normalizePreviewArguments([
     "--port", "3100",
     "--ip=127.0.0.1",
@@ -168,13 +175,15 @@ test("the sealed submission package passes locally and exposes only authority-ga
   const sourceConfigPath = path.join(root, "dist", "server", "wrangler.json");
   const sourceConfigFixture = {
     main: "index.js",
-    assets: { directory: "../client" },
+    assets: { directory: "../client", binding: "ASSETS", run_worker_first: [...FONT_ASSET_PATHS] },
     build: { watch_dir: "./src" },
     d1_databases: [{ migrations_dir: "../../drizzle" }],
   };
   const rebasedConfig = rebaseWranglerConfig(sourceConfigFixture, sourceConfigPath);
   assert.equal(rebasedConfig.main, path.resolve(root, "dist/server/index.js"));
   assert.equal(rebasedConfig.assets.directory, path.resolve(root, "dist/client"));
+  assert.equal(rebasedConfig.assets.binding, "ASSETS");
+  assert.deepEqual(rebasedConfig.assets.run_worker_first, [...FONT_ASSET_PATHS]);
   assert.equal(rebasedConfig.build.watch_dir, path.resolve(root, "dist/server/src"));
   assert.equal(rebasedConfig.d1_databases[0].migrations_dir, path.resolve(root, "drizzle"));
   assert.equal(rebasedConfig.send_metrics, false, "compiled previews must never re-enable Wrangler telemetry");

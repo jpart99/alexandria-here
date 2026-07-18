@@ -30,7 +30,7 @@ npm run qa:release:compiled
 npm run qa:failure-matrix
 ```
 
-The compiled release check is loopback-only and never starts, stops, or rebuilds the Worker. `npm start` launches from a fresh random rebased config under ignored root `.wrangler`, generates a preview-only admission secret off the command line, strips inherited cloud/output/process-env controls, rejects linked path components and remote/tunnel/content/config overrides, and constrains persistence beneath root `.wrangler`. The gate requires synchronized Worker output, Sites metadata, D1 migrations, fonts, and generated-state exclusions; then it checks the landing route, served styles/fonts, unsafe-URL rejection, and receipt fail-closed behavior. The failure matrix is the separate live archive and persistence gate and may create local D1 rows.
+The compiled release check is loopback-only and never starts, stops, or rebuilds the Worker. `npm start` launches from a fresh random rebased config under ignored root `.wrangler`, generates a preview-only admission secret off the command line, strips inherited cloud/output/process-env controls, rejects linked path components and remote/tunnel/content/config overrides, and constrains persistence beneath root `.wrangler`. The gate requires synchronized Worker output, Sites metadata, D1 migrations, fonts, and generated-state exclusions; then it checks the landing route, selective font routing, ordinary asset bypass, GET/HEAD/native Range/ETag behavior, unsafe-URL rejection, and receipt fail-closed behavior. The failure matrix is the separate live archive and persistence gate and may create local D1 rows.
 
 Stop the exact compiled preview before any later rebuild or Sites packaging operation.
 
@@ -39,11 +39,12 @@ Stop the exact compiled preview before any later rebuild or Sites packaging oper
 Do not execute these steps without explicit user approval:
 
 1. Create or reuse the Sites project and persist only `project_id`, `d1`, and `r2` in `.openai/hosting.json`.
-2. Commit and push the exact validated source using the short-lived Sites source credential without storing the credential in Git configuration or a remote URL.
-3. Package the existing successful build with the Sites packaging helper, save one version, deploy it privately, and wait for a successful deployment result.
-4. Configure `RECOVERY_RATE_LIMIT_SECRET` as a random hosted secret of at least 16 characters. Configure `OPENAI_API_KEY` when model planning is enabled. `OPENAI_MODEL` may remain at its `gpt-5.6` default.
-5. Run a real bounded recovery and inspect its receipt. Model execution is proven only when `receipt.planner` is `gpt-5.6`, `receipt.model` is populated, and all mechanical validation results pass. A deterministic fallback is valid product behavior but is not model-execution proof.
-6. Run `reference:produce` against the production URL through the ordinary public API, then persist the printed `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH`. Confirm that the path resolves from production D1 after deployment.
-7. After the per-client cooldown allows one admitted request, run `proof:model` with `ALEXANDRIA_BASE_URL` set to production. Keep the resulting recovery only when the command proves the GPT-5.6 planner and every deterministic validation.
+2. Configure `RECOVERY_RATE_LIMIT_SECRET` as a random hosted secret of at least 16 characters. Configure `OPENAI_API_KEY` when model planning is enabled. `OPENAI_MODEL` may remain at its `gpt-5.6` default.
+3. Commit and push the exact validated source using the short-lived Sites source credential without storing the credential in Git configuration or a remote URL.
+4. Package the existing successful build with the Sites packaging helper, save one version, deploy it, and wait for a successful deployment result.
+5. Set `ALEXANDRIA_BASE_URL` to the deployed HTTPS origin and run `npm run qa:production`. This hosted boundary gate must pass before the release is accepted; packaged `_headers` alone is only a fallback and does not prove Sites applied the font contract. It deliberately admits no recovery, so it does not replace the real bounded-recovery gate below.
+6. Run a real bounded recovery and inspect its receipt. Model execution is proven only when `receipt.planner` is `gpt-5.6`, `receipt.model` is populated, and all mechanical validation results pass. A deterministic fallback is valid product behavior but is not model-execution proof.
+7. Run `reference:produce` against the production URL through the ordinary public API, then persist the printed `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH`. Confirm that the path resolves from production D1 after deployment.
+8. After the per-client cooldown allows one admitted request, run `proof:model` with `ALEXANDRIA_BASE_URL` set to production. Keep the resulting recovery only when the command proves the GPT-5.6 planner and every deterministic validation.
 
 No external gate may be marked complete from a local fallback recovery, a local Miniflare row, an unpersisted reference path, or the presence of credentials alone.
