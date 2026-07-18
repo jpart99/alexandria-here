@@ -49,6 +49,8 @@ Do not execute these steps without explicit user approval:
 
 No external gate may be marked complete from a local fallback recovery, a local Miniflare row, an unpersisted reference path, or the presence of credentials alone.
 
+Immediately before saving the final Devpost copy, run `npm run qa:submission:live`. This is a read-only production gate pinned to the public judging recovery. It rejects drift in the returned/missing page totals, receipt counts, source hashes, model attribution, decision attribution, validations, manifest hash, Atlas route, and accepted font-delivery boundary. It does not save Devpost, upload media, publish YouTube, accept rules, or submit the entry.
+
 ## Accepted production record
 
 Production Sites version 12 was accepted only after the hosted gate passed against the public origin. Its audited source commit is `3d786cb1f3c16e8a67e3c62d139f8f12f4986498`; saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_7a28c4a2c4688191b4dc099128059479`; deployment `appgdep_6a5bfa7084748191abe03fa661ea8e3e`; environment revision 7. The source gate passed 66 tests. The hosted check proved exact browser-only alias discovery, no physical `/fonts/` namespace leakage, exact font bytes and headers, GET/HEAD/Range/ETag/304 behavior, ordinary asset bypass, safe missing-alias handling, unsafe-URL rejection, fail-closed receipt lookup, and agreement with persisted reference recovery `18026989-33be-4011-86ee-19e1754cb22c`.

@@ -15,6 +15,7 @@
     "qa:release:compiled": "node scripts/release-readiness.mjs --compiled",
     "qa:production": "node scripts/production-smoke.mjs",
     "qa:submission": "tsx scripts/submission-readiness.ts",
+    "qa:submission:live": "node scripts/submission-live-proof.mjs",
     "proof:model": "node scripts/prove-model.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",

@@ -124,7 +124,7 @@ const [actualMajor, actualMinor] = process.versions.node.split(".").map(Number);
 const nodeSupported = actualMajor > minimumMajor || (actualMajor === minimumMajor && actualMinor >= minimumMinor);
 check("Static/local", "Supported Node runtime", nodeSupported ? "PASS" : "FAIL", `running ${process.version}; requires ${packageJson.engines?.node}`);
 
-const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "qa:production", "qa:submission", "reference:produce", "proof:model"];
+const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "qa:production", "qa:submission", "qa:submission:live", "reference:produce", "proof:model"];
 const missingScripts = requiredScripts.filter((name) => !packageJson.scripts?.[name]);
 const isolatedCompiledPreview = packageJson.scripts?.start === "node scripts/start-compiled-preview.mjs"
   && await exists("scripts/start-compiled-preview.mjs");

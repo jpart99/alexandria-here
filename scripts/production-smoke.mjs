@@ -72,10 +72,37 @@ const applicationWorkerMarker = "app-worker-v1";
 const cacheControl = "public, max-age=86400";
 const fontNames = ["geist-latin.woff2", "cormorant-garamond-latin.woff2"];
 const fontRoutes = fontNames.map((name) => ({ publicPath: `/witness-fonts/${name}` }));
+const requireExactReferenceProof = process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF === "1";
+const exactReferenceProof = Object.freeze({
+  recoveryId: "18026989-33be-4011-86ee-19e1754cb22c",
+  receiptVersion: "1.0",
+  planner: "gpt-5.6",
+  model: "gpt-5.6-sol",
+  manifestHash: "e4eeddc5cc3a0e1c43c7f0f63e869399d3c566824cd0c44dc1a9af706142e773",
+  captures: 8,
+  preservedPages: 5,
+  missingPages: 2,
+  renderedBlocks: 347,
+  preservedBlocks: 622,
+  sourceHashes: 946,
+  inferredEdges: 36,
+  knownAbsences: 8,
+  validations: 10,
+  decisions: 15,
+});
 const checks = [];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function countBy(items, key) {
+  const counts = new Map();
+  for (const item of items) {
+    const value = item?.[key];
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+  return counts;
 }
 
 async function request(relative, init = {}) {
@@ -283,6 +310,56 @@ if (process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH) {
     && referenceReceipt.validationResults.length > 0
     && referenceReceipt.validationResults.every((validation) => validation?.passed === true), "Reference receipt contains a failed or missing validation result.");
   checks.push(["durable reference recovery", { status: response.status, recoveryId }]);
+
+  if (requireExactReferenceProof) {
+    assert(recoveryId === exactReferenceProof.recoveryId, "The live submission gate received the wrong judging recovery ID.");
+    assert(referenceReceipt.receiptVersion === exactReferenceProof.receiptVersion, "Judging receipt version drifted.");
+    assert(referenceReceipt.planner === exactReferenceProof.planner, "Judging receipt planner drifted.");
+    assert(referenceReceipt.model === exactReferenceProof.model, "Judging receipt model drifted.");
+    assert(referenceReceipt.manifestHash === exactReferenceProof.manifestHash, "Judging manifest hash drifted.");
+    assert(Array.isArray(record.result.captures) && record.result.captures.length === exactReferenceProof.captures, "Judging capture count drifted.");
+    assert(Array.isArray(referenceReceipt.captures) && referenceReceipt.captures.length === exactReferenceProof.captures, "Judging receipt capture count drifted.");
+    assert(Array.isArray(referenceReceipt.sourceHashes) && referenceReceipt.sourceHashes.length === exactReferenceProof.sourceHashes, "Judging source-hash count drifted.");
+    assert(Array.isArray(record.result.manifest?.pages), "Judging manifest pages are unavailable.");
+    const pageStatuses = countBy(record.result.manifest.pages, "status");
+    assert(record.result.manifest.pages.length === exactReferenceProof.preservedPages + exactReferenceProof.missingPages
+      && pageStatuses.get("preserved") === exactReferenceProof.preservedPages
+      && pageStatuses.get("missing") === exactReferenceProof.missingPages,
+    "Judging returned/missing page counts drifted.");
+    assert(referenceReceipt.counts?.renderedBlocks === exactReferenceProof.renderedBlocks
+      && referenceReceipt.counts?.preservedBlocks === exactReferenceProof.preservedBlocks
+      && referenceReceipt.counts?.inferredEdges === exactReferenceProof.inferredEdges
+      && referenceReceipt.counts?.knownAbsences === exactReferenceProof.knownAbsences,
+    "Judging receipt headline counts drifted.");
+    assert(Array.isArray(referenceReceipt.validationResults)
+      && referenceReceipt.validationResults.length === exactReferenceProof.validations
+      && referenceReceipt.validationResults.every((validation) => validation?.passed === true),
+    "Judging receipt validation contract drifted.");
+    assert(Array.isArray(referenceReceipt.decisions)
+      && referenceReceipt.decisions.length === exactReferenceProof.decisions
+      && referenceReceipt.decisions.every((decision) => decision?.result === "accepted"),
+    "Judging decision contract drifted.");
+    const decisionAttribution = countBy(
+      referenceReceipt.decisions.map((decision) => ({ attribution: `${decision.kind}:${decision.proposedBy}` })),
+      "attribution",
+    );
+    const expectedAttribution = new Map([
+      ["era_selection:deterministic", 1],
+      ["page_order:gpt-5.6", 1],
+      ["primary_witness:gpt-5.6", 5],
+      ["known_absence:deterministic", 8],
+    ]);
+    assert(decisionAttribution.size === expectedAttribution.size
+      && [...expectedAttribution].every(([key, count]) => decisionAttribution.get(key) === count),
+    "Judging decision attribution drifted.");
+    const warnings = JSON.stringify([record.result.warnings || [], referenceReceipt.warnings || []]);
+    assert(!/(?:model|planner)[_-]?(?:fallback|failed|error)|fallback[_-]?(?:model|planner)/iu.test(warnings), "Judging proof contains a model-fallback warning.");
+    checks.push(["exact submission proof", exactReferenceProof]);
+  }
+}
+
+if (requireExactReferenceProof && !process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH) {
+  throw new Error("The live submission gate requires ALEXANDRIA_REFERENCE_RECOVERY_PATH.");
 }
 
 console.log(JSON.stringify({ origin: baseUrl.origin, checks }, null, 2));
