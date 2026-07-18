@@ -20,6 +20,7 @@ import {
 } from "../lib/planner";
 import { canonicalPath, isSameSiteUrl, validateArchiveUrl, validateSubmittedUrl } from "../lib/url-safety";
 import { MAX_PERSISTED_RECOVERY_BYTES, serializePersistedRecovery } from "../lib/persistence-budget";
+import { aggregateRecoveryWarnings } from "../lib/recovery-warnings";
 
 const capture: Capture = {
   id: "capture-home-20030401000000",
@@ -191,6 +192,15 @@ test("extraction preserves source DOM order and reports only real body truncatio
   );
   assert.equal(truncated.blocks.filter((block) => block.kind === "paragraph").length, 80);
   assert.equal(truncated.warnings.includes("block_limit_reached"), true);
+
+  const secondTruncated = await extractSourceRecord(
+    { ...capture, id: "capture-second-20030402000000", sourceId: "source-capture-second-20030402000000" },
+    `<html><head><title>Also truncated</title></head><body><main>${Array.from({ length: 82 }, (_, index) => `<p>Second body ${index}.</p>`).join("")}</main></body></html>`,
+    "http://example.org/",
+  );
+  assert.deepEqual(truncated.warnings, ["block_limit_reached"]);
+  assert.deepEqual(secondTruncated.warnings, ["block_limit_reached"]);
+  assert.deepEqual(aggregateRecoveryWarnings(truncated.warnings, secondTruncated.warnings), ["block_limit_reached"]);
 });
 
 test("literal archived line-break markers do not leak into titles or navigation labels", async () => {
@@ -457,6 +467,32 @@ test("duplicate-path fragments choose one mechanical primary and never concatena
     assert.deepEqual(decision?.supportingSourceIds, [weakHomeCapture.sourceId]);
     assert.equal(planned.receipt.planner, "deterministic");
     assert.ok(planned.warnings.some((warning) => warning.includes("OPENAI_API_KEY_not_configured")));
+    assert.equal(planned.receipt.receiptVersion, "1.1");
+    assert.deepEqual(
+      planned.receipt.captures.map((item) => item.id),
+      records.map((record) => record.capture.id),
+    );
+    assert.equal(planned.receipt.captures[0].archiveUrl, records[0].capture.archiveUrl);
+    assert.ok(planned.receipt.warnings.some((warning) =>
+      warning.category === "model_fallback"
+      && warning.raw.includes("OPENAI_API_KEY_not_configured")
+      && warning.occurrences.some((occurrence) => occurrence.scope === "model")));
+
+    const warningVariant = await createManifestAndReceipt({
+      recoveryId: "test-cross-fragments-warning",
+      originalUrl: "http://example.org/",
+      selectedYear: "2003",
+      windowStart: temporalCandidates[0].windowStart,
+      windowEnd: temporalCandidates[0].windowEnd,
+      temporalSelection: score,
+      temporalCandidates,
+      recoveryWarnings: [{ raw: "unknown_warning", occurrence: { scope: "recovery" } }],
+      records,
+      graph,
+      createdAt: "2003-04-08T00:00:00Z",
+    });
+    assert.equal(warningVariant.receipt.manifestHash, planned.receipt.manifestHash);
+    assert.ok(warningVariant.receipt.warnings.some((warning) => warning.raw === "unknown_warning"));
 
     const candidates = buildPageCandidates(records);
     const invalidPlan: TemporalPlan = {

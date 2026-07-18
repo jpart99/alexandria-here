@@ -3,6 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { RECOVERY_BUDGETS } from "./archive";
 import type {
+  Capture,
   RecoveryReceipt,
   RestorationDecision,
   RestorationManifest,
@@ -15,6 +16,7 @@ import type {
 import type { EvidenceGraph } from "./evidence-graph";
 import { validateEvidencePacket } from "./evidence-packet";
 import { sha256, stableStringify } from "./hash";
+import { buildReceiptWarnings, modelFallbackWarning, type ReceiptWarningInput } from "./recovery-warnings";
 
 function chronologistResponseSchema(visiblePageIds?: readonly string[]) {
   const requiredPageIds = visiblePageIds?.length
@@ -620,6 +622,8 @@ export async function createManifestAndReceipt(args: {
   windowEnd: string;
   temporalSelection: TemporalSelectionScore;
   temporalCandidates: TemporalCandidateWindow[];
+  captures?: Capture[];
+  recoveryWarnings?: ReceiptWarningInput[];
   records: SourceRecord[];
   graph: EvidenceGraph;
   createdAt: string;
@@ -654,7 +658,7 @@ export async function createManifestAndReceipt(args: {
       plannerModel = candidate.model;
       planner = "gpt-5.6";
     } catch (error) {
-      warnings.push(`model_fallback:${error instanceof Error ? error.message : "unknown_error"}`);
+      warnings.push(modelFallbackWarning(error));
     }
   } else {
     warnings.push("model_fallback:OPENAI_API_KEY_not_configured");
@@ -789,12 +793,51 @@ export async function createManifestAndReceipt(args: {
     });
   }
 
+  const selectedCaptures = args.captures || args.records.map((record) => record.capture);
+  const receiptCaptures = selectedCaptures.map((capture) => ({
+    id: capture.id,
+    sourceId: capture.sourceId,
+    originalUrl: capture.originalUrl,
+    archiveUrl: capture.archiveUrl,
+    capturedAt: capture.capturedAt,
+    statusCode: capture.statusCode,
+    mimeType: capture.mimeType,
+    ...(capture.digest ? { digest: capture.digest } : {}),
+    warnings: [...capture.warnings],
+  }));
+  const receiptWarningInputs: ReceiptWarningInput[] = [
+    ...(args.recoveryWarnings || []),
+    ...selectedCaptures.flatMap((capture) => capture.warnings.map((warning) => ({
+      raw: warning,
+      occurrence: { scope: "capture" as const, captureId: capture.id, sourceId: capture.sourceId },
+    }))),
+    ...args.records.flatMap((record) => record.warnings.map((warning) => ({
+      raw: warning,
+      occurrence: { scope: "source" as const, captureId: record.capture.id, sourceId: record.sourceId },
+    }))),
+    ...args.records.flatMap((record) => record.blocks.flatMap((block) => block.warnings.map((warning) => ({
+      raw: warning,
+      occurrence: {
+        scope: "block" as const,
+        captureId: record.capture.id,
+        sourceId: record.sourceId,
+        blockId: block.id,
+      },
+    })))),
+    ...warnings.map((warning) => ({
+      raw: warning,
+      occurrence: { scope: warning.startsWith("model_fallback:") ? "model" as const : "recovery" as const },
+    })),
+  ];
+  const receiptWarnings = buildReceiptWarnings(receiptWarningInputs);
   const manifestHash = await sha256(stableStringify(manifest));
   const receipt: RecoveryReceipt = {
-    receiptVersion: "1.0",
+    receiptVersion: "1.1",
     recoveryId: args.recoveryId,
     manifestHash,
     sourceHashes: allBlocks.map((block) => ({ blockId: block.id, hash: block.contentHash })),
+    captures: receiptCaptures,
+    warnings: receiptWarnings,
     model: plannerModel,
     promptVersion: planner === "gpt-5.6" ? "chronologist-v2" : null,
     modelSchemaVersion: "temporal-restoration-plan-v2",

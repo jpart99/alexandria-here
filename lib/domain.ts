@@ -151,11 +151,38 @@ export type TemporalCandidateWindow = {
   selected: boolean;
 };
 
+export type RecoveryReceiptCapture = {
+  id: string;
+  sourceId: string;
+  originalUrl: string;
+  archiveUrl: string;
+  capturedAt: string;
+  statusCode: number;
+  mimeType: string;
+  digest?: string;
+  warnings: string[];
+};
+
+export type RecoveryReceiptWarningOccurrence = {
+  scope: "capture" | "source" | "block" | "model" | "recovery";
+  sourceId?: string;
+  captureId?: string;
+  blockId?: string;
+};
+
+export type RecoveryReceiptWarning = {
+  raw: string;
+  category: "capture_failure" | "model_fallback" | "extraction" | "other";
+  occurrences: RecoveryReceiptWarningOccurrence[];
+};
+
 export type RecoveryReceipt = {
-  receiptVersion: "1.0";
+  receiptVersion: "1.0" | "1.1";
   recoveryId: string;
   manifestHash: string;
   sourceHashes: Array<{ blockId: string; hash: string }>;
+  captures: RecoveryReceiptCapture[];
+  warnings: RecoveryReceiptWarning[];
   model: string | null;
   promptVersion: "chronologist-v2" | null;
   modelSchemaVersion: "temporal-restoration-plan-v2";

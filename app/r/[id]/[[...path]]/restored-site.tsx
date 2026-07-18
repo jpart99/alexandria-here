@@ -45,7 +45,8 @@ function formatPublicWarning(warning: string) {
     return "Additional archive content exceeded this recovery’s bounded evidence limit and was not claimed.";
   }
   if (warning.startsWith("capture_failed:")) {
-    return "A selected archive capture could not be read safely and was excluded.";
+    const captureId = /^capture_failed:([^:]+):/.exec(warning)?.[1];
+    return `Selected archive capture${captureId ? ` ${captureId}` : ""} could not be read safely and was excluded.`;
   }
   return "A bounded recovery warning was recorded in the machine receipt; Alexandria made no unsupported claim from it.";
 }
@@ -598,7 +599,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             <h3>What Alexandria refused to claim</h3>
             <ul>
               {result.manifest.pages.filter((item) => item.status === "missing").map((item) => <li key={item.id}>Referenced path <code>{item.path}</code> has no usable selected capture.</li>)}
-              {(result.warnings || []).slice(0, 6).map((warning) => <li key={warning}>{formatPublicWarning(warning)}</li>)}
+              {(result.warnings || []).map((warning) => <li key={warning}>{formatPublicWarning(warning)}</li>)}
               {result.manifest.pages.every((item) => item.status !== "missing") && (result.warnings || []).length === 0 && (
                 <li>No unresolved paths or extraction warnings were recorded for this edition.</li>
               )}
@@ -612,7 +613,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
           <div className="section-intro">
             <p className="eyebrow">Content-addressed record</p>
             <h2 id="receipt-heading">Recovery Receipt</h2>
-            <p>A replayable record of what Alexandria rendered and why. Its hash proves internal consistency—not historical truth by itself.</p>
+            <p>A content-addressed audit record of what Alexandria rendered and why. Its hash identifies the exact manifest; its passing validators establish internal consistency—not historical truth.</p>
             <p>Public archival evidence remains subject to its source rights and archive access terms. Alexandria claims neither ownership nor historical completeness.</p>
           </div>
           <a className="receipt-download" href={`/api/recover/${result.id}/receipt`} download>
@@ -628,6 +629,24 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             <div><span>Rendered blocks</span><strong>{result.receipt.counts.renderedBlocks}</strong></div>
             <div><span>Known absences</span><strong>{result.receipt.counts.knownAbsences}</strong></div>
           </div>
+          <h3>Warnings and bounded exclusions</h3>
+          {(result.receipt.warnings || []).length > 0 ? (
+            <ul className="validation-list receipt-warning-list">
+              {result.receipt.warnings.map((warning) => {
+                const owners = warning.occurrences.map((occurrence) =>
+                  occurrence.blockId || occurrence.sourceId || occurrence.captureId || occurrence.scope);
+                return (
+                  <li key={warning.raw}>
+                    <strong>{formatPublicWarning(warning.raw)}</strong>
+                    <span>
+                      {warning.occurrences.length} recorded occurrence{warning.occurrences.length === 1 ? "" : "s"}
+                      {owners.length ? ` · ${owners.join(", ")}` : ""}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : <p className="receipt-empty">No recovery warnings or bounded exclusions were recorded.</p>}
           {primaryDecisions.length > 0 && (
             <section className="receipt-decisions" aria-labelledby="receipt-decisions-heading">
               <h3 id="receipt-decisions-heading">Accepted primary-witness decisions</h3>

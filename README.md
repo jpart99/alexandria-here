@@ -27,7 +27,7 @@ The sealed master shows ordinary production recovery `8ea53a47-437b-4afe-ad2c-29
 - The submitted origin is never fetched.
 - At most 12 inventory records are considered, 8 archived HTML documents are fetched, and 5–8 pages are returned.
 - Archived HTML is treated as untrusted input and reduced to inert evidence records; scripts, forms, embeds, event handlers, and unsafe protocols never render.
-- Historical text and images render only when an exact evidence block exists in the Recovery Receipt.
+- Historical text and images render only when a persisted evidence block has a matching content-hash entry in the Recovery Receipt.
 - Insufficient connected evidence returns a complete, inspectable result instead of fabricated content.
 - Public archival evidence remains subject to source rights and archive access terms; Alexandria claims neither ownership nor historical completeness.
 

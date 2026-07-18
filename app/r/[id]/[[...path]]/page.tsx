@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: RestoredPageParams 
   const title = `${result.manifest.recoveredTitle} — Alexandria Here`;
   const description = result.outcome === "restored"
     ? `${result.manifest.selectedEraLabel}. A witnessed restoration with every rendered claim linked to public archive evidence.`
-    : `An evidence Atlas for ${result.manifest.recoveredTitle}: what survived, what did not connect, and the replayable recovery receipt.`;
+    : `An evidence Atlas for ${result.manifest.recoveredTitle}: what survived, what did not connect, and its content-addressed recovery receipt.`;
   return {
     title,
     description,

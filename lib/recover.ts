@@ -5,6 +5,7 @@ import { extractSourceRecord } from "./extractor";
 import { createManifestAndReceipt } from "./planner";
 import { completeRecovery, failRecovery, updateRecoveryStage } from "./recovery-store";
 import { mapSettledWithConcurrency } from "./concurrency";
+import type { ReceiptWarningInput } from "./recovery-warnings";
 
 const CAPTURE_READ_CONCURRENCY = 3;
 
@@ -43,6 +44,7 @@ export async function runRecovery(args: {
     );
     const records: SourceRecord[] = [];
     const warnings: string[] = [];
+    const receiptWarnings: ReceiptWarningInput[] = [];
     const captureResults = await mapSettledWithConcurrency(
       inventory.selected,
       CAPTURE_READ_CONCURRENCY,
@@ -62,6 +64,10 @@ export async function runRecovery(args: {
         const capture = inventory.selected[index];
         const detail = result.reason instanceof Error ? result.reason.message : "unknown_error";
         warnings.push(`capture_failed:${capture.id}:${detail}`);
+        receiptWarnings.push({
+          raw: `capture_failed:${capture.id}:${detail}`,
+          occurrence: { scope: "capture", captureId: capture.id, sourceId: capture.sourceId },
+        });
       }
     }
     if (records.length === 0) throw new Error("The archive listed captures, but none could be safely read.");
@@ -76,6 +82,8 @@ export async function runRecovery(args: {
       windowEnd: inventory.windowEnd,
       temporalSelection: inventory.temporalSelection,
       temporalCandidates: inventory.temporalCandidates,
+      captures: inventory.selected,
+      recoveryWarnings: receiptWarnings,
       records,
       graph,
       createdAt: args.createdAt,
@@ -104,7 +112,7 @@ export async function runRecovery(args: {
       manifest: planned.manifest,
       receipt: planned.receipt,
       temporalCandidates: inventory.temporalCandidates,
-      warnings: [...warnings, ...planned.warnings, ...records.flatMap((record) => record.warnings)],
+      warnings: planned.receipt.warnings.map((warning) => warning.raw),
     };
     await completeRecovery(args.id, result);
     await args.emit({

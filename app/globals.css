@@ -239,6 +239,8 @@ a { color: inherit; }
 .validation-list li { padding: 16px 0; display: grid; grid-template-columns: 90px 1fr; gap: 18px; border-bottom: 1px solid var(--rule); }
 .validation-list strong { color: #9eb39b; }
 .validation-list span { color: #929da3; }
+.receipt-warning-list li { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.receipt-warning-list strong, .receipt-warning-list span { overflow-wrap: anywhere; }
 .receipt-empty { max-width: 680px; padding: 16px; border: 1px dashed #465159; color: #7f8a90; font-size: 12px; line-height: 1.5; }
 .receipt-surface details { margin-top: 38px; }
 .receipt-surface summary { cursor: pointer; font-weight: 700; }
