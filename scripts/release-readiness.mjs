@@ -1,6 +1,8 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { forbiddenArtifactReason } from "./release-artifact-contract.mjs";
+
 const root = process.cwd();
 const compiledMode = process.argv.includes("--compiled");
 const baseUrl = new URL(process.env.ALEXANDRIA_BASE_URL || "http://127.0.0.1:3100");
@@ -46,6 +48,25 @@ async function filesUnder(target) {
   return nested.flat();
 }
 
+async function artifactEntriesUnder(target) {
+  if (!await exists(target)) return [];
+  const absolute = path.join(root, target);
+  const entries = await readdir(absolute, { withFileTypes: true });
+  const nested = await Promise.all(entries.map(async (entry) => {
+    const relative = path.join(target, entry.name);
+    const descriptor = { relative, symbolicLink: entry.isSymbolicLink() };
+    return entry.isDirectory() ? [descriptor, ...await artifactEntriesUnder(relative)] : [descriptor];
+  }));
+  return nested.flat();
+}
+
+async function forbiddenGeneratedArtifacts(target) {
+  return (await artifactEntriesUnder(target)).flatMap((entry) => {
+    const reason = forbiddenArtifactReason(entry.relative, { symbolicLink: entry.symbolicLink });
+    return reason ? [{ ...entry, reason }] : [];
+  });
+}
+
 async function unsafeFontArtifacts(targets) {
   const candidates = (await Promise.all(targets.map((target) => filesUnder(target)))).flat()
     .filter((relative) => shippedTextExtensions.has(path.extname(relative).toLowerCase()));
@@ -85,7 +106,10 @@ check("Static/local", "Supported Node runtime", nodeSupported ? "PASS" : "FAIL",
 
 const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "qa:submission", "reference:produce", "proof:model"];
 const missingScripts = requiredScripts.filter((name) => !packageJson.scripts?.[name]);
-check("Static/local", "Release commands declared", missingScripts.length ? "FAIL" : "PASS", missingScripts.length ? `missing: ${missingScripts.join(", ")}` : requiredScripts.join(", "));
+const isolatedCompiledPreview = packageJson.scripts?.start === "node scripts/start-compiled-preview.mjs"
+  && await exists("scripts/start-compiled-preview.mjs");
+const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview;
+check("Static/local", "Release commands declared", releaseCommandsReady ? "PASS" : "FAIL", missingScripts.length ? `missing: ${missingScripts.join(", ")}` : isolatedCompiledPreview ? requiredScripts.join(", ") : "start must use the dist-immutable compiled preview launcher");
 check("Static/local", "Package cannot be published", packageJson.private === true ? "PASS" : "FAIL", "package.json private must be true");
 
 const hostingKeys = Object.keys(hosting);
@@ -137,6 +161,7 @@ if (missingArtifactParts.length === 0) {
   const packagedHosting = JSON.parse(await text("dist/.openai/hosting.json"));
   const packagedMigrations = (await readdir(path.join(root, "dist/.openai/drizzle"))).filter((name) => name.endsWith(".sql")).sort();
   const unsafeArtifacts = await unsafeFontArtifacts(["dist/server", "dist/client"]);
+  const forbiddenArtifacts = await forbiddenGeneratedArtifacts("dist");
   const packagedFontsMatch = (await Promise.all(fontAssets.map(async (name) => {
     const sourcePath = `public/fonts/${name}`;
     const packagedPath = `dist/client/fonts/${name}`;
@@ -148,14 +173,17 @@ if (missingArtifactParts.length === 0) {
     && JSON.stringify(packagedHosting) === JSON.stringify(hosting)
     && JSON.stringify(packagedMigrations) === JSON.stringify(migrationFiles)
     && unsafeArtifacts.length === 0
+    && forbiddenArtifacts.length === 0
     && packagedFontsMatch;
-  artifactDetail = unsafeArtifacts.length
-    ? `unsafe local font reference in ${unsafeArtifacts.join(", ")}`
-    : !packagedFontsMatch
-      ? "self-hosted font files are missing or differ from public/fonts"
-      : artifactCurrent
-        ? "Worker entry, hosting metadata, migrations, and deployable fonts are synchronized"
-        : "stop the exact local Worker, run npm run build, then rerun this check";
+  artifactDetail = forbiddenArtifacts.length
+    ? `forbidden generated state in ${forbiddenArtifacts.slice(0, 8).map((entry) => `${entry.relative.split(path.sep).join("/")} (${entry.reason})`).join(", ")}`
+    : unsafeArtifacts.length
+      ? `unsafe local font reference in ${unsafeArtifacts.join(", ")}`
+      : !packagedFontsMatch
+        ? "self-hosted font files are missing or differ from public/fonts"
+        : artifactCurrent
+          ? "Worker entry, hosting metadata, migrations, deployable fonts, and generated-state exclusions are synchronized"
+          : "stop the exact local Worker, run npm run build, then rerun this check";
 }
 check("Compiled local", "Sites artifact is complete and current", artifactCurrent ? "PASS" : compiledMode ? "FAIL" : "PENDING", artifactDetail);
 

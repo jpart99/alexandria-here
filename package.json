@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
-    "start": "wrangler dev --config dist/server/wrangler.json --local",
+    "start": "node scripts/start-compiled-preview.mjs",
     "test": "tsx --test tests/*.test.ts",
     "qa:failure-matrix": "node scripts/run-failure-matrix.mjs",
     "qa:release": "npm test && tsc --noEmit && npm run lint && node scripts/release-readiness.mjs",

@@ -73,7 +73,7 @@ npm start -- --port 3100 --ip 127.0.0.1 --persist-to .wrangler/production-previe
 
 `vinext start` is a Node preview server and cannot provide the `cloudflare:workers` module or D1 binding. Use the Wrangler-backed `npm start` command for this D1 application.
 
-Stop the compiled `npm start` preview before running a fresh `npm run build`. Wrangler keeps temporary files beside `dist/server/wrangler.json` while that preview is active, and on Windows those open files prevent Vite from replacing `dist` cleanly. Build and package first, then restart the compiled preview if it is still needed; the normal `npm run dev` server does not need to be stopped.
+`npm start` writes each rebased preview-only Wrangler config into a fresh random directory under ignored root `.wrangler`, generates its own local admission secret, strips inherited cloud/output/process-env controls, rejects linked path components, and accepts only loopback IP, port, contained `.wrangler` persistence, and log-level overrides. Wrangler's runtime scratch therefore never enters `dist`, stale dotenv files cannot join the preview, and the launcher cannot switch to remote or tunnel execution. Stop the exact compiled preview before a fresh `npm run build` or Sites packaging operation; on Windows its open Worker files can still prevent Vite from replacing the build cleanly. The normal `npm run dev` server does not need to be stopped.
 
 ## Environment
 

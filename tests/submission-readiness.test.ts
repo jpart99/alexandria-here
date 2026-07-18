@@ -1,8 +1,21 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+
+import {
+  isPathContained,
+  normalizePreviewArguments,
+  previewEnvironment,
+  rebaseWranglerConfig,
+} from "../scripts/compiled-preview-contract.mjs";
+import {
+  createFreshPreviewConfigDirectory,
+  ensureContainedDirectory,
+  writeExclusivePreviewConfig,
+} from "../scripts/compiled-preview-files.mjs";
+import { forbiddenArtifactReason, isForbiddenArtifactPath } from "../scripts/release-artifact-contract.mjs";
 
 import {
   assertCanonicalTiming,
@@ -105,6 +118,8 @@ test("the sealed submission package passes locally and exposes only authority-ga
 
   const layout = await readFile(path.join(root, "app", "layout.tsx"), "utf8");
   const css = await readFile(path.join(root, "app", "globals.css"), "utf8");
+  const releaseReadiness = await readFile(path.join(root, "scripts", "release-readiness.mjs"), "utf8");
+  const packageContract = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   assert.match("file:///C:/build/font.woff2", unsafeFontReference);
   assert.match("C:/build/font.woff2", unsafeFontReference);
   assert.match("C:\\build\\font.woff2", unsafeFontReference);
@@ -122,6 +137,134 @@ test("the sealed submission package passes locally and exposes only authority-ga
   );
   assert.doesNotMatch(layout, /from\s+["']next\/font(?:\/google|\/local)?["']/u);
   assert.doesNotMatch(`${layout}\n${css}`, unsafeFontReference);
+  assert.match(releaseReadiness, /forbiddenGeneratedArtifacts\("dist"\)/u);
+  assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
+  const normalizedPreviewArguments = normalizePreviewArguments([
+    "--port", "3100",
+    "--ip=127.0.0.1",
+    "--persist-to", ".wrangler/contract-test",
+    "--log-level", "warn",
+  ], { root });
+  assert.deepEqual(normalizedPreviewArguments, [
+    "--port", "3100",
+    "--ip", "127.0.0.1",
+    "--persist-to", path.resolve(root, ".wrangler/contract-test"),
+    "--log-level", "warn",
+  ]);
+  assert.equal(isPathContained(path.join(root, ".wrangler"), path.join(root, ".wrangler", "state")), true);
+  assert.equal(isPathContained(path.join(root, ".wrangler"), path.join(root, "dist", "state")), false);
+  const rejectedPreviewArguments = [
+    ["--remote"], ["-r"], ["--tunnel"], ["--tunnel-name", "public"], ["--no-local"], ["--local=false"],
+    ["--config", "other.json"], ["--config=other.json"], ["-cother.json"], ["-c=other.json"], ["--cwd", "dist"],
+    ["--assets", "."], ["--env-file", ".env"], ["--var", "KEY:value"], ["worker.js"], ["--ip", "0.0.0.0"],
+    ["--persist-to", "dist/state"], ["--persist-to", path.resolve(root, "dist", "state")],
+  ];
+  for (const arguments_ of rejectedPreviewArguments) {
+    assert.throws(() => normalizePreviewArguments(arguments_, { root }), /compiled-preview|loopback-only|\.wrangler/u);
+  }
+  const sourceConfigPath = path.join(root, "dist", "server", "wrangler.json");
+  const sourceConfigFixture = {
+    main: "index.js",
+    assets: { directory: "../client" },
+    build: { watch_dir: "./src" },
+    d1_databases: [{ migrations_dir: "../../drizzle" }],
+  };
+  const rebasedConfig = rebaseWranglerConfig(sourceConfigFixture, sourceConfigPath);
+  assert.equal(rebasedConfig.main, path.resolve(root, "dist/server/index.js"));
+  assert.equal(rebasedConfig.assets.directory, path.resolve(root, "dist/client"));
+  assert.equal(rebasedConfig.build.watch_dir, path.resolve(root, "dist/server/src"));
+  assert.equal(rebasedConfig.d1_databases[0].migrations_dir, path.resolve(root, "drizzle"));
+  assert.equal(rebasedConfig.send_metrics, false, "compiled previews must never re-enable Wrangler telemetry");
+  assert.equal(sourceConfigFixture.main, "index.js", "config rebasing must not mutate the built config object");
+  const filteredEnvironment = previewEnvironment({
+    PATH: "kept",
+    WRANGLER_LOG_PATH: "dist/worker.log",
+    WRANGLER_REGISTRY_PATH: "dist/registry.json",
+    wrangler_output_file_directory: "dist",
+    CLOUDFLARE_INCLUDE_PROCESS_ENV: "true",
+    CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV: "true",
+    CLOUDFLARE_API_TOKEN: "not-a-real-token",
+    CLOUDFLARE_ACCESS_CLIENT_SECRET: "not-a-real-secret",
+    CF_ACCOUNT_ID: "not-a-real-account",
+    MINIFLARE_ROOT_PATH: "dist/miniflare",
+    OPENAI_API_KEY: "not-a-real-key",
+    WRANGLER_CF_AUTHORIZATION_TOKEN: "not-a-real-token",
+  });
+  assert.deepEqual(filteredEnvironment, { PATH: "kept" });
+  const previewFilesystemFixture = await mkdtemp(path.join(os.tmpdir(), "alexandria-preview-contract-"));
+  try {
+    const scratchFixture = path.join(previewFilesystemFixture, ".wrangler");
+    const outsideFixture = path.join(previewFilesystemFixture, "outside");
+    await Promise.all([mkdir(scratchFixture), mkdir(outsideFixture)]);
+    const contained = await ensureContainedDirectory(scratchFixture, path.join(scratchFixture, "state", "nested"));
+    assert.equal(contained, path.join(scratchFixture, "state", "nested"));
+    const firstConfigDirectory = await createFreshPreviewConfigDirectory(scratchFixture);
+    const secondConfigDirectory = await createFreshPreviewConfigDirectory(scratchFixture);
+    assert.notEqual(firstConfigDirectory, secondConfigDirectory, "every preview must receive a fresh config directory");
+    await writeExclusivePreviewConfig(path.join(firstConfigDirectory, "wrangler.json"), "{}\n");
+    await assert.rejects(
+      writeExclusivePreviewConfig(path.join(firstConfigDirectory, "wrangler.json"), "replacement\n"),
+      /Refusing to replace/u,
+    );
+    const junction = path.join(scratchFixture, "outside-link");
+    try {
+      await symlink(outsideFixture, junction, "junction");
+      await assert.rejects(
+        ensureContainedDirectory(scratchFixture, path.join(junction, "must-not-be-created")),
+        /real directory|outside workspace/u,
+      );
+      assert.equal(await stat(path.join(outsideFixture, "must-not-be-created")).then(() => true, () => false), false);
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+      if (!new Set(["EPERM", "EACCES", "ENOSYS"]).has(code)) throw error;
+    }
+  } finally {
+    await rm(previewFilesystemFixture, { recursive: true, force: true });
+  }
+  const forbiddenArtifactFixtures = [
+    "dist/server/.wrangler",
+    "DIST/server/.WRANGLER/tmp",
+    "dist/worker.log",
+    "dist/worker.log.1",
+    "dist/worker.log.gz",
+    "dist/state.sqlite",
+    "dist/state.sqlite-wal",
+    "dist/state.sqlite-shm",
+    "dist/state.db-wal",
+    "dist/state.db-shm",
+    "dist/.env",
+    "dist/.env.production",
+    "dist/.envrc",
+    "dist/.env~",
+    "dist/.env_backup",
+    "dist/.dev.vars.local",
+    "dist/.docker/config.json",
+    "dist/.kube/config",
+    "dist/.ssh/id_rsa",
+    "dist/.SSH/ID_ED25519.backup",
+    "dist/.aws/credentials",
+    "dist/private/id_ecdsa~",
+    "dist/bundle.tar.gz",
+    "dist/bundle.tar",
+    "dist/bundle.tgz",
+    "dist/bundle.zip",
+    "dist/bundle.gz",
+    "dist/bundle.7z",
+    "dist/bundle.rar",
+    "dist/server-key.pem",
+    "dist/private.key",
+    "dist/private.key.backup",
+    "dist/private.ppk",
+  ];
+  for (const relativePath of forbiddenArtifactFixtures) {
+    assert.equal(isForbiddenArtifactPath(relativePath), true, `${relativePath} must be excluded from Sites artifacts`);
+  }
+  assert.equal(isForbiddenArtifactPath("dist/client/benign-link", { symbolicLink: true }), true);
+  assert.equal(forbiddenArtifactReason("dist/client/benign-link", { symbolicLink: true }), "symbolic link");
+  for (const legitimatePath of ["dist/server/wrangler.json", "dist/.openai/drizzle/0000.sql", "dist/client/assets/index.css", "dist/client/fonts/geist-latin.woff2"]) {
+    assert.equal(isForbiddenArtifactPath(legitimatePath), false, `${legitimatePath} must remain packageable`);
+  }
+  assert.equal(isForbiddenArtifactPath("dist/client/assets/.environment.json"), false, ".environment.json must not be mistaken for a dotenv file");
   assert.match(layout, /import\s+\{\s*preload\s*\}\s+from\s+["']react-dom["']/u);
   assert.match(layout, /preload\(\s*["']\/fonts\/geist-latin\.woff2["'][\s\S]{0,180}as:\s*["']font["'][\s\S]{0,180}type:\s*["']font\/woff2["'][\s\S]{0,180}crossOrigin:\s*["']anonymous["']/u);
   assert.match(layout, /preload\(\s*["']\/fonts\/cormorant-garamond-latin\.woff2["'][\s\S]{0,180}as:\s*["']font["'][\s\S]{0,180}type:\s*["']font\/woff2["'][\s\S]{0,180}crossOrigin:\s*["']anonymous["']/u);

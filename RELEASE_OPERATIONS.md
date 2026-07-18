@@ -30,7 +30,7 @@ npm run qa:release:compiled
 npm run qa:failure-matrix
 ```
 
-The compiled release check is loopback-only and never starts, stops, or rebuilds the Worker. It requires synchronized Worker output, Sites metadata, and D1 migrations; then it checks the landing route, unsafe-URL rejection, and receipt fail-closed behavior. The failure matrix is the separate live archive and persistence gate and may create local D1 rows.
+The compiled release check is loopback-only and never starts, stops, or rebuilds the Worker. `npm start` launches from a fresh random rebased config under ignored root `.wrangler`, generates a preview-only admission secret off the command line, strips inherited cloud/output/process-env controls, rejects linked path components and remote/tunnel/content/config overrides, and constrains persistence beneath root `.wrangler`. The gate requires synchronized Worker output, Sites metadata, D1 migrations, fonts, and generated-state exclusions; then it checks the landing route, served styles/fonts, unsafe-URL rejection, and receipt fail-closed behavior. The failure matrix is the separate live archive and persistence gate and may create local D1 rows.
 
 Stop the exact compiled preview before any later rebuild or Sites packaging operation.
 
