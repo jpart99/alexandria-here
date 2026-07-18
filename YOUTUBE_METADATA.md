@@ -30,4 +30,4 @@ Nothing here is claimed without a witness.
 - Audience: No, it is not made for kids
 - Category: Science & Technology
 - Language: English
-- Captions: upload `submission-assets/narration.txt` only if YouTube cannot generate accurate automatic captions; otherwise review the automatic transcript before final submission.
+- Captions: upload `submission-assets/alexandria-here-build-week-demo.en.vtt`; it contains 49 non-overlapping cues aligned to the exact narration and ends before the 2:35.25 master.

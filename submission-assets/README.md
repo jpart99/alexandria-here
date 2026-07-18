@@ -8,6 +8,8 @@
 - `05-what-survived-focused.png` — live Ghost Map.
 - `06-receipt-focused.png` — live GPT-5.6 mechanical receipt.
 - `alexandria-here-build-week-demo.mp4` — narrated 2:35 Build Week master at 1080p.
+- `alexandria-here-build-week-demo.sha256` — checksum for the full-decode-clean public master.
+- `alexandria-here-build-week-demo.en.vtt` — timed English captions aligned to the narration master.
 - `narration.txt` — narration transcript for accessibility and re-recording.
 
 The product frames were captured from the public Sites deployment after the
