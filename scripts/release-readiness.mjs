@@ -59,7 +59,7 @@ const [actualMajor, actualMinor] = process.versions.node.split(".").map(Number);
 const nodeSupported = actualMajor > minimumMajor || (actualMajor === minimumMajor && actualMinor >= minimumMinor);
 check("Static/local", "Supported Node runtime", nodeSupported ? "PASS" : "FAIL", `running ${process.version}; requires ${packageJson.engines?.node}`);
 
-const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "reference:produce"];
+const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "reference:produce", "proof:model"];
 const missingScripts = requiredScripts.filter((name) => !packageJson.scripts?.[name]);
 check("Static/local", "Release commands declared", missingScripts.length ? "FAIL" : "PASS", missingScripts.length ? `missing: ${missingScripts.join(", ")}` : requiredScripts.join(", "));
 check("Static/local", "Package cannot be published", packageJson.private === true ? "PASS" : "FAIL", "package.json private must be true");

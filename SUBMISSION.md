@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: copy-ready draft. Public access, repository, track, and `/feedback` Session ID are confirmed. Do not submit until the public video URL and receipt-proven GPT-5.6 run are added and Jaia personally accepts the official-rules checkbox.
+Status: copy-ready draft. Public access, repository, track, `/feedback` Session ID, and receipt-proven GPT-5.6 run are confirmed. Do not submit until the public video URL is added and Jaia personally accepts the official-rules checkbox.
 
 ## Project
 
@@ -50,13 +50,13 @@ Its signature interaction is not generation; it is challengeability. A beautiful
 
 ## How we used Codex
 
-Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 3 at commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8` passes 29 tests, TypeScript, lint, a clean production build, ten release-contract checks, a seven-scenario failure matrix, receipt validation, and a zero-vulnerability production dependency audit. Codex also localized and repaired a real hosted regression where older requested years fell outside Wayback's general 400-row response, then proved the correction through the ordinary public recovery endpoint.
+Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 6 at commit `f434249d673911bb5de89689313248b68a389b52` passes 36 tests, TypeScript, lint, a clean production build, ten release-contract checks, a seven-scenario failure matrix, receipt validation, public browser regression, and a zero-vulnerability production dependency audit. Codex also localized and repaired real hosted regressions in requested-year discovery and model-output contracts, then proved each correction through the ordinary public recovery endpoint.
 
 ## How GPT-5.6 is used
 
-GPT-5.6 is the Chronologist, not the historian. Code mechanically selects the evidence window; GPT-5.6 reconciles the surviving witnesses inside that boundary by selecting primary and supporting records, ordering pages, resolving navigation labels, and returning source-linked decisions. Code validates every returned identifier and citation. Historical text and images always come from hashed archive evidence blocks, never from model prose.
+GPT-5.6 is the Chronologist, not the historian. Code mechanically selects the evidence window; GPT-5.6 makes exactly two consequential judgments inside that boundary: a complete page order and one primary witness per visible page. Supporting witnesses, navigation labels and citations, and receipt decisions are constructed mechanically from those accepted choices. Code validates every returned identifier and citation. Historical text and images always come from hashed archive evidence blocks, never from model prose.
 
-**Submission gate:** replace this paragraph with a link to a production receipt only after it records `planner: "gpt-5.6"`, a populated model, and ten passing deterministic checks. The current production reference correctly records deterministic fallback because the configured OpenAI project returned a quota error.
+The [production iExile receipt](https://alexandria-here.cinemaexile.chatgpt.site/api/recover/8ea53a47-437b-4afe-ad2c-29c81637a327/receipt) records `planner: "gpt-5.6"`, model `gpt-5.6-sol`, and 10 of 10 deterministic validations passing. Its returned site is [publicly inspectable](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327).
 
 ## Verified historical context: iExile
 
@@ -75,7 +75,7 @@ The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` i
 
 The reference is persisted as an ordinary recovery row and linked from the landing page. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine.
 
-The same production pipeline explicitly requested iExile's 2009 edition and returned [a witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/2db0d8a7-49da-4296-961e-c6f9f40a621b) with 8 pages, 347 rendered blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing. Its receipt records the deterministic Chronologist fallback while API credit is unavailable; it is not presented as a GPT-5.6-planned recovery.
+The same production pipeline explicitly requested iExile's 2009 edition and returned [a GPT-5.6-planned witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) with 5 returned pages from 8 capture records, 347 rendered blocks, 946 content-addressed source blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing.
 
 ## Current build boundary
 
@@ -128,7 +128,7 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 - [x] Confirm that the Sites deployment is publicly reachable without an authenticated session (`200 OK` verified July 17, 2026 Pacific / July 18 UTC).
 - [x] Publish the public judging repository with setup instructions and reference details: https://github.com/jpart99/alexandria-here
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
-- [ ] Produce and link one receipt-proven GPT-5.6 recovery.
+- [x] Produce and link one receipt-proven GPT-5.6 recovery.
 - [x] Clean-build, package, deploy, and verify the requested-year discovery fixes in production version 3.
 - [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.

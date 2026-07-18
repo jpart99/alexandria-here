@@ -65,5 +65,5 @@ Target: 2:35–2:50. Public YouTube upload. Screen recording with clear voiceove
 - Record at 1080p with browser zoom at 100% and notifications hidden.
 - Do not use copyrighted music or third-party logos as decorative assets.
 - The narration must audibly cover the product, Codex, and GPT-5.6.
-- Replace the receipt shot with a production recovery whose receipt records `planner: "gpt-5.6"` after API credit is active.
+- Use the production iExile recovery `/r/8ea53a47-437b-4afe-ad2c-29c81637a327`; its receipt records `planner: "gpt-5.6"`, model `gpt-5.6-sol`, and 10/10 passing validations.
 - Upload as **Public** on YouTube, not Unlisted or Private.

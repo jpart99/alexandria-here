@@ -83,7 +83,7 @@ npm run qa:release
 
 This non-mutating local gate runs tests, TypeScript, lint, and the release-manifest audit. It deliberately does not build, deploy, contact the archive, create recoveries, or treat unapproved external work as a local failure.
 
-Production version 3 runs commit `2bf8fd0762e86387b73bf6556b57530cefdc35e8`. It preserves a requested year inside the bounded inventory and issues an explicit year-scoped CDX query so that older evidence can be discovered even when it falls outside the archive's general 400-row response. The release passes 29/29 tests, TypeScript, lint, and a clean production build. A public hosted recovery requested iExile's 2009 edition through the ordinary endpoint and returned 8 pages, 347 rendered blocks, 36 inferred edges, 8 known absences, and all 10 receipt validations passing: [open the witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/2db0d8a7-49da-4296-961e-c6f9f40a621b).
+Production version 6 runs commit `f434249d673911bb5de89689313248b68a389b52`. The release passes 36/36 tests, TypeScript, lint, a clean production build, public browser regression, and a zero-vulnerability production dependency audit. Its ordinary public pipeline produced a [receipt-proven GPT-5.6 iExile recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327): 5 returned pages from 8 capture records, 347 rendered blocks, 946 content-addressed source blocks, 36 inferred edges, 8 known absences, and all 10 receipt validations passing.
 
 After producing a clean build and starting its Wrangler preview, run:
 
