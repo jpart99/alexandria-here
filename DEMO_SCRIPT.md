@@ -4,7 +4,7 @@ Target: 2:35. Public YouTube upload. Screen recording with clear narration; face
 
 Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
 
-## 0:00–0:18 — The promise
+## 0:00–0:19 — The promise
 
 **Screen:** Hold on the production landing page, then cut into the persisted witnessed recovery.
 
@@ -12,7 +12,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 > The web forgets by accident. Alexandria Here is a witnessed restoration engine for the lost web. It does not generate the past; it reconciles surviving witnesses. This is iExile, the literary community I founded in 2007, returned from public archive evidence.
 
-## 0:18–0:43 — The returned place
+## 0:19–0:42 — The returned place
 
 **Screen:** Begin the real production interaction capture. Browse the Returned Site, open one internal page, and return home while the Atlas rail remains visible.
 
@@ -20,7 +20,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 > Give Alexandria one public URL. When connected evidence is sufficient, it opens directly into a coherent returned site—not a screenshot gallery. This edition passed through the same bounded live-recovery pipeline available to every visitor. It returns five visible pages from eight capture records spanning August through November 2009.
 
-## 0:43–1:08 — Show the seams
+## 0:42–1:05 — Show the seams
 
 **Screen:** Continue the real production interaction capture. Move the visible pointer to **Show the Seams**, toggle it, scroll through provenance markers, then open **Witnesses**.
 
@@ -28,7 +28,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 > Its centerpiece is challengeability. Show the Seams exposes block-level provenance. Every rendered historical block resolves to archived evidence and a content hash. Alexandria may reconstruct placement, but it cannot display unsupported historical content. If a page is known only through surviving links, the absence remains visible.
 
-## 1:08–1:30 — Time and absence
+## 1:05–1:26 — Time and absence
 
 **Screen:** Open **Timeline**, then **What Survived**.
 
@@ -36,7 +36,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 > The Temporal Evidence Graph reconciles capture dates, URL variants, conflicts, and source relationships into one supported edition. The Ghost Map reveals the shape of survival: returned pages, inferred connections, and eight known absences—paths witnessed by the archive, but not faithfully recoverable.
 
-## 1:30–1:58 — Receipt and reliability
+## 1:26–1:57 — Receipt and reliability
 
 **Screen:** Open **Receipt**. Hold on the planner, model, validation count, hashes, warnings, and receipt download.
 
@@ -44,9 +44,9 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 > Every recovery ends with a mechanical receipt. This one discloses planner GPT-5.6, model GPT-5.6-sol, 946 source hashes, 347 rendered blocks, and ten of ten passing validations. The model proposes consequential evidence choices; deterministic code derives the cited structure and decides what may be rendered. Failure stays visible. Silence is never filled with fiction.
 
-## 1:58–2:27 — Codex and GPT-5.6
+## 1:57–2:27 — Codex and GPT-5.6
 
-**Screen:** Briefly show the README and test status in a neutral local editor or terminal view. Return to the receipt, then the recovered site.
+**Screen:** Hold on the composed **Built with Codex. Reconciled by GPT-5.6.** frame, then return to the recovered site.
 
 **Narration:**
 
@@ -68,5 +68,3 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 - Keep product UI text legible; pause on the GPT-5.6 receipt and its 10/10 validations.
 - The narration audibly explains the working product, Codex's build role, and GPT-5.6's runtime role.
 - Upload the finished video as **Public** on YouTube, not Unlisted or Private.
-
-Narration word count: **308 words**.

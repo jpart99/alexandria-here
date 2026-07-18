@@ -46,4 +46,4 @@ Nothing here is claimed without a witness.
 - Category: Science & Technology
 - Language: English
 - Thumbnail: `submission-assets/07-youtube-thumbnail.png`
-- Captions: upload `submission-assets/alexandria-here-build-week-demo.en.vtt`; it contains 49 non-overlapping cues aligned to the exact narration and ends before the 2:35.25 master.
+- Captions: upload `submission-assets/alexandria-here-build-week-demo.en.vtt`; it contains 49 non-overlapping cues aligned to the exact narration and ends before the 2:35.26 master.

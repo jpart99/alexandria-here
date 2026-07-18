@@ -10,6 +10,10 @@ The public production deployment is available at [alexandria-here.cinemaexile.ch
 
 The deployed engine remains operational when the model provider is unavailable: it records the provider failure in the receipt, uses the deterministic reconciliation path, and never substitutes generated historical content. A submission claim that GPT-5.6 performed a recovery is valid only when that recovery's receipt names the GPT-5.6 planner and model.
 
+## Build Week submission media
+
+The public repository packages the full audited submission media in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`: the 2:35.26 1080p master, exact English captions, 1280×720 thumbnail, 1600×900 Devpost cover, narration transcript, and copy-ready YouTube metadata. The video includes real production interaction—returned-site browsing, Show the Seams, provenance markers, and Witnesses—plus receipt-proven GPT-5.6 and Codex workflow coverage. Its SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`; see [`submission-assets`](submission-assets/README.md).
+
 ## Evidence boundary
 
 [Trish Hopkinson's June 19, 2026 editor interview](https://trishhopkinson.com/2026/06/19/no-fee-submission-call-editor-interview-iexile-deadline-always-open/) independently identifies Jaia Papitz as iExile's founder and records a 2007 founding. That source supports historical founder/year context only. It is not an Alexandria capture, recovery witness, receipt, or source for hosted recovery metrics; those claims must come from the relevant Recovery Receipt.
@@ -139,6 +143,6 @@ Successful recoveries open on the Returned Site. Insufficient-evidence recoverie
 npm run db:generate
 ```
 
-Deploy through the Sites hosting workflow so the managed `DB` resource and packaged `dist/.openai/drizzle` migrations are provisioned together. The zero UUID in generated `dist/server/wrangler.json` is a local placeholder; do not use that file with raw `wrangler deploy`. A manual Cloudflare deployment would require creating a durable D1 database, replacing the placeholder with its real database ID, applying every migration, configuring the Worker assets binding, and setting the OpenAI secret.
+Deploy through the Sites hosting workflow so the managed `DB` resource and packaged `dist/.openai/drizzle` migrations are provisioned together. The zero UUID in generated `dist/server/wrangler.json` is a local placeholder; do not use that file with raw `wrangler deploy`. A manual Cloudflare deployment would require creating a durable D1 database, replacing the placeholder with its real database ID, applying every migration, configuring the Worker assets binding, setting the required `RECOVERY_RATE_LIMIT_SECRET`, and optionally setting `OPENAI_API_KEY` for GPT-5.6 planning. Without the OpenAI key, the engine remains evidence-only through its deterministic fallback.
 
 The runtime enforces a 1.8 MB serialized-result budget beneath D1's 2 MB row limit. A larger evidence packet fails as an honest terminal recovery instead of surfacing an opaque database error. If a visitor closes the streamed recovery connection, the Worker aborts that recovery, persists the terminal state, and releases the singleton lock.

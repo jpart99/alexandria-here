@@ -38,7 +38,7 @@ When the evidence is insufficient, Alexandria does not fabricate a site. It retu
 - Cheerio extraction that treats archived HTML as hostile inert data and strips scripts, forms, embeds, event handlers, and unsafe protocols.
 - Content-addressed evidence blocks using SHA-256.
 - A deterministic temporal score that rewards page coverage and link density while penalizing date spread, conflicts, and duplicate captures.
-- A constrained GPT-5.6 Chronologist using the Responses API and strict Zod structured output. It may reconcile only supplied page, record, block, and source IDs; it cannot browse or create historical body content.
+- A constrained GPT-5.6 Chronologist using the Responses API and strict Zod structured output. From a bounded evidence packet, it may return only a complete visible-page order and one supplied primary record ID per page. It cannot browse, choose rendered blocks or supporting sources, or create historical content; those structures are derived mechanically.
 - A deterministic Witness validator that rejects unknown IDs, unsupported decisions, hash mismatches, missing evidence, and invalid page/body states before rendering.
 - A deterministic fallback that keeps the product useful and explicitly records why the model was not used.
 
@@ -66,14 +66,14 @@ The [production iExile receipt](https://alexandria-here.cinemaexile.chatgpt.site
 
 The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` into a coherent edition spanning April 13 through October 28, 2003:
 
-- 8 returned pages
+- 8 manifest pages: 6 returned and 2 represented honestly as missing
 - 154 preserved evidence blocks
 - 24 witnessed internal-reference edges
 - 8 known absences
 - 10 of 10 deterministic receipt validations passing
 - durable managed-D1 path: `/r/de5bb377-5b53-4ea4-b074-feb106e02113`
 
-The reference is persisted as an ordinary recovery row and linked from the landing page. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine.
+This earlier production proof remains persisted as an ordinary recovery row and directly accessible at the path above. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine. The landing page now links the receipt-proven iExile recovery below.
 
 The same production pipeline explicitly requested iExile's 2009 edition and returned [a GPT-5.6-planned witnessed recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) with 5 returned pages from 8 capture records, 347 rendered blocks, 946 content-addressed source blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing.
 
@@ -102,23 +102,23 @@ Reliability is easier to trust when it is visible. “AI checks itself” is not
 
 Support multiple genuinely evidenced editions from the same recovery, conflict-aware cross-fragment entity resolution, more archive providers behind the same evidence contract, and institutional export workflows for libraries, educators, and community archivists.
 
-## Under-three-minute demo beat sheet
+## Audited 2:35 demo
 
-**0:00–0:18 — The loss.** Open on a vanished URL. “The web loses places, not just pages.”
+The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, thumbnail, description/chapters, and Devpost cover in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the deployed runtime remains production version 6 commit `f434249d673911bb5de89689313248b68a389b52`.
 
-**0:18–0:38 — One real input.** Submit the URL and show persisted Scout → Chronologist → Witness stages. Explain the bounded archive-only contract.
+**0:00–0:19 — The promise.** Introduce Alexandria as a witnessed restoration engine and iExile as the founder's real lost community.
 
-**0:38–1:12 — The return.** Land directly inside the Returned Site. Browse two pages. State the selected capture window and page count.
+**0:19–0:42 — The returned place.** Browse the live production Returned Site and one internal page.
 
-**1:12–1:48 — Show the Seams.** Toggle seams. Open a block witness and its archived source. Say: “Nothing here is claimed without a witness.”
+**0:42–1:05 — Show the Seams.** Toggle block provenance, reveal markers, and open the Witness ledger.
 
-**1:48–2:12 — Ghost Map and refusal.** Show preserved pages, reconstructed structure, and known absences. Open “What Alexandria refused to claim.”
+**1:05–1:26 — Time and absence.** Show the Temporal Evidence Graph and Ghost Map.
 
-**2:12–2:38 — Receipt and AI role.** Show the receipt's planner/model, source hashes, primary/supporting witness decision, and ten passing checks. Explain that GPT-5.6 proposes a source-linked reading and deterministic code decides what may render.
+**1:26–1:57 — Receipt and reliability.** Hold on GPT-5.6, model, hashes, blocks, known absences, and ten passing checks.
 
-**2:38–2:55 — Honest failure.** Briefly show an insufficient-evidence Atlas or the fallback warning. “A recovery may fail honestly.”
+**1:57–2:27 — Codex and GPT-5.6.** Explain Codex's build-integrator role and GPT-5.6's constrained Chronologist contract.
 
-**2:55–3:00 — Close.** “Alexandria does not generate the past. It reconciles its surviving witnesses.”
+**2:27–2:35 — Close.** “Alexandria Here returns a place—with witnesses.”
 
 ## Final submission checklist
 
@@ -130,7 +130,8 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
 - [x] Produce and link one receipt-proven GPT-5.6 recovery.
 - [x] Clean-build, package, deploy, and verify the requested-year discovery and model-contract fixes in production version 6.
-- [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
+- [x] Render and audit the public-video master under three minutes with audio explaining both Codex and GPT-5.6 use.
+- [ ] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
 - [ ] Submit before July 21, 2026 at 5:00 PM PT.
