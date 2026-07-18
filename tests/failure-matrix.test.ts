@@ -28,33 +28,122 @@ async function withMockFetch<T>(mock: typeof fetch, task: () => Promise<T>) {
   }
 }
 
-test("capture retrieval rejects non-HTML, declared oversize, streamed oversize, and off-allowlist redirects", async () => {
-  await withMockFetch(async () => new Response("plain", {
+test("capture retrieval rejects unsafe responses and disposes every unread body", async () => {
+  let nonHtmlCancelled = false;
+  await withMockFetch(async () => new Response(new ReadableStream({
+    cancel() {
+      nonHtmlCancelled = true;
+    },
+  }), {
     headers: { "content-type": "text/plain" },
   }), async () => {
     await assert.rejects(() => fetchCaptureHtml(capture), /was not HTML/);
   });
+  assert.equal(nonHtmlCancelled, true);
 
-  await withMockFetch(async () => new Response("small", {
+  let declaredOversizeCancelled = false;
+  await withMockFetch(async () => new Response(new ReadableStream({
+    cancel() {
+      declaredOversizeCancelled = true;
+    },
+  }), {
     headers: { "content-type": "text/html", "content-length": "2500001" },
   }), async () => {
     await assert.rejects(() => fetchCaptureHtml(capture), /exceeded the response budget/);
   });
+  assert.equal(declaredOversizeCancelled, true);
 
-  await withMockFetch(async () => new Response("x".repeat(2_500_001), {
+  let streamedOversizeCancelled = false;
+  await withMockFetch(async () => new Response(new ReadableStream({
+    pull(controller) {
+      controller.enqueue(new Uint8Array(2_500_001));
+    },
+    cancel() {
+      streamedOversizeCancelled = true;
+    },
+  }), {
     headers: { "content-type": "text/html" },
   }), async () => {
     await assert.rejects(() => fetchCaptureHtml(capture), /exceeded the response budget/);
   });
+  assert.equal(streamedOversizeCancelled, true);
 
   let calls = 0;
+  let rejectedRedirectCancelled = false;
   await withMockFetch(async () => {
     calls += 1;
-    return new Response(null, { status: 302, headers: { location: "https://evil.example/capture" } });
+    return new Response(new ReadableStream({
+      cancel() {
+        rejectedRedirectCancelled = true;
+      },
+    }), { status: 302, headers: { location: "https://evil.example/capture" } });
   }, async () => {
     await assert.rejects(() => fetchCaptureHtml(capture), /leave the allowlist/);
   });
   assert.equal(calls, 1);
+  assert.equal(rejectedRedirectCancelled, true);
+});
+
+test("capture retrieval cancels an allowed redirect body before reading the next hop", async () => {
+  let calls = 0;
+  let redirectCancelled = false;
+  await withMockFetch(async () => {
+    calls += 1;
+    if (calls === 1) {
+      return new Response(new ReadableStream({
+        cancel() {
+          redirectCancelled = true;
+        },
+      }), {
+        status: 302,
+        headers: {
+          location: "https://web.archive.org/web/20030401000000id_/http://lostsite.org/home.html",
+        },
+      });
+    }
+    assert.equal(redirectCancelled, true);
+    return new Response("preserved", { headers: { "content-type": "text/html" } });
+  }, async () => {
+    assert.equal(await fetchCaptureHtml(capture), "preserved");
+  });
+  assert.equal(calls, 2);
+});
+
+test("capture retrieval keeps its timeout active while the response body is stalled", async (context) => {
+  context.mock.timers.enable({ apis: ["setTimeout"] });
+  let responseReady!: () => void;
+  const headersReturned = new Promise<void>((resolve) => {
+    responseReady = resolve;
+  });
+  let requestSignal: AbortSignal | undefined;
+  let bodyController: ReadableStreamDefaultController<Uint8Array> | undefined;
+
+  try {
+    await withMockFetch(async (_input, init) => {
+      requestSignal = init?.signal || undefined;
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          bodyController = controller;
+        },
+      });
+      requestSignal?.addEventListener("abort", () => {
+        bodyController?.error(requestSignal?.reason);
+      }, { once: true });
+      responseReady();
+      return new Response(body, { headers: { "content-type": "text/html" } });
+    }, async () => {
+      const pending = fetchCaptureHtml(capture);
+      await headersReturned;
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      context.mock.timers.tick(12_000);
+      const timedOut = requestSignal?.aborted === true;
+      if (!timedOut) bodyController?.error(new Error("test cleanup: capture timeout was inactive"));
+      await assert.rejects(pending, /Archive request timed out/);
+      assert.equal(timedOut, true);
+    });
+  } finally {
+    context.mock.timers.reset();
+  }
 });
 
 test("empty archive inventory and an unavailable requested era fail explicitly", async () => {

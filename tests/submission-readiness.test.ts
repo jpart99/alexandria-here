@@ -118,6 +118,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
 
   const layout = await readFile(path.join(root, "app", "layout.tsx"), "utf8");
   const css = await readFile(path.join(root, "app", "globals.css"), "utf8");
+  const staticHeaders = await readFile(path.join(root, "public", "_headers"), "utf8");
   const releaseReadiness = await readFile(path.join(root, "scripts", "release-readiness.mjs"), "utf8");
   const packageContract = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   assert.match("file:///C:/build/font.woff2", unsafeFontReference);
@@ -137,6 +138,8 @@ test("the sealed submission package passes locally and exposes only authority-ga
   );
   assert.doesNotMatch(layout, /from\s+["']next\/font(?:\/google|\/local)?["']/u);
   assert.doesNotMatch(`${layout}\n${css}`, unsafeFontReference);
+  assert.match(staticHeaders, /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/u);
+  assert.match(staticHeaders, /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/u);
   assert.match(releaseReadiness, /forbiddenGeneratedArtifacts\("dist"\)/u);
   assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
   const normalizedPreviewArguments = normalizePreviewArguments([

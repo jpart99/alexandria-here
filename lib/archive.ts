@@ -38,12 +38,65 @@ function captureId(originalUrl: string, timestamp: string) {
   return `capture-${path}-${timestamp}`;
 }
 
+async function cancelResponseBody(response: Response | undefined): Promise<void> {
+  if (!response?.body || response.bodyUsed) return;
+  try {
+    await response.body.cancel();
+  } catch {
+    // The request is already being rejected. Body disposal is best-effort.
+  }
+}
+
+async function readBoundedBody(response: Response, sizeError: string): Promise<Uint8Array> {
+  if (!response.body) return new Uint8Array();
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  let finished = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        finished = true;
+        break;
+      }
+      if (!value?.byteLength) continue;
+
+      total += value.byteLength;
+      if (total > MAX_RESPONSE_BYTES) throw new Error(sizeError);
+      chunks.push(value);
+    }
+  } catch (error) {
+    if (!finished) {
+      try {
+        await reader.cancel(error);
+      } catch {
+        // Preserve the original read, timeout, or byte-budget failure.
+      }
+    }
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 async function fetchJson(url: URL, externalSignal?: AbortSignal): Promise<unknown> {
   validateArchiveUrl(url.toString());
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(new Error("Archive request timed out.")), REQUEST_TIMEOUT_MS);
+  let response: Response | undefined;
   try {
-    const response = await fetch(url, {
+    response = await fetch(url, {
       headers: { Accept: "application/json", "User-Agent": "Alexandria-Here/2.0" },
       redirect: "manual",
       signal: externalSignal ? AbortSignal.any([controller.signal, externalSignal]) : controller.signal,
@@ -56,12 +109,12 @@ async function fetchJson(url: URL, externalSignal?: AbortSignal): Promise<unknow
     if (!/\bjson\b/i.test(contentType)) throw new Error("Archive inventory was not JSON.");
     const length = Number(response.headers.get("content-length") || "0");
     if (length > MAX_RESPONSE_BYTES) throw new Error("Archive inventory exceeded the response budget.");
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > MAX_RESPONSE_BYTES) throw new Error("Archive inventory exceeded the response budget.");
+    const buffer = await readBoundedBody(response, "Archive inventory exceeded the response budget.");
     const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
     return JSON.parse(text);
   } finally {
     clearTimeout(timeout);
+    await cancelResponseBody(response);
   }
 }
 
@@ -446,12 +499,18 @@ export async function discoverCaptures(originalUrl: string, requestedYear?: stri
   };
 }
 
-async function fetchAllowedRedirect(url: URL, remainingRedirects = 2, externalSignal?: AbortSignal): Promise<Response> {
+async function fetchAllowedCapture(
+  url: URL,
+  capture: Capture,
+  remainingRedirects = 2,
+  externalSignal?: AbortSignal,
+): Promise<Uint8Array> {
   validateArchiveUrl(url.toString());
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(new Error("Archive request timed out.")), REQUEST_TIMEOUT_MS);
+  let response: Response | undefined;
   try {
-    const response = await fetch(url, {
+    response = await fetch(url, {
       headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": "Alexandria-Here/2.0" },
       redirect: "manual",
       signal: externalSignal ? AbortSignal.any([controller.signal, externalSignal]) : controller.signal,
@@ -460,22 +519,27 @@ async function fetchAllowedRedirect(url: URL, remainingRedirects = 2, externalSi
       if (remainingRedirects <= 0) throw new Error("Archive redirect limit exceeded.");
       const location = response.headers.get("location");
       if (!location) throw new Error("Archive returned an invalid redirect.");
-      return fetchAllowedRedirect(validateArchiveUrl(new URL(location, url).toString()), remainingRedirects - 1, externalSignal);
+      const redirectUrl = validateArchiveUrl(new URL(location, url).toString());
+      await cancelResponseBody(response);
+      response = undefined;
+      return fetchAllowedCapture(redirectUrl, capture, remainingRedirects - 1, externalSignal);
     }
-    return response;
+    if (!response.ok) throw new Error(`Capture ${capture.id} failed with ${response.status}.`);
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().includes("html")) throw new Error("Archive capture was not HTML.");
+    const length = Number(response.headers.get("content-length") || "0");
+    if (length > MAX_RESPONSE_BYTES) throw new Error("Capture exceeded the response budget.");
+    // Await inside this try so the finally block keeps the timeout alive until
+    // the complete bounded body is owned, read, or canceled.
+    const body = await readBoundedBody(response, "Capture exceeded the response budget.");
+    return body;
   } finally {
     clearTimeout(timeout);
+    await cancelResponseBody(response);
   }
 }
 
 export async function fetchCaptureHtml(capture: Capture, signal?: AbortSignal): Promise<string> {
-  const response = await fetchAllowedRedirect(validateArchiveUrl(capture.archiveUrl), 2, signal);
-  if (!response.ok) throw new Error(`Capture ${capture.id} failed with ${response.status}.`);
-  const contentType = response.headers.get("content-type") || "";
-  if (!contentType.toLowerCase().includes("html")) throw new Error("Archive capture was not HTML.");
-  const length = Number(response.headers.get("content-length") || "0");
-  if (length > MAX_RESPONSE_BYTES) throw new Error("Capture exceeded the response budget.");
-  const buffer = await response.arrayBuffer();
-  if (buffer.byteLength > MAX_RESPONSE_BYTES) throw new Error("Capture exceeded the response budget.");
+  const buffer = await fetchAllowedCapture(validateArchiveUrl(capture.archiveUrl), capture, 2, signal);
   return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
 }

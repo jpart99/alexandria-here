@@ -95,6 +95,9 @@ const envExample = Object.fromEntries(
 );
 const gitignore = await text(".gitignore");
 const matrix = await text("FAILURE_RELIABILITY_MATRIX.md");
+const staticHeaders = await exists("public/_headers") ? await text("public/_headers") : "";
+const assetCacheHeaderReady = /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/iu.test(staticHeaders);
+const fontMimeHeaderReady = /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/iu.test(staticHeaders);
 
 const [minimumMajor, minimumMinor] = String(packageJson.engines?.node || "")
   .replace(/^[^0-9]*/, "")
@@ -114,7 +117,12 @@ check("Static/local", "Package cannot be published", packageJson.private === tru
 
 const hostingKeys = Object.keys(hosting);
 const invalidHostingKeys = hostingKeys.filter((key) => !["project_id", "d1", "r2"].includes(key));
-check("Static/local", "Sites hosting manifest", invalidHostingKeys.length === 0 && hosting.d1 === "DB" && hosting.r2 === null ? "PASS" : "FAIL", "logical D1 binding DB; no R2; only Sites-owned keys");
+const sitesContractReady = invalidHostingKeys.length === 0
+  && hosting.d1 === "DB"
+  && hosting.r2 === null
+  && assetCacheHeaderReady
+  && fontMimeHeaderReady;
+check("Static/local", "Sites hosting manifest", sitesContractReady ? "PASS" : "FAIL", sitesContractReady ? "logical D1 binding DB; no R2; Sites-owned keys; immutable assets and exact WOFF2 MIME" : "hosting keys or static asset header contract is invalid");
 
 const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "RECOVERY_RATE_LIMIT_SECRET", "NEXT_PUBLIC_REFERENCE_RECOVERY_PATH", "ALEXANDRIA_BASE_URL", "ALEXANDRIA_REFERENCE_URL"];
 const missingEnv = requiredEnv.filter((name) => !(name in envExample));
@@ -162,6 +170,8 @@ if (missingArtifactParts.length === 0) {
   const packagedMigrations = (await readdir(path.join(root, "dist/.openai/drizzle"))).filter((name) => name.endsWith(".sql")).sort();
   const unsafeArtifacts = await unsafeFontArtifacts(["dist/server", "dist/client"]);
   const forbiddenArtifacts = await forbiddenGeneratedArtifacts("dist");
+  const packagedHeadersMatch = await exists("dist/client/_headers")
+    && (await readFile(path.join(root, "public/_headers"))).equals(await readFile(path.join(root, "dist/client/_headers")));
   const packagedFontsMatch = (await Promise.all(fontAssets.map(async (name) => {
     const sourcePath = `public/fonts/${name}`;
     const packagedPath = `dist/client/fonts/${name}`;
@@ -174,11 +184,14 @@ if (missingArtifactParts.length === 0) {
     && JSON.stringify(packagedMigrations) === JSON.stringify(migrationFiles)
     && unsafeArtifacts.length === 0
     && forbiddenArtifacts.length === 0
+    && packagedHeadersMatch
     && packagedFontsMatch;
   artifactDetail = forbiddenArtifacts.length
     ? `forbidden generated state in ${forbiddenArtifacts.slice(0, 8).map((entry) => `${entry.relative.split(path.sep).join("/")} (${entry.reason})`).join(", ")}`
     : unsafeArtifacts.length
       ? `unsafe local font reference in ${unsafeArtifacts.join(", ")}`
+      : !packagedHeadersMatch
+        ? "static asset header rules are missing or differ from public/_headers"
       : !packagedFontsMatch
         ? "self-hosted font files are missing or differ from public/fonts"
         : artifactCurrent
@@ -283,7 +296,7 @@ if (compiledMode) {
         const bytes = Buffer.from(await response.arrayBuffer());
         const expected = await readFile(path.join(root, "public", "fonts", name));
         const mime = response.headers.get("content-type") || "";
-        if (response.status !== 200 || !/^(?:font\/woff2|application\/(?:font-woff2|octet-stream))(?:;|$)/iu.test(mime) || !bytes.equals(expected)) {
+        if (response.status !== 200 || !/^font\/woff2(?:;|$)/iu.test(mime) || !bytes.equals(expected)) {
           servedFontFailures.push(`${name} (HTTP ${response.status}; ${mime || "no MIME"})`);
         }
       }

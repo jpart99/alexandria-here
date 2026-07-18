@@ -104,13 +104,14 @@ export async function POST(request: Request) {
     },
     cancel() {
       if (terminal) return;
-      // A streamed HTTP recovery is intentionally tied to its requesting client.
-      // If that client disappears, persist a terminal state and release the
-      // singleton lock instead of leaving every later visitor blocked until TTL.
+      // When the runtime reports downstream cancellation, persist a terminal
+      // state and release the singleton lock instead of leaving every later
+      // visitor blocked until TTL.
       terminal = true;
       recoveryAbort.abort(new Error("The recovery connection closed before verification finished."));
-      waitUntil(recoveryTask?.catch(() => undefined)
-        ?? failRecovery(recoveryId, "The recovery connection closed before verification finished."));
+      const cancellation = recoveryTask
+        ?? failRecovery(recoveryId, "The recovery connection closed before verification finished.");
+      return cancellation.then(() => undefined, () => undefined);
     },
   });
 

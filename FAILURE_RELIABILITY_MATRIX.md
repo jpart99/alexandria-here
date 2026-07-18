@@ -15,7 +15,7 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 | Insufficient evidence | Fewer than five preserved pages, or weak page connectivity | Persist `complete` with `outcome: insufficient_evidence`; open the Atlas evidence state | Live recovery through the compiled Worker |
 | Requested era | Year is malformed or not one of at most three deterministic candidates | Reject the request/edition; list only supported candidate years | Automated selection and mocked inventory tests |
 | Concurrent work | Second recovery while singleton lock is active | `409`, `Retry-After: 15`; active recovery is not disturbed | Compiled Worker matrix |
-| Client disconnect | Requesting client cancels the NDJSON stream | Abort work, persist the dignified terminal reason, release the lock promptly | Compiled Worker matrix |
+| Client disconnect | Requesting client cancels a live NDJSON stream after its first event | Require Workerd to propagate cancellation, persist the exact connection-closed reason, and release the lock; bounded archive deadlines remain a separate safety net, not substitute proof | Compiled Worker matrix |
 | Durable result cap | Serialized result exceeds 1.8 MB | Fail before D1's 2 MB row limit with the durable-storage-budget reason | Automated persistence-budget test |
 | Legacy result | Additive v2 arrays are missing from an otherwise compatible row | Normalize safe empty arrays and supporting witness IDs; continue rendering | Automated compatibility test |
 | Stale/corrupt result | Invalid JSON or incompatible durable result shape | Treat result as unavailable instead of throwing from every read route | Automated compatibility test |
@@ -27,11 +27,13 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 - A real bounded recovery of `http://info.cern.ch/hypertext/WWW/TheProject.html`
   completed as `insufficient_evidence` and rendered at its ordinary `/r/:id` route.
 - A live in-progress recovery returned `409` to a concurrent request.
-- Cancelling that stream transitioned its persisted row to `failed`, released the
-  singleton lock, and allowed the next live recovery to start.
+- Cancelling that live stream after its first event persisted the exact
+  connection-closed reason, released the singleton lock, and allowed the next
+  live recovery to start. The matrix separately proves direct preview
+  reachability after disconnect cleanup and after the final live CERN recovery.
 - The first execution exposed a cancellation race that persisted `Unable to
   enqueue`; the stream emitter now stops enqueueing after cancellation so the
-  intended connection-closed reason remains authoritative.
+  observed cancellation or bounded-timeout reason remains authoritative.
 - A stale receipt path that could serialize `undefined` as a successful download
   now returns the explicit unavailable response.
 

@@ -66,6 +66,12 @@ async function expectStatus(name, requestFactory, expected) {
   return { response, body };
 }
 
+async function assertDirectPreviewReachability(stage) {
+  const response = await fetch(`${baseUrl}/`, { redirect: "manual" });
+  assert(response.status === 200, `Compiled preview was not reachable ${stage}: HTTP ${response.status}.`);
+  await response.body?.cancel();
+}
+
 await expectStatus("unsupported request content type", () => fetch(`${baseUrl}/api/recover`, {
   method: "POST",
   headers: { "content-type": "text/plain" },
@@ -101,26 +107,44 @@ await expectStatus(
 
 const disconnectAbort = new AbortController();
 const disconnectPromise = recoveryRequest(activeTarget, disconnectAbort.signal, MATRIX_CLIENTS.disconnect);
-setTimeout(() => disconnectAbort.abort(new Error("failure-matrix disconnect")), 100);
-let disconnectedId;
+const disconnectSafety = setTimeout(
+  () => disconnectAbort.abort(new Error("failure-matrix disconnect safety timeout")),
+  2_000,
+);
+let disconnectedId = "";
 try {
   const response = await disconnectPromise;
-  disconnectedId = response.headers.get("x-recovery-id") || undefined;
-  await response.body?.cancel("failure-matrix disconnect");
+  assert(response.status === 200, `Disconnect probe could not begin: HTTP ${response.status}.`);
+  disconnectedId = response.headers.get("x-recovery-id") || "";
+  assert(disconnectedId, "Disconnect probe omitted X-Recovery-Id.");
+  assert(response.body, "Disconnect probe returned no response body.");
+  const reader = response.body.getReader();
+  const firstEvent = await reader.read();
+  assert(!firstEvent.done, "Disconnect probe stream closed before its first persisted stage.");
+  await reader.cancel("failure-matrix disconnect");
 } catch (error) {
-  assert(disconnectAbort.signal.aborted, `Disconnect probe failed before its deliberate abort: ${String(error)}`);
+  throw new Error(`Disconnect probe failed before a live stream could be cancelled: ${String(error)}`);
+} finally {
+  clearTimeout(disconnectSafety);
 }
 
-if (disconnectedId) {
-  const cancelled = await pollRecord(disconnectedId, (record) => record.status === "failed");
-  assert(
-    /connection closed before verification finished/i.test(cancelled.error || ""),
-    `Disconnect persisted the wrong terminal reason: ${cancelled.error || "none"}`,
-  );
-}
+const terminalAfterDisconnect = await pollRecord(
+  disconnectedId,
+  (record) => record.status !== "running",
+  64,
+);
+assert(terminalAfterDisconnect.status === "failed", `Disconnect recovery ended as ${terminalAfterDisconnect.status}.`);
+assert(
+  /connection closed before verification finished/i.test(terminalAfterDisconnect.error || ""),
+  `Disconnect persisted the wrong terminal reason: ${terminalAfterDisconnect.error || "none"}`,
+);
+
+// These probes deliberately bypass the one-time Wrangler startup retry. They
+// prove direct preview reachability at both historical crash boundaries.
+await assertDirectPreviewReachability("after disconnect cleanup");
 
 let insufficient;
-for (let attempt = 0; attempt < 40; attempt += 1) {
+for (let attempt = 0; attempt < 64; attempt += 1) {
   const candidate = await requestWithWorkerRetry(() => recoveryRequest(insufficientTarget, undefined, MATRIX_CLIENTS.insufficient));
   if (candidate.status === 200) {
     insufficient = candidate;
@@ -130,8 +154,13 @@ for (let attempt = 0; attempt < 40; attempt += 1) {
   assert(candidate.status === 409, `Post-disconnect recovery returned ${candidate.status}: ${body.slice(0, 200)}`);
   await new Promise((resolve) => setTimeout(resolve, 250));
 }
-assert(insufficient, "Client disconnect did not release the recovery lock within 10 seconds.");
-results.push({ name: "client disconnect cleanup", status: "lock_released", result: "pass" });
+assert(insufficient, "Client disconnect did not release the recovery lock within 16 seconds.");
+results.push({
+  name: "client disconnect cleanup",
+  status: "lock_released",
+  mode: "disconnect_propagated",
+  result: "pass",
+});
 assert(insufficient.status === 200, `Post-disconnect recovery remained locked: ${insufficient.status}`);
 const insufficientId = insufficient.headers.get("x-recovery-id");
 assert(insufficientId, "Insufficient-evidence recovery omitted X-Recovery-Id.");
@@ -143,5 +172,6 @@ assert(
 );
 assert(completed.result?.manifest?.insufficientReason, "Live insufficient-evidence result omitted its reason.");
 results.push({ name: "live insufficient-evidence outcome", status: completed.result.outcome, result: "pass" });
+await assertDirectPreviewReachability("after the final live recovery");
 
 console.log(JSON.stringify({ baseUrl, results, liveRecoveryPath: `/r/${insufficientId}` }, null, 2));

@@ -1,0 +1,6 @@
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*.woff2
+  Content-Type: font/woff2
+  X-Content-Type-Options: nosniff
