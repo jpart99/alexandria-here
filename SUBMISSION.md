@@ -1,0 +1,124 @@
+# OpenAI Build Week submission draft
+
+Status: copy-ready draft. Do not submit until the repository URL, public video URL, `/feedback` Codex Session ID, final access mode, and receipt-proven GPT-5.6 run are filled in.
+
+## Project
+
+**Alexandria Here — a witnessed restoration engine for the lost web**
+
+Recommended track: **Education**
+
+Tagline: **The lost web, present again—without pretending the gaps were never there.**
+
+Live product: https://alexandria-here.cinemaexile.chatgpt.site
+
+Code repository: `[ADD JUDGING REPOSITORY URL]`
+
+Demo video: `[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]`
+
+Codex Session ID: `[ADD /feedback SESSION ID]`
+
+## Inspiration
+
+The web loses places, not just pages: community archives, memorials, independent publications, classrooms, and cultural projects disappear into partial captures. Snapshot tools can show individual moments, while generative systems are tempted to smooth over missing material. Alexandria Here asks a stricter question: can a vanished site be returned as a coherent place while making every surviving witness, structural inference, conflict, and absence inspectable?
+
+## What it does
+
+Give Alexandria one vanished public URL. It inventories a bounded set of public Wayback captures, selects the strongest coherent historical window, extracts inert evidence blocks, builds a Temporal Evidence Graph, and returns a browsable site when the surviving evidence is connected enough.
+
+Every returned block can reveal its witness in **Show the Seams**. The **Ghost Map** shows preserved pages, reconstructed structure, and referenced-but-uncaptured absences. The **Recovery Receipt** records source IDs, hashes, archive timestamps, model/schema versions, decisions, warnings, and deterministic validation results.
+
+When the evidence is insufficient, Alexandria does not fabricate a site. It returns a complete Atlas explaining what survived and why it refused to claim more.
+
+## How we built it
+
+- TypeScript with Vinext/Next App Router on a Cloudflare Worker-compatible runtime.
+- Managed D1 persistence with streamed, persisted recovery stages.
+- One archive provider, strict URL validation, redirect revalidation, MIME/size/time budgets, and no submitted-origin fetch.
+- Cheerio extraction that treats archived HTML as hostile inert data and strips scripts, forms, embeds, event handlers, and unsafe protocols.
+- Content-addressed evidence blocks using SHA-256.
+- A deterministic temporal score that rewards page coverage and link density while penalizing date spread, conflicts, and duplicate captures.
+- A constrained GPT-5.6 Chronologist using the Responses API and strict Zod structured output. It may reconcile only supplied page, record, block, and source IDs; it cannot browse or create historical body content.
+- A deterministic Witness validator that rejects unknown IDs, unsupported decisions, hash mismatches, missing evidence, and invalid page/body states before rendering.
+- A deterministic fallback that keeps the product useful and explicitly records why the model was not used.
+
+## What makes it different
+
+Wayback shows snapshots. Alexandria returns a place—with witnesses.
+
+Its signature interaction is not generation; it is challengeability. A beautiful returned site can be toggled into an evidentiary view where every seam becomes visible. Alexandria's most important output may be what it refuses to claim: uncaptured paths, unresolved variants, conflicts, and missing assets supported only by surviving references.
+
+## How we used Codex
+
+Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. The final local candidate passed 27 tests, TypeScript, lint, production build, ten release-contract checks, a seven-scenario failure matrix, receipt validation, mobile/browser regression, and a zero-vulnerability production dependency audit before deployment.
+
+## How GPT-5.6 is used
+
+GPT-5.6 is the Chronologist, not the historian. Code mechanically selects the evidence window; GPT-5.6 reconciles the surviving witnesses inside that boundary by selecting primary and supporting records, ordering pages, resolving navigation labels, and returning source-linked decisions. Code validates every returned identifier and citation. Historical text and images always come from hashed archive evidence blocks, never from model prose.
+
+**Submission gate:** replace this paragraph with a link to a production receipt only after it records `planner: "gpt-5.6"`, a populated model, and ten passing deterministic checks. The current production reference correctly records deterministic fallback because the configured OpenAI project returned a quota error.
+
+## Production evidence
+
+The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` into a coherent edition spanning April 13 through October 28, 2003:
+
+- 8 returned pages
+- 154 preserved evidence blocks
+- 24 witnessed internal-reference edges
+- 8 known absences
+- 10 of 10 deterministic receipt validations passing
+- durable managed-D1 path: `/r/de5bb377-5b53-4ea4-b074-feb106e02113`
+
+The reference is persisted as an ordinary recovery row and linked from the landing page. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine.
+
+## Challenges
+
+Archive evidence is messy: captures are incomplete, timestamps disagree, URLs drift, navigation points to uncaptured pages, and archived HTML must be treated as hostile. The hardest product decision was refusing to optimize for a visually complete fiction. We built mechanical invariants so unsupported content cannot render, then designed the missing material as a first-class, dignified outcome instead of an error state.
+
+## Accomplishments
+
+- General live recovery within strict, legible budgets.
+- Stable Returned Site and five-panel Recovery Atlas.
+- Block-level provenance and downloadable content-addressed receipts.
+- Honest insufficient-evidence and model-fallback outcomes.
+- Archive-only network boundary and aggressive inert-data sanitization.
+- Durable hosted recovery produced through the same path as every visitor.
+
+## What we learned
+
+Reliability is easier to trust when it is visible. “AI checks itself” is not a sufficient safety story; a constrained proposal followed by a mechanical evidence validator is. Missing evidence is also not merely a backend failure. When represented clearly, absence becomes meaningful archival information.
+
+## What's next
+
+Support multiple genuinely evidenced editions from the same recovery, conflict-aware cross-fragment entity resolution, more archive providers behind the same evidence contract, and institutional export workflows for libraries, educators, and community archivists.
+
+## Under-three-minute demo beat sheet
+
+**0:00–0:18 — The loss.** Open on a vanished URL. “The web loses places, not just pages.”
+
+**0:18–0:38 — One real input.** Submit the URL and show persisted Scout → Chronologist → Witness stages. Explain the bounded archive-only contract.
+
+**0:38–1:12 — The return.** Land directly inside the Returned Site. Browse two pages. State the selected capture window and page count.
+
+**1:12–1:48 — Show the Seams.** Toggle seams. Open a block witness and its archived source. Say: “Nothing here is claimed without a witness.”
+
+**1:48–2:12 — Ghost Map and refusal.** Show preserved pages, reconstructed structure, and known absences. Open “What Alexandria refused to claim.”
+
+**2:12–2:38 — Receipt and AI role.** Show the receipt's planner/model, source hashes, primary/supporting witness decision, and ten passing checks. Explain that GPT-5.6 proposes a source-linked reading and deterministic code decides what may render.
+
+**2:38–2:55 — Honest failure.** Briefly show an insufficient-evidence Atlas or the fallback warning. “A recovery may fail honestly.”
+
+**2:55–3:00 — Close.** “Alexandria does not generate the past. It reconciles its surviving witnesses.”
+
+## Final submission checklist
+
+- [ ] Join the OpenAI Build Week challenge on Devpost and accept the official rules.
+- [ ] Select Education, unless the final positioning changes.
+- [ ] Decide whether the Sites deployment is public or provide judge/test access instructions.
+- [ ] Publish or share the judging repository; include setup instructions and sample/reference details.
+- [ ] Add the `/feedback` Codex Session ID.
+- [ ] Produce and link one receipt-proven GPT-5.6 recovery.
+- [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
+- [ ] Replace every bracketed placeholder.
+- [ ] Confirm the production URL, reference recovery, receipt download, mobile layout, and console immediately before submission.
+- [ ] Submit before July 21, 2026 at 5:00 PM PT.

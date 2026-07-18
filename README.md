@@ -4,6 +4,12 @@ Alexandria Here is a witnessed restoration engine for the lost web. Give it one 
 
 > Alexandria does not generate the past. It reconciles its surviving witnesses.
 
+## Live product
+
+The owner-only production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path.
+
+The deployed engine remains operational when the model provider is unavailable: it records the provider failure in the receipt, uses the deterministic reconciliation path, and never substitutes generated historical content. A submission claim that GPT-5.6 performed a recovery is valid only when that recovery's receipt names the GPT-5.6 planner and model.
+
 ## Product boundary
 
 - One public HTTP(S) URL per recovery.
