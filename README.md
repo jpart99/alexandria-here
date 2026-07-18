@@ -35,6 +35,8 @@ The sealed master shows ordinary production recovery `8ea53a47-437b-4afe-ad2c-29
 
 The repository is public for Build Week judging under the terms in [LICENSE](LICENSE). Recovered archival material is evidence from third-party sources and is explicitly excluded from the software license; Alexandria does not claim ownership of it.
 
+The self-hosted Geist and Cormorant Garamond webfont subsets remain under the SIL Open Font License 1.1; their copyright and license notices ship beside the binaries in [`public/fonts`](public/fonts).
+
 ## Stack
 
 - Vinext / Next App Router and TypeScript

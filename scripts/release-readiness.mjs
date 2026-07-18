@@ -5,6 +5,9 @@ const root = process.cwd();
 const compiledMode = process.argv.includes("--compiled");
 const baseUrl = new URL(process.env.ALEXANDRIA_BASE_URL || "http://127.0.0.1:3100");
 const checks = [];
+const unsafeFontReference = /(?:(?:file:|[A-Za-z]:[\\/]|\\\\(?:\?\\UNC\\|[^\\/\s"'`<>]+[\\/]))[^"'`<>\r\n)]{0,32767})\.(?:woff2?|ttf|otf)\b/iu;
+const shippedTextExtensions = new Set([".js", ".mjs", ".cjs", ".css", ".html", ".json", ".map"]);
+const fontAssets = ["geist-latin.woff2", "cormorant-garamond-latin.woff2"];
 
 function check(section, name, state, detail) {
   checks.push({ section, name, state, detail });
@@ -30,6 +33,27 @@ async function latestMtime(target) {
   const entries = await readdir(absolute, { withFileTypes: true });
   const times = await Promise.all(entries.map((entry) => latestMtime(path.join(target, entry.name))));
   return Math.max(targetStat.mtimeMs, ...times);
+}
+
+async function filesUnder(target) {
+  if (!await exists(target)) return [];
+  const absolute = path.join(root, target);
+  const entries = await readdir(absolute, { withFileTypes: true });
+  const nested = await Promise.all(entries.map(async (entry) => {
+    const relative = path.join(target, entry.name);
+    return entry.isDirectory() ? filesUnder(relative) : [relative];
+  }));
+  return nested.flat();
+}
+
+async function unsafeFontArtifacts(targets) {
+  const candidates = (await Promise.all(targets.map((target) => filesUnder(target)))).flat()
+    .filter((relative) => shippedTextExtensions.has(path.extname(relative).toLowerCase()));
+  const offenders = [];
+  for (const relative of candidates) {
+    if (unsafeFontReference.test(await text(relative))) offenders.push(relative.split(path.sep).join("/"));
+  }
+  return offenders;
 }
 
 function isSafeExampleSecret(value) {
@@ -91,8 +115,18 @@ check("Static/local", "D1 migrations are journaled", JSON.stringify(migrationFil
 const distIndex = await exists("dist/server/index.js");
 const distHosting = await exists("dist/.openai/hosting.json");
 const distMigrations = await exists("dist/.openai/drizzle");
+const distClient = await exists("dist/client");
+const missingArtifactParts = [
+  [distIndex, "dist/server/index.js"],
+  [distHosting, "dist/.openai/hosting.json"],
+  [distMigrations, "dist/.openai/drizzle"],
+  [distClient, "dist/client"],
+].filter(([present]) => !present).map(([, name]) => name);
 let artifactCurrent = false;
-if (distIndex && distHosting && distMigrations) {
+let artifactDetail = missingArtifactParts.length
+  ? `compiled artifact is incomplete: missing ${missingArtifactParts.join(", ")}; run npm run build, then rerun this check`
+  : "stop the exact local Worker, run npm run build, then rerun this check";
+if (missingArtifactParts.length === 0) {
   const buildInputs = ["app", "build", "db", "lib", "public", "types", "worker", "package.json", "package-lock.json", "vite.config.ts", "next.config.ts"];
   const presentInputs = [];
   for (const item of buildInputs) {
@@ -102,11 +136,28 @@ if (distIndex && distHosting && distMigrations) {
   const outputTime = (await stat(path.join(root, "dist/server/index.js"))).mtimeMs;
   const packagedHosting = JSON.parse(await text("dist/.openai/hosting.json"));
   const packagedMigrations = (await readdir(path.join(root, "dist/.openai/drizzle"))).filter((name) => name.endsWith(".sql")).sort();
+  const unsafeArtifacts = await unsafeFontArtifacts(["dist/server", "dist/client"]);
+  const packagedFontsMatch = (await Promise.all(fontAssets.map(async (name) => {
+    const sourcePath = `public/fonts/${name}`;
+    const packagedPath = `dist/client/fonts/${name}`;
+    return await exists(sourcePath)
+      && await exists(packagedPath)
+      && (await readFile(path.join(root, sourcePath))).equals(await readFile(path.join(root, packagedPath)));
+  }))).every(Boolean);
   artifactCurrent = outputTime >= latestInput
     && JSON.stringify(packagedHosting) === JSON.stringify(hosting)
-    && JSON.stringify(packagedMigrations) === JSON.stringify(migrationFiles);
+    && JSON.stringify(packagedMigrations) === JSON.stringify(migrationFiles)
+    && unsafeArtifacts.length === 0
+    && packagedFontsMatch;
+  artifactDetail = unsafeArtifacts.length
+    ? `unsafe local font reference in ${unsafeArtifacts.join(", ")}`
+    : !packagedFontsMatch
+      ? "self-hosted font files are missing or differ from public/fonts"
+      : artifactCurrent
+        ? "Worker entry, hosting metadata, migrations, and deployable fonts are synchronized"
+        : "stop the exact local Worker, run npm run build, then rerun this check";
 }
-check("Compiled local", "Sites artifact is complete and current", artifactCurrent ? "PASS" : compiledMode ? "FAIL" : "PENDING", artifactCurrent ? "Worker entry, hosting metadata, and all migrations are synchronized" : "stop the exact local Worker, run npm run build, then rerun this check");
+check("Compiled local", "Sites artifact is complete and current", artifactCurrent ? "PASS" : compiledMode ? "FAIL" : "PENDING", artifactDetail);
 
 if (compiledMode) {
   const localHosts = new Set(["localhost", "127.0.0.1", "[::1]"]);
@@ -115,7 +166,100 @@ if (compiledMode) {
   } else {
     try {
       const landing = await fetch(baseUrl, { redirect: "manual" });
-      check("Compiled local", "Landing route responds", landing.status === 200 ? "PASS" : "FAIL", `HTTP ${landing.status} from ${baseUrl.origin}`);
+      const landingBody = await landing.text();
+      const linkHeader = landing.headers.get("link") || "";
+      const htmlStylesheetHrefs = [...landingBody.matchAll(/<link\b[^>]*>/giu)]
+        .map(([tag]) => ({
+          href: tag.match(/\bhref=["']([^"']+)["']/iu)?.[1],
+          rel: tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "",
+        }))
+        .filter((link) => link.href && /(?:^|\s)stylesheet(?:\s|$)/iu.test(link.rel))
+        .map((link) => link.href);
+      const headerStylesheetHrefs = [...linkHeader.matchAll(/<([^>]+)>\s*;([^,]*)/giu)]
+        .filter(([, , parameters]) => {
+          const rel = parameters.match(/(?:^|;)\s*rel\s*=\s*(?:"([^"]*)"|'([^']*)'|([^;\s,]+))/iu);
+          const value = rel?.[1] || rel?.[2] || rel?.[3] || "";
+          return value.split(/\s+/u).includes("stylesheet");
+        })
+        .map(([, href]) => href);
+      const servedStyleFailures = [];
+      const stylesheetLinks = [];
+      for (const href of new Set([...htmlStylesheetHrefs, ...headerStylesheetHrefs])) {
+        try {
+          const url = new URL(href, baseUrl);
+          if (url.origin !== baseUrl.origin) {
+            servedStyleFailures.push(`${url.origin} (cross-origin stylesheet)`);
+          } else {
+            stylesheetLinks.push(url);
+          }
+        } catch {
+          servedStyleFailures.push("invalid stylesheet URL");
+        }
+      }
+      const inlineStyles = [...landingBody.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/giu)].map((match) => match[1]);
+      if (inlineStyles.some((style) => unsafeFontReference.test(style))) {
+        servedStyleFailures.push("inline style contains an unsafe font reference");
+      }
+      const nonEmptyInlineStyleCount = inlineStyles.filter((style) => style.trim().length > 0).length;
+      const fontPreloadFailures = [];
+      const preloadTags = [...landingBody.matchAll(/<link\b[^>]*>/giu)].map(([tag]) => tag);
+      for (const name of fontAssets) {
+        const matches = preloadTags.filter((tag) => {
+          const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1] || "";
+          const rel = tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "";
+          const as = tag.match(/\bas=["']([^"']+)["']/iu)?.[1] || "";
+          const type = tag.match(/\btype=["']([^"']+)["']/iu)?.[1] || "";
+          const crossOrigin = tag.match(/\bcrossorigin=["']([^"']*)["']/iu);
+          let pathname = "";
+          try {
+            pathname = new URL(href, baseUrl).pathname;
+          } catch {
+            return false;
+          }
+          return rel.split(/\s+/u).includes("preload")
+            && pathname === `/fonts/${name}`
+            && as === "font"
+            && type === "font/woff2"
+            && crossOrigin !== null
+            && (crossOrigin[1] === "" || crossOrigin[1] === "anonymous");
+        });
+        if (matches.length !== 1) fontPreloadFailures.push(`${name} (${matches.length} valid preload tags)`);
+      }
+      let verifiedStylesheetCount = 0;
+      for (const stylesheetUrl of stylesheetLinks) {
+        const stylesheet = await fetch(stylesheetUrl, { redirect: "manual" });
+        const stylesheetBody = await stylesheet.text();
+        const mime = stylesheet.headers.get("content-type") || "";
+        const styleIsValid = stylesheet.status === 200
+          && /^text\/css(?:;|$)/iu.test(mime)
+          && stylesheetBody.trim().length > 0
+          && !unsafeFontReference.test(stylesheetBody);
+        if (!styleIsValid) {
+          const emptyDetail = stylesheetBody.trim().length === 0 ? "; empty CSS" : "";
+          servedStyleFailures.push(`${stylesheetUrl.pathname} (HTTP ${stylesheet.status}; ${mime || "no MIME"}${emptyDetail})`);
+        } else {
+          verifiedStylesheetCount += 1;
+        }
+      }
+      const hasStyleSurface = verifiedStylesheetCount > 0 || nonEmptyInlineStyleCount > 0;
+      const landingClean = landing.status === 200
+        && !unsafeFontReference.test(`${linkHeader}\n${landingBody}`)
+        && hasStyleSurface
+        && fontPreloadFailures.length === 0
+        && servedStyleFailures.length === 0;
+      check("Compiled local", "Landing route responds", landingClean ? "PASS" : "FAIL", landingClean ? `clean HTTP ${landing.status} from ${baseUrl.origin}; ${verifiedStylesheetCount} linked and ${nonEmptyInlineStyleCount} inline style surface(s); one preload per font` : `unsafe, empty, absent, duplicated, or unavailable served style: ${[...servedStyleFailures, ...fontPreloadFailures].join(", ") || "landing HTML/Link header"}`);
+
+      const servedFontFailures = [];
+      for (const name of fontAssets) {
+        const response = await fetch(new URL(`/fonts/${name}`, baseUrl), { redirect: "manual" });
+        const bytes = Buffer.from(await response.arrayBuffer());
+        const expected = await readFile(path.join(root, "public", "fonts", name));
+        const mime = response.headers.get("content-type") || "";
+        if (response.status !== 200 || !/^(?:font\/woff2|application\/(?:font-woff2|octet-stream))(?:;|$)/iu.test(mime) || !bytes.equals(expected)) {
+          servedFontFailures.push(`${name} (HTTP ${response.status}; ${mime || "no MIME"})`);
+        }
+      }
+      check("Compiled local", "Self-hosted fonts serve exact bytes", servedFontFailures.length ? "FAIL" : "PASS", servedFontFailures.length ? servedFontFailures.join(", ") : `${fontAssets.length} exact WOFF2 files with safe MIME`);
       const unsafe = await fetch(new URL("/api/recover", baseUrl), {
         method: "POST",
         headers: { "content-type": "application/json" },
