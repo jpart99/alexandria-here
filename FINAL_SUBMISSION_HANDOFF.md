@@ -37,8 +37,10 @@ After processing finishes, verify 1080p playback, audible narration, visible cap
 - Track: **Education**
 - Production: https://alexandria-here.cinemaexile.chatgpt.site
 - Public repository: https://github.com/jpart99/alexandria-here
-- GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
-- Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/8ea53a47-437b-4afe-ad2c-29c81637a327/receipt
+- GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
+- Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt
+- Claim-to-witness index: `JUDGE_EVIDENCE.md`
+- Sealed-video capture provenance (earlier ordinary production row, not the current decision-attribution proof): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
 - Primary Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
 - Project thumbnail: `submission-assets/08-devpost-cover.png` (1500×1000 PNG, Devpost-preferred 3:2, below the live field's 5 MB cap)
 - Gallery, in upload order: `09-devpost-gallery-returned-site.png`, `10-devpost-gallery-show-the-seams.png`, `11-devpost-gallery-timeline.png`, `12-devpost-gallery-what-survived.png`, `13-devpost-gallery-witnesses.png`, `14-devpost-gallery-receipt.png`
@@ -57,4 +59,4 @@ Final user-controlled actions:
 
 Submit early: Devpost permits edits to the judged entry until the deadline, when the hackathon submission locks.
 
-Do not replace the recovery path, model metrics, video master, captions, or hashes without re-running the corresponding audit gates.
+Do not replace the current judging recovery path, the separate sealed-video capture path, model metrics, video master, captions, or hashes without re-running the corresponding audit gates.

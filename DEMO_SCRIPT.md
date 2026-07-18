@@ -2,7 +2,7 @@
 
 Target: 2:35. Public YouTube upload. Screen recording with clear narration; face camera is not required.
 
-Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
+Sealed video-capture recovery (ordinary production row; do not replace): `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
 
 ## 0:00–0:19 — The promise
 

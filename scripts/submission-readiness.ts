@@ -60,9 +60,11 @@ const DEVPOST_HASHES: Readonly<Record<(typeof DEVPOST_NAMES)[number], string>> =
 const GALLERY_NAMES = DEVPOST_NAMES.slice(1);
 const YOUTUBE_CHAPTERS = [0, 19, 42, 65, 86, 117, 147] as const;
 const PRODUCTION_URL = "https://alexandria-here.cinemaexile.chatgpt.site";
-const RECOVERY_ID = "8ea53a47-437b-4afe-ad2c-29c81637a327";
+const RECOVERY_ID = "18026989-33be-4011-86ee-19e1754cb22c";
 const RECOVERY_URL = `${PRODUCTION_URL}/r/${RECOVERY_ID}`;
 const RECEIPT_URL = `${PRODUCTION_URL}/api/recover/${RECOVERY_ID}/receipt`;
+const VIDEO_CAPTURE_RECOVERY_ID = "8ea53a47-437b-4afe-ad2c-29c81637a327";
+const VIDEO_CAPTURE_RECOVERY_URL = `${PRODUCTION_URL}/r/${VIDEO_CAPTURE_RECOVERY_ID}`;
 const REPOSITORY_URL = "https://github.com/jpart99/alexandria-here";
 const SESSION_ID = "019f7304-e394-7f11-ba64-26e415135ff6";
 const YOUTUBE_PLACEHOLDER = "[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]";
@@ -432,6 +434,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       .filter((line) => line.startsWith("> "))
       .map((line) => line.slice(2))
       .join(" ");
+    requirePhrases(demoScript, [VIDEO_CAPTURE_RECOVERY_URL, "ordinary production row; do not replace"], "demo script capture provenance");
     assertSameWords(cueText, narration, "captions and narration transcript");
     assertSameWords(cueText, scriptNarration, "captions and demo script narration");
     return `${cues.length} exact cues from ${firstStartMs} to ${lastEndMs} ms; transcript and script match`;
@@ -474,7 +477,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     const description = extractMarkdownSection(metadata, "## Description", "## Recommended upload settings");
     if (title !== YOUTUBE_TITLE) fail(`YouTube title differs from the sealed ${YOUTUBE_TITLE.length}-character title`);
     if (!description || description.length > 5000) fail(`YouTube description length is ${description.length}; expected 1-5000 characters`);
-    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness"], "YouTube description");
+    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness"], "YouTube description");
     const chapters = [...description.matchAll(/^(\d{2}):(\d{2}) (.+)$/gm)].map((match) => Number(match[1]) * 60 + Number(match[2]));
     if (JSON.stringify(chapters) !== JSON.stringify(YOUTUBE_CHAPTERS)) {
       fail(`YouTube chapter boundaries are ${chapters.join(", ")}; expected ${YOUTUBE_CHAPTERS.join(", ")}`);
@@ -485,7 +488,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
 
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission"], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission"], "final handoff");
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
     if (!galleryLine) fail("final handoff is missing the exact gallery upload-order line");
@@ -500,7 +503,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
 
   await addCheck(checks, "Submission contracts", "Evidence-backed submission narrative", async () => {
     const submission = await document("SUBMISSION.md");
-    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, SESSION_ID, "5 returned pages from 8 capture records", "347 rendered blocks", "946 content-addressed source blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)"], "submission narrative");
+    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "version 7", "042215042dd46ded14b501f961f4d9e7debb8178", "48 tests", "eleven static/local release-contract checks", "eight-scenario failure matrix", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)"], "submission narrative");
     assertCanonicalTiming(submission, "submission narrative");
     const youtubeState = classifyYouTubeReference(submission);
     return `production, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "YouTube URL"} claims are present`;

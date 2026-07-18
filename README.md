@@ -1,12 +1,12 @@
 # Alexandria Here
 
-Alexandria Here is a witnessed restoration engine for the lost web. Give it one vanished public URL and it reconstructs the strongest coherent edition supported by public archive evidence, then exposes every source, inference, validation, and known absence.
+Alexandria Here is a witnessed restoration engine for the lost web. Give it one vanished public URL and it reconstructs a coherent edition supported by public archive evidence—the highest-ranked bounded edition by default, or a mechanically supported requested year—then exposes every source, inference, validation, and known absence.
 
 > Alexandria does not generate the past. It reconciles its surviving witnesses.
 
 ## Live product
 
-The public production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). An unauthenticated request returned `200 OK` on July 17, 2026 Pacific / July 18 UTC. Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path.
+The public production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). An unauthenticated request returned `200 OK` on July 17, 2026 Pacific / July 18 UTC. Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path. The judge-facing [`JUDGE_EVIDENCE.md`](JUDGE_EVIDENCE.md) maps the headline claims to the corrected production receipt, pinned source, executable checks, and explicit non-claims.
 
 The deployed engine remains operational when the model provider is unavailable: it records the provider failure in the receipt, uses the deterministic reconciliation path, and never substitutes generated historical content. A submission claim that GPT-5.6 performed a recovery is valid only when that recovery's receipt names the GPT-5.6 planner and model.
 
@@ -14,9 +14,11 @@ The deployed engine remains operational when the model provider is unavailable: 
 
 The public repository packages the full audited submission media: the 2:35.26 1080p master, exact English captions, 1280×720 YouTube thumbnail, Devpost-preferred 1500×1000 3:2 cover, six ordered 3:2 gallery cards, narration transcript, and copy-ready YouTube metadata. The video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2` and includes real production interaction—returned-site browsing, Show the Seams, provenance markers, and Witnesses—plus receipt-proven GPT-5.6 and Codex workflow coverage. Its SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`; run `npm run qa:submission` for the read-only pre-upload integrity gate and see [`submission-assets`](submission-assets/README.md).
 
+The sealed master shows ordinary production recovery `8ea53a47-437b-4afe-ad2c-29c81637a327`; its planner, model, and count claims remain receipt-backed. Current judging links use corrected version 7 recovery `18026989-33be-4011-86ee-19e1754cb22c`, whose decision attribution separates deterministic era selection from GPT-5.6 page-order and primary-witness decisions.
+
 ## Evidence boundary
 
-[Trish Hopkinson's June 19, 2026 editor interview](https://trishhopkinson.com/2026/06/19/no-fee-submission-call-editor-interview-iexile-deadline-always-open/) independently identifies Jaia Papitz as iExile's founder and records a 2007 founding. That source supports historical founder/year context only. It is not an Alexandria capture, recovery witness, receipt, or source for hosted recovery metrics; those claims must come from the relevant Recovery Receipt.
+[Trish Hopkinson's June 19, 2026 editor interview](https://trishhopkinson.com/2026/06/19/no-fee-submission-call-editor-interview-iexile-deadline-always-open/) provides a third-party-published attribution that Jaia Papitz founded iExile in 2007. That source supports historical founder/year context only; it is not independent corroboration of the interview statement. It is not an Alexandria capture, recovery witness, receipt, or source for hosted recovery metrics; those claims must come from the relevant Recovery Receipt.
 
 ## Product boundary
 
@@ -24,7 +26,7 @@ The public repository packages the full audited submission media: the 2:35.26 10
 - One allowlisted archive provider: `web.archive.org`.
 - The submitted origin is never fetched.
 - At most 12 inventory records are considered, 8 archived HTML documents are fetched, and 5–8 pages are returned.
-- Archived HTML is parsed as hostile, inert data; scripts, forms, embeds, event handlers, and unsafe protocols never render.
+- Archived HTML is treated as untrusted input and reduced to inert evidence records; scripts, forms, embeds, event handlers, and unsafe protocols never render.
 - Historical text and images render only when an exact evidence block exists in the Recovery Receipt.
 - Insufficient connected evidence returns a complete, inspectable result instead of fabricated content.
 - Public archival evidence remains subject to source rights and archive access terms; Alexandria claims neither ownership nor historical completeness.
@@ -91,7 +93,7 @@ npm run qa:release
 
 This non-mutating local gate runs tests, TypeScript, lint, and the release-manifest audit. It deliberately does not build, deploy, contact the archive, create recoveries, or treat unapproved external work as a local failure.
 
-Production version 6 runs commit `f434249d673911bb5de89689313248b68a389b52`. The release passes 36/36 tests, TypeScript, lint, a clean production build, public browser regression, and a zero-vulnerability production dependency audit. Its ordinary public pipeline produced a [receipt-proven GPT-5.6 iExile recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327): 5 returned pages from 8 capture records, 347 rendered blocks, 946 content-addressed source blocks, 36 inferred edges, 8 known absences, and all 10 receipt validations passing.
+Production version 7 runs audited runtime commit `042215042dd46ded14b501f961f4d9e7debb8178`. The release passes 48/48 tests, TypeScript, lint, a clean production build, public browser regression, and a zero-vulnerability production dependency audit. Its ordinary public pipeline produced a [receipt-proven GPT-5.6 iExile recovery](https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c): 5 returned preserved pages plus 2 witnessed Missing states from 8 capture records, 347 rendered blocks, 946 content-addressed extracted evidence blocks, 36 inferred edges, 8 known absences, and all 10 receipt validations passing. Its corrected decisions attribute the era to deterministic selection and exactly two decision kinds to GPT-5.6: page order and primary-witness choice.
 
 After producing a clean build and starting its Wrangler preview, run:
 
@@ -118,7 +120,7 @@ To produce a receipt-proven GPT-5.6 run without client-side streaming timeouts:
 ALEXANDRIA_BASE_URL=https://your-production-host.example npm run proof:model
 ```
 
-The command prints persisted progress, fetches the finished receipt, and exits non-zero unless the receipt records `planner: "gpt-5.6"`, a populated model, and zero failed validations. `ALEXANDRIA_PROOF_URL` and `ALEXANDRIA_PROOF_YEAR` default to the bounded iExile 2009 proof target.
+The command prints persisted progress, fetches the finished receipt, and exits non-zero unless the receipt records `planner: "gpt-5.6"`, a populated model, zero failed validations, deterministic `era_selection`, and only GPT-authored `page_order` and `primary_witness` decisions. `ALEXANDRIA_PROOF_URL` and `ALEXANDRIA_PROOF_YEAR` default to the bounded iExile 2009 proof target.
 
 The command prints `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH=/r/<id>`. Configure that value in the deployed app to show **View a witnessed recovery** on the landing page. Re-running the command is idempotent while the configured D1 row exists and matches the target; if the row is missing, the command creates a new recovery through `POST /api/recover` and prints the replacement path. No fixture, seed route, or privileged recovery code is used.
 

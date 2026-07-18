@@ -10,15 +10,17 @@ Alexandria Here returns a lost website as a coherent, browsable place—without 
 
 Live product: https://alexandria-here.cinemaexile.chatgpt.site
 
-Witnessed GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
+Witnessed GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
 
-Mechanical receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/8ea53a47-437b-4afe-ad2c-29c81637a327/receipt
+Mechanical receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt
+
+Sealed-video capture provenance (earlier ordinary production row shown on screen): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
 
 Source: https://github.com/jpart99/alexandria-here
 
-Built for OpenAI Build Week in the Education track. Codex accelerated architecture, archive retrieval, security, testing, deployment, and browser audits. At runtime, GPT-5.6 acts as a constrained Chronologist: it selects visible-page order and one primary witness per page from a bounded evidence packet. Deterministic validation decides what may render.
+Built for OpenAI Build Week in the Education track. Codex accelerated architecture, archive retrieval, security, testing, deployment, and browser audits. At runtime, GPT-5.6 acts as a constrained Chronologist: it orders the returned preserved pages and selects one primary witness for each from a bounded evidence packet. Deterministic code fixes the temporal window and decides what may render.
 
-The demo includes a real production interaction sequence: browsing the returned iExile site, toggling Show the Seams, exposing provenance markers, and opening the Witness ledger.
+The demo includes a real production interaction sequence from the earlier ordinary row linked above: browsing the returned iExile site, toggling Show the Seams, exposing provenance markers, and opening the Witness ledger. The current recovery and receipt links point to the corrected version 7 decision-attribution proof.
 
 Narration disclosure: this demo uses synthetic narration generated from the published transcript. The first-person founder statement reflects Jaia Papitz's documented role; no historical image, archive witness, recovery result, or receipt content was generated for the video.
 
