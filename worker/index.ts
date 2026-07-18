@@ -33,10 +33,10 @@ const worker = {
     const fontAsset = await fetchFontAsset(request, env.ASSETS);
 
     if (fontAsset) {
-      // `run_worker_first` is intentionally limited to the two shipped fonts.
-      // The asset
-      // binding still owns bytes, ranges, validators, and HEAD semantics; this
-      // Worker only supplies the response metadata Sites omitted in production.
+      // Browser-facing font aliases have no matching static file, so Sites
+      // reaches the Worker before its asset layer. The ASSETS binding still
+      // owns the physical bytes, ranges, validators, and HEAD semantics; this
+      // Worker only rewrites the alias and supplies the missing metadata.
       response = fontAsset;
     } else if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];

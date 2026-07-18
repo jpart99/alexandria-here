@@ -65,10 +65,14 @@ baseUrl.search = "";
 baseUrl.hash = "";
 
 const root = process.cwd();
-const marker = "worker-font-v1";
+const marker = "worker-font-alias-v2";
 const applicationWorkerMarker = "app-worker-v1";
 const cacheControl = "public, max-age=86400";
 const fontNames = ["geist-latin.woff2", "cormorant-garamond-latin.woff2"];
+const fontRoutes = fontNames.map((name) => ({
+  publicPath: `/witness-fonts/${name}`,
+  physicalPath: `/fonts/${name}`,
+}));
 const checks = [];
 
 function assert(condition, message) {
@@ -125,6 +129,7 @@ assert(landing.status === 200 && landingHtml.length > 1_000, `Landing failed: HT
 checks.push(["landing", landing.status]);
 
 const stylesheetUrls = [];
+const stylesheetBodies = [];
 for (const [tag] of landingHtml.matchAll(/<link\b[^>]*>/giu)) {
   const rel = tag.match(/\brel=["']([^"']*)["']/iu)?.[1] || "";
   if (!rel.split(/\s+/u).some((token) => token.toLowerCase() === "stylesheet")) continue;
@@ -138,26 +143,74 @@ assert(stylesheetUrls.length > 0, "Landing exposed no same-origin stylesheet.");
 for (const stylesheetUrl of new Set(stylesheetUrls)) {
   const stylesheet = await request(stylesheetUrl, { headers: { "Cache-Control": "no-cache" } });
   const stylesheetBytes = await readBounded(stylesheet, 2_000_000);
+  const stylesheetBody = stylesheetBytes.toString("utf8");
   assert(stylesheet.status === 200 && stylesheetBytes.length > 0, `Stylesheet failed: HTTP ${stylesheet.status}.`);
   assert(/^text\/css(?:;|$)/iu.test(stylesheet.headers.get("content-type") || ""), "Stylesheet MIME is unsafe.");
   assert(stylesheet.headers.get("x-alexandria-asset-route") === null, "Ordinary assets entered the font Worker route.");
   assert(stylesheet.headers.get("x-alexandria-worker-route") === null, "Ordinary assets entered the application Worker.");
+  stylesheetBodies.push(stylesheetBody);
   checks.push([`ordinary asset remains direct: ${stylesheetUrl}`, stylesheet.status]);
 }
 
-for (const name of fontNames) {
-  const relative = `/fonts/${name}`;
+const preloadTags = [...landingHtml.matchAll(/<link\b[^>]*>/giu)].map(([tag]) => tag);
+const browserSurface = `${landing.headers.get("link") || ""}\n${landingHtml}\n${stylesheetBodies.join("\n")}`;
+const allowedFontAliases = new Set(fontRoutes.map(({ publicPath }) => publicPath));
+const cssFontAliases = new Set();
+for (const stylesheetBody of stylesheetBodies) {
+  for (const match of stylesheetBody.matchAll(/url\(\s*(["']?)([^"')]+\.woff2(?:\?[^"')\s]*)?)\1\s*\)/giu)) {
+    const fontUrl = new URL(match[2], baseUrl);
+    assert(fontUrl.origin === baseUrl.origin, `Cross-origin font refused: ${fontUrl.origin}.`);
+    assert(allowedFontAliases.has(fontUrl.pathname) && !fontUrl.search && !fontUrl.hash, `Unexpected browser font URL: ${fontUrl.href}.`);
+    cssFontAliases.add(fontUrl.pathname);
+  }
+}
+for (const route of fontRoutes) {
+  const validPreloads = preloadTags.filter((tag) => {
+    const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1] || "";
+    const rel = tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "";
+    const as = tag.match(/\bas=["']([^"']+)["']/iu)?.[1] || "";
+    const type = tag.match(/\btype=["']([^"']+)["']/iu)?.[1] || "";
+    const crossOrigin = tag.match(/\bcrossorigin=["']([^"']*)["']/iu);
+    let url;
+    try {
+      url = new URL(href, baseUrl);
+    } catch {
+      return false;
+    }
+    return rel.split(/\s+/u).some((token) => token.toLowerCase() === "preload")
+      && url.origin === baseUrl.origin
+      && url.pathname === route.publicPath
+      && !url.search
+      && !url.hash
+      && as === "font"
+      && type === "font/woff2"
+      && crossOrigin !== null
+      && (crossOrigin[1] === "" || crossOrigin[1] === "anonymous");
+  });
+  assert(validPreloads.length === 1, `${route.publicPath} has ${validPreloads.length} valid preload tags.`);
+  assert(cssFontAliases.has(route.publicPath), `${route.publicPath} is absent from served CSS.`);
+  assert(!browserSurface.includes(route.physicalPath), `Browser output exposes the physical font path ${route.physicalPath}.`);
+}
+checks.push(["browser font references use only Worker aliases", fontRoutes.map(({ publicPath }) => publicPath)]);
+
+for (const { publicPath: relative } of fontRoutes) {
+  const name = relative.slice(relative.lastIndexOf("/") + 1);
   const expected = await readFile(path.join(root, "public", "fonts", name));
   const full = await request(relative, { headers: { "Cache-Control": "no-cache", Pragma: "no-cache" } });
   const bytes = await readBounded(full, expected.length + 1);
   assert(full.status === 200, `${name} GET failed: HTTP ${full.status}.`);
   assert(bytes.equals(expected), `${name} production bytes differ from source.`);
   assert(responseHasFontHeaders(full), `${name} has the wrong MIME, cache, security, or route headers.`);
+  const etag = full.headers.get("etag");
+  assert(etag, `${name} omitted ETag.`);
 
   const head = await request(relative, { method: "HEAD" });
   const headBytes = await readBounded(head, 1);
   assert(head.status === 200 && headBytes.length === 0, `${name} HEAD semantics failed.`);
   assert(responseHasFontHeaders(head), `${name} HEAD headers failed.`);
+  assert(head.headers.get("etag") === etag, `${name} HEAD changed its ETag.`);
+  const headLength = head.headers.get("content-length");
+  assert(headLength === null || Number(headLength) === expected.length, `${name} HEAD changed its Content-Length.`);
 
   const ranged = await request(relative, { headers: { Range: "bytes=0-3" } });
   const rangedBytes = await readBounded(ranged, expected.length + 1);
@@ -170,8 +223,6 @@ for (const name of fontNames) {
   assert(partialReady || exactFallbackReady, `${name} Range semantics failed: HTTP ${ranged.status}.`);
   assert(responseHasFontHeaders(ranged), `${name} Range headers failed.`);
 
-  const etag = full.headers.get("etag");
-  assert(etag, `${name} omitted ETag.`);
   const conditional = await request(relative, { headers: { "If-None-Match": etag } });
   const conditionalBytes = await readBounded(conditional, 1);
   assert(conditional.status === 304 && conditionalBytes.length === 0, `${name} conditional request returned ${conditional.status}.`);
@@ -185,7 +236,7 @@ for (const name of fontNames) {
   }]);
 }
 
-const missingFont = await request("/fonts/not-shipped.woff2");
+const missingFont = await request("/witness-fonts/not-shipped.woff2");
 const missingFontBytes = await readBounded(missingFont, 64_000);
 assert(missingFont.status === 404, `Missing font returned HTTP ${missingFont.status}.`);
 assert(missingFont.headers.get("x-alexandria-asset-route") === null, "A missing font entered the selective Worker route.");

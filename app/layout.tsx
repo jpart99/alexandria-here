@@ -16,12 +16,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  preload("/fonts/geist-latin.woff2", {
+  preload("/witness-fonts/geist-latin.woff2", {
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",
   });
-  preload("/fonts/cormorant-garamond-latin.woff2", {
+  preload("/witness-fonts/cormorant-garamond-latin.woff2", {
     as: "font",
     type: "font/woff2",
     crossOrigin: "anonymous",

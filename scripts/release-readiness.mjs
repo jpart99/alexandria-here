@@ -10,9 +10,10 @@ const checks = [];
 const unsafeFontReference = /(?:(?:file:|[A-Za-z]:[\\/]|\\\\(?:\?\\UNC\\|[^\\/\s"'`<>]+[\\/]))[^"'`<>\r\n)]{0,32767})\.(?:woff2?|ttf|otf)\b/iu;
 const shippedTextExtensions = new Set([".js", ".mjs", ".cjs", ".css", ".html", ".json", ".map"]);
 const fontAssets = ["geist-latin.woff2", "cormorant-garamond-latin.woff2"];
-const fontAssetPaths = fontAssets.map((name) => `/fonts/${name}`);
+const fontPhysicalAssetPaths = fontAssets.map((name) => `/fonts/${name}`);
+const fontPublicPaths = fontAssets.map((name) => `/witness-fonts/${name}`);
 const fontCacheControl = "public, max-age=86400";
-const fontWorkerRouteMarker = "worker-font-v1";
+const fontWorkerRouteMarker = "worker-font-alias-v2";
 const applicationWorkerRouteMarker = "app-worker-v1";
 
 function check(section, name, state, detail) {
@@ -101,12 +102,18 @@ const gitignore = await text(".gitignore");
 const matrix = await text("FAILURE_RELIABILITY_MATRIX.md");
 const viteSource = await text("vite.config.ts");
 const workerSource = await text("worker/index.ts");
+const fontDeliverySource = await text("lib/font-delivery.ts");
 const staticHeaders = await exists("public/_headers") ? await text("public/_headers") : "";
 const assetCacheHeaderReady = /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/iu.test(staticHeaders);
 const fontFallbackHeaderReady = /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+Cache-Control:\s*public,\s*max-age=86400\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/iu.test(staticHeaders);
-const fontWorkerSourceReady = /assets:\s*\{[\s\S]*?binding:\s*["']ASSETS["'][\s\S]*?run_worker_first:\s*\[\.\.\.FONT_ASSET_PATHS\][\s\S]*?\}/u.test(viteSource)
+const sourceFontAliasesAbsent = (await Promise.all(fontPublicPaths.map((publicPath) => exists(`public${publicPath}`)))).every((present) => !present);
+const fontWorkerSourceReady = /assets:\s*\{[\s\S]*?binding:\s*["']ASSETS["'][\s\S]*?\}/u.test(viteSource)
+  && !/run_worker_first/u.test(viteSource)
   && /import\s*\{[^}]*\bfetchFontAsset\b[^}]*\}\s*from\s*["']\.\.\/lib\/font-delivery["']/u.test(workerSource)
-  && /await\s+fetchFontAsset\(request,\s*env\.ASSETS\)/u.test(workerSource);
+  && /await\s+fetchFontAsset\(request,\s*env\.ASSETS\)/u.test(workerSource)
+  && fontPublicPaths.every((publicPath) => fontDeliverySource.includes(`publicPath: "${publicPath}"`))
+  && fontPhysicalAssetPaths.every((assetPath) => fontDeliverySource.includes(`assetPath: "${assetPath}"`))
+  && sourceFontAliasesAbsent;
 
 const [minimumMajor, minimumMinor] = String(packageJson.engines?.node || "")
   .replace(/^[^0-9]*/, "")
@@ -130,7 +137,7 @@ const sitesContractReady = invalidHostingKeys.length === 0
   && hosting.d1 === "DB"
   && hosting.r2 === null;
 check("Static/local", "Sites hosting manifest", sitesContractReady ? "PASS" : "FAIL", sitesContractReady ? "logical D1 binding DB; no R2; Sites-owned keys only" : "hosting keys or logical bindings are invalid");
-check("Static/local", "Selective font Worker route", fontWorkerSourceReady ? "PASS" : "FAIL", fontWorkerSourceReady ? "ASSETS binding and exact shared font-path list feed the Worker decorator" : "Vite/Worker font routing source contract is incomplete");
+check("Static/local", "Selective font Worker route", fontWorkerSourceReady ? "PASS" : "FAIL", fontWorkerSourceReady ? "two nonexistent public aliases rewrite through the Worker to exact ASSETS paths; no host-specific route override" : "Vite/Worker font alias contract is incomplete or an alias was accidentally packaged as a static file");
 check("Static/local", "Static header fallback", assetCacheHeaderReady && fontFallbackHeaderReady ? "PASS" : "FAIL", assetCacheHeaderReady && fontFallbackHeaderReady ? "immutable hashed assets plus a non-authoritative WOFF2 fallback" : "public/_headers fallback contract is incomplete");
 
 const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "RECOVERY_RATE_LIMIT_SECRET", "NEXT_PUBLIC_REFERENCE_RECOVERY_PATH", "ALEXANDRIA_BASE_URL", "ALEXANDRIA_REFERENCE_URL", "ALEXANDRIA_REFERENCE_RECOVERY_PATH"];
@@ -191,9 +198,11 @@ if (missingArtifactParts.length === 0) {
       && await exists(packagedPath)
       && (await readFile(path.join(root, sourcePath))).equals(await readFile(path.join(root, packagedPath)));
   }))).every(Boolean);
+  const packagedFontAliasesAbsent = (await Promise.all(fontPublicPaths.map((publicPath) => exists(`dist/client${publicPath}`)))).every((present) => !present);
   const generatedFontRouteReady = generatedWrangler.assets?.binding === "ASSETS"
     && generatedWrangler.assets?.directory === "../client"
-    && JSON.stringify(generatedWrangler.assets?.run_worker_first) === JSON.stringify(fontAssetPaths);
+    && (generatedWrangler.assets?.run_worker_first === undefined
+      || (Array.isArray(generatedWrangler.assets.run_worker_first) && generatedWrangler.assets.run_worker_first.length === 0));
   artifactCurrent = outputTime >= latestInput
     && JSON.stringify(packagedHosting) === JSON.stringify(hosting)
     && JSON.stringify(packagedMigrations) === JSON.stringify(migrationFiles)
@@ -201,6 +210,7 @@ if (missingArtifactParts.length === 0) {
     && forbiddenArtifacts.length === 0
     && packagedHeadersMatch
     && packagedFontsMatch
+    && packagedFontAliasesAbsent
     && generatedFontRouteReady;
   artifactDetail = forbiddenArtifacts.length
     ? `forbidden generated state in ${forbiddenArtifacts.slice(0, 8).map((entry) => `${entry.relative.split(path.sep).join("/")} (${entry.reason})`).join(", ")}`
@@ -210,10 +220,12 @@ if (missingArtifactParts.length === 0) {
         ? "static asset header rules are missing or differ from public/_headers"
       : !packagedFontsMatch
         ? "self-hosted font files are missing or differ from public/fonts"
+        : !packagedFontAliasesAbsent
+          ? "a browser-facing font alias was packaged as a static asset and would bypass the Worker"
       : !generatedFontRouteReady
-        ? "generated Wrangler config lacks the exact selective ASSETS font route"
+        ? "generated Wrangler config lacks the ASSETS binding or still depends on run_worker_first"
         : artifactCurrent
-          ? "Worker entry, selective ASSETS font route, hosting metadata, migrations, fonts, and generated-state exclusions are synchronized"
+          ? "Worker alias entry, ASSETS binding, hosting metadata, migrations, physical fonts, alias exclusions, and generated-state exclusions are synchronized"
           : "stop the exact local Worker, run npm run build, then rerun this check";
 }
 check("Compiled local", "Sites artifact is complete and current", artifactCurrent ? "PASS" : compiledMode ? "FAIL" : "PENDING", artifactDetail);
@@ -256,13 +268,33 @@ if (compiledMode) {
         }
       }
       const inlineStyles = [...landingBody.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/giu)].map((match) => match[1]);
+      const servedBrowserStyles = [...inlineStyles];
+      const servedFontAliases = new Set();
+      const inspectFontReferences = (style, label) => {
+        for (const match of style.matchAll(/url\(\s*(["']?)([^"')]+\.woff2(?:\?[^"')\s]*)?)\1\s*\)/giu)) {
+          try {
+            const fontUrl = new URL(match[2], baseUrl);
+            if (fontUrl.origin !== baseUrl.origin
+              || !fontPublicPaths.includes(fontUrl.pathname)
+              || fontUrl.search
+              || fontUrl.hash) {
+              servedStyleFailures.push(`${label} (unexpected font URL ${fontUrl.href})`);
+            } else {
+              servedFontAliases.add(fontUrl.pathname);
+            }
+          } catch {
+            servedStyleFailures.push(`${label} (invalid font URL)`);
+          }
+        }
+      };
+      for (const [index, inlineStyle] of inlineStyles.entries()) inspectFontReferences(inlineStyle, `inline style ${index + 1}`);
       if (inlineStyles.some((style) => unsafeFontReference.test(style))) {
         servedStyleFailures.push("inline style contains an unsafe font reference");
       }
       const nonEmptyInlineStyleCount = inlineStyles.filter((style) => style.trim().length > 0).length;
       const fontPreloadFailures = [];
       const preloadTags = [...landingBody.matchAll(/<link\b[^>]*>/giu)].map(([tag]) => tag);
-      for (const name of fontAssets) {
+      for (const [fontIndex, name] of fontAssets.entries()) {
         const matches = preloadTags.filter((tag) => {
           const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1] || "";
           const rel = tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "";
@@ -276,7 +308,7 @@ if (compiledMode) {
             return false;
           }
           return rel.split(/\s+/u).includes("preload")
-            && pathname === `/fonts/${name}`
+            && pathname === fontPublicPaths[fontIndex]
             && as === "font"
             && type === "font/woff2"
             && crossOrigin !== null
@@ -288,6 +320,8 @@ if (compiledMode) {
       for (const stylesheetUrl of stylesheetLinks) {
         const stylesheet = await fetch(stylesheetUrl, { redirect: "manual" });
         const stylesheetBody = await stylesheet.text();
+        servedBrowserStyles.push(stylesheetBody);
+        inspectFontReferences(stylesheetBody, stylesheetUrl.pathname);
         const mime = stylesheet.headers.get("content-type") || "";
         const styleIsValid = stylesheet.status === 200
           && /^text\/css(?:;|$)/iu.test(mime)
@@ -302,6 +336,14 @@ if (compiledMode) {
           verifiedStylesheetCount += 1;
         }
       }
+      for (const [fontIndex, name] of fontAssets.entries()) {
+        if (!servedFontAliases.has(fontPublicPaths[fontIndex])) {
+          servedStyleFailures.push(`${name} (public Worker alias absent from served styles)`);
+        }
+        if (`${linkHeader}\n${landingBody}\n${servedBrowserStyles.join("\n")}`.includes(fontPhysicalAssetPaths[fontIndex])) {
+          servedStyleFailures.push(`${name} (physical asset path leaked into browser output)`);
+        }
+      }
       const hasStyleSurface = verifiedStylesheetCount > 0 || nonEmptyInlineStyleCount > 0;
       const landingClean = landing.status === 200
         && !unsafeFontReference.test(`${linkHeader}\n${landingBody}`)
@@ -312,8 +354,8 @@ if (compiledMode) {
 
       const servedFontFailures = [];
       const servedFontRangeModes = [];
-      for (const name of fontAssets) {
-        const fontUrl = new URL(`/fonts/${name}`, baseUrl);
+      for (const [fontIndex, name] of fontAssets.entries()) {
+        const fontUrl = new URL(fontPublicPaths[fontIndex], baseUrl);
         const response = await fetch(fontUrl, { redirect: "manual" });
         const bytes = Buffer.from(await response.arrayBuffer());
         const expected = await readFile(path.join(root, "public", "fonts", name));
@@ -327,14 +369,21 @@ if (compiledMode) {
           servedFontFailures.push(`${name} GET (HTTP ${response.status}; ${mime || "no MIME"}; route ${response.headers.get("x-alexandria-asset-route") || "missing"})`);
           continue;
         }
+        const etag = response.headers.get("etag");
+        if (!etag) servedFontFailures.push(`${name} GET (no ETag)`);
 
         const head = await fetch(fontUrl, { method: "HEAD", redirect: "manual" });
         const headBytes = Buffer.from(await head.arrayBuffer());
+        const headLength = head.headers.get("content-length");
         if (head.status !== 200
           || headBytes.length !== 0
           || !/^font\/woff2(?:;|$)/iu.test(head.headers.get("content-type") || "")
+          || head.headers.get("cache-control") !== fontCacheControl
+          || head.headers.get("x-content-type-options") !== "nosniff"
           || head.headers.get("x-alexandria-asset-route") !== fontWorkerRouteMarker
-          || head.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker) {
+          || head.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker
+          || (etag && head.headers.get("etag") !== etag)
+          || (headLength !== null && Number(headLength) !== expected.length)) {
           servedFontFailures.push(`${name} HEAD (HTTP ${head.status}; ${headBytes.length} bytes)`);
         }
 
@@ -352,6 +401,8 @@ if (compiledMode) {
           && rangeBytes.equals(expected);
         if ((!partialRangeReady && !fullRangeFallbackReady)
           || !/^font\/woff2(?:;|$)/iu.test(range.headers.get("content-type") || "")
+          || range.headers.get("cache-control") !== fontCacheControl
+          || range.headers.get("x-content-type-options") !== "nosniff"
           || range.headers.get("x-alexandria-asset-route") !== fontWorkerRouteMarker
           || range.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker) {
           servedFontFailures.push(`${name} Range (HTTP ${range.status}; ${range.headers.get("content-range") || "no content-range"})`);
@@ -359,20 +410,20 @@ if (compiledMode) {
           servedFontRangeModes.push(`${name}:${partialRangeReady ? "206" : "exact-200"}`);
         }
 
-        const etag = response.headers.get("etag");
-        if (!etag) {
-          servedFontFailures.push(`${name} GET (no ETag)`);
-        } else {
+        if (etag) {
           const conditional = await fetch(fontUrl, { headers: { "If-None-Match": etag }, redirect: "manual" });
           if (conditional.status !== 304
             || conditional.body !== null
+            || conditional.headers.get("cache-control") !== fontCacheControl
+            || conditional.headers.get("x-content-type-options") !== "nosniff"
             || conditional.headers.get("x-alexandria-asset-route") !== fontWorkerRouteMarker
-            || conditional.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker) {
+            || conditional.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker
+            || conditional.headers.get("etag") !== etag) {
             servedFontFailures.push(`${name} conditional (HTTP ${conditional.status})`);
           }
         }
       }
-      const missingFont = await fetch(new URL("/fonts/not-shipped.woff2", baseUrl), { redirect: "manual" });
+      const missingFont = await fetch(new URL("/witness-fonts/not-shipped.woff2", baseUrl), { redirect: "manual" });
       if (missingFont.status !== 404
         || missingFont.headers.get("x-alexandria-asset-route") !== null
         || missingFont.headers.get("x-alexandria-worker-route") !== applicationWorkerRouteMarker
