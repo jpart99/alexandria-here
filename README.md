@@ -25,6 +25,10 @@ The deployed engine remains operational when the model provider is unavailable: 
 - Insufficient connected evidence returns a complete, inspectable result instead of fabricated content.
 - Public archival evidence remains subject to source rights and archive access terms; Alexandria claims neither ownership nor historical completeness.
 
+## License and recovered material
+
+The repository is public for Build Week judging under the terms in [LICENSE](LICENSE). Recovered archival material is evidence from third-party sources and is explicitly excluded from the software license; Alexandria does not claim ownership of it.
+
 ## Stack
 
 - Vinext / Next App Router and TypeScript

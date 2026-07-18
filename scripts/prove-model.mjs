@@ -13,7 +13,9 @@ const response = await fetch(`${baseUrl}/api/recover`, {
 });
 
 if (!response.ok || !response.body) {
-  throw new Error(`Recovery admission failed (${response.status}): ${await response.text()}`);
+  const retryAfter = response.headers.get("retry-after");
+  const retryHint = retryAfter ? `; retry after ${retryAfter}s` : "";
+  throw new Error(`Recovery admission failed (${response.status}${retryHint}): ${await response.text()}`);
 }
 
 const reader = response.body.getReader();
