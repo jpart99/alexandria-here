@@ -55,6 +55,8 @@ if (!receiptResponse.ok) {
   throw new Error(`Receipt fetch failed (${receiptResponse.status}): ${await receiptResponse.text()}`);
 }
 const receipt = await receiptResponse.json();
+const resultResponse = await fetch(`${baseUrl}/api/recover/${encodeURIComponent(recoveryId)}`);
+const persisted = resultResponse.ok ? await resultResponse.json() : null;
 const failed = receipt.validationResults.filter((check) => !check.passed);
 const proof = {
   recoveryUrl: `${baseUrl}/r/${recoveryId}`,
@@ -63,6 +65,7 @@ const proof = {
   model: receipt.model,
   validations: receipt.validationResults.length,
   failed: failed.length,
+  warnings: persisted?.result?.warnings || [],
   manifestHash: receipt.manifestHash,
 };
 console.log(JSON.stringify({ proof }));

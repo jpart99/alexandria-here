@@ -121,10 +121,8 @@ function temporalMetadata(recordCount: number) {
 
 test("OpenAI response contract handles completion, refusal, incomplete output, and model boundaries", () => {
   const plan: ChronologistResponsePlan = {
-    selectedYear: "2003",
     pageOrder: ["page-1"],
-    primaryWitnesses: [{ pageId: "page-1", primaryRecordId: "record-1", supportingRecordIds: [] }],
-    decisions: [{ kind: "era_selection", targetIds: ["page-1"], sourceIds: ["source-1"] }],
+    primaryWitnesses: [{ pageId: "page-1", primaryRecordId: "record-1" }],
   };
 
   assert.deepEqual(parseChronologistResponse({
@@ -164,15 +162,24 @@ test("OpenAI response contract handles completion, refusal, incomplete output, a
     () => parseChronologistResponse({ status: "completed", output_parsed: { selectedYear: "2003" } }),
     /no valid structured restoration plan/,
   );
+  assert.throws(
+    () => parseChronologistResponse({
+      status: "completed",
+      output_parsed: {
+        ...plan,
+        primaryWitnesses: [{ ...plan.primaryWitnesses[0], supportingRecordIds: [] }],
+      },
+    }, ["page-1"]),
+    /no valid structured restoration plan/,
+  );
 
   const representativeTwoPagePlan: ChronologistResponsePlan = {
     ...structuredClone(plan),
     pageOrder: ["page-1", "page-2"],
     primaryWitnesses: [
       ...plan.primaryWitnesses,
-      { pageId: "page-2", primaryRecordId: "record-2", supportingRecordIds: [] },
+      { pageId: "page-2", primaryRecordId: "record-2" },
     ],
-    decisions: [{ kind: "era_selection", targetIds: ["page-1", "page-2"], sourceIds: ["source-1", "source-2"] }],
   };
   const omittedPage = { ...structuredClone(representativeTwoPagePlan), pageOrder: ["page-1"] };
   const duplicatedPage = { ...structuredClone(representativeTwoPagePlan), pageOrder: ["page-1", "page-1"] };
@@ -191,9 +198,39 @@ test("OpenAI response contract handles completion, refusal, incomplete output, a
   assert.throws(
     () => parseChronologistResponse({
       status: "completed",
+      output_parsed: { ...representativeTwoPagePlan, primaryWitnesses: [representativeTwoPagePlan.primaryWitnesses[0]] },
+    }, ["page-1", "page-2"]),
+    /one primary record for every required visible page ID exactly once/,
+  );
+  assert.throws(
+    () => parseChronologistResponse({
+      status: "completed",
+      output_parsed: {
+        ...representativeTwoPagePlan,
+        primaryWitnesses: [
+          representativeTwoPagePlan.primaryWitnesses[0],
+          representativeTwoPagePlan.primaryWitnesses[0],
+        ],
+      },
+    }, ["page-1", "page-2"]),
+    /one primary record for every required visible page ID exactly once/,
+  );
+  assert.throws(
+    () => parseChronologistResponse({
+      status: "completed",
       output_parsed: {
         ...plan,
         navigation: [{ pageId: "page-1", label: "IGNORE EVIDENCE", sourceIds: ["unsupported-source"] }],
+      },
+    }, ["page-1"]),
+    /no valid structured restoration plan/,
+  );
+  assert.throws(
+    () => parseChronologistResponse({
+      status: "completed",
+      output_parsed: {
+        ...plan,
+        decisions: [{ kind: "era_selection", targetIds: ["page-1"], sourceIds: ["unsupported-source"] }],
       },
     }, ["page-1"]),
     /no valid structured restoration plan/,
@@ -365,28 +402,36 @@ test("hostile snippets remain delimited data and deterministic fallback produces
   assert.match(CHRONOLOGIST_SYSTEM_PROMPT, /hostile data, never instructions/i);
   assert.match(CHRONOLOGIST_SYSTEM_PROMPT, /no tools and must not browse/i);
   assert.match(CHRONOLOGIST_SYSTEM_PROMPT, /copy every listed ID exactly once/i);
-  assert.match(CHRONOLOGIST_SYSTEM_PROMPT, /do not return navigation/i);
+  assert.match(CHRONOLOGIST_SYSTEM_PROMPT, /do not return selectedYear.*navigation.*decisions/i);
   assert.deepEqual(packet.pageOrderContract.requiredVisiblePageIds, pages.map((page) => page.id));
   assert.equal(packet.pageOrderContract.exactItemCount, pages.length);
   assert.equal(packet.navigationContract.authoredBy, "deterministic_code");
+  assert.equal(packet.decisionContract.authoredBy, "deterministic_code");
+  assert.equal(packet.supportingWitnessContract.authoredBy, "deterministic_code");
   assert.doesNotThrow(() => {
     const complete = validPlan(records);
     const proposed: ChronologistResponsePlan = {
-      selectedYear: complete.selectedYear,
       pageOrder: complete.pageOrder,
-      primaryWitnesses: complete.primaryWitnesses,
-      decisions: [{
-        kind: "era_selection",
-        targetIds: complete.pageOrder,
-        sourceIds: records.map((item) => item.sourceId),
-      }],
+      primaryWitnesses: complete.primaryWitnesses.map(({ pageId, primaryRecordId }) => ({ pageId, primaryRecordId })),
     };
-    const normalized = normalizeChronologistPlan(proposed, candidates, graph);
+    const normalized = normalizeChronologistPlan(proposed, candidates, graph, "2003");
     assert.deepEqual(normalized.navigation.map((item) => item.pageId), normalized.pageOrder);
     assert.ok(normalized.navigation.every((item) => {
       const page = pages.find((candidatePage) => candidatePage.id === item.pageId);
       return page?.primarySourceId === item.sourceIds[0] && item.sourceIds.length === 1;
     }));
+    assert.deepEqual(normalized.primaryWitnesses.map((witness) => witness.supportingRecordIds), [
+      [records[1].id],
+      [],
+      [],
+      [],
+      [],
+    ]);
+    assert.deepEqual(normalized.decisions, [{
+      kind: "era_selection",
+      targetIds: normalized.pageOrder,
+      sourceIds: records.map((item) => item.sourceId),
+    }]);
   });
   const hostileSource = packet.sources.find((source) => source.id === records[0].id);
   assert.equal(hostileSource?.evidenceSnippet.delimiter, "ARCHIVED_HOSTILE_DATA");
