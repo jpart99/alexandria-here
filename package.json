@@ -13,6 +13,7 @@
     "qa:failure-matrix": "node scripts/run-failure-matrix.mjs",
     "qa:release": "npm test && tsc --noEmit && npm run lint && node scripts/release-readiness.mjs",
     "qa:release:compiled": "node scripts/release-readiness.mjs --compiled",
+    "proof:model": "node scripts/prove-model.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "reference:produce": "node scripts/produce-reference.mjs"

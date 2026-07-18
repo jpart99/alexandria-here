@@ -69,7 +69,7 @@ RECOVERY_RATE_LIMIT_SECRET=required-random-hosted-secret
 
 Do not expose the API key to browser code. The model receives normalized evidence records only and has no browsing tools.
 
-For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL` and `ALEXANDRIA_REFERENCE_URL` are used only by the reference-production CLI.
+For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL`, `ALEXANDRIA_REFERENCE_URL`, `ALEXANDRIA_PROOF_URL`, and `ALEXANDRIA_PROOF_YEAR` are release-operator variables only.
 
 ## Verification
 
@@ -99,6 +99,14 @@ set ALEXANDRIA_BASE_URL=https://your-production-host.example
 set ALEXANDRIA_REFERENCE_URL=https://the-real-vanished-target.example
 npm run reference:produce
 ```
+
+To produce a receipt-proven GPT-5.6 run without client-side streaming timeouts:
+
+```bash
+ALEXANDRIA_BASE_URL=https://your-production-host.example npm run proof:model
+```
+
+The command prints persisted progress, fetches the finished receipt, and exits non-zero unless the receipt records `planner: "gpt-5.6"`, a populated model, and zero failed validations. `ALEXANDRIA_PROOF_URL` and `ALEXANDRIA_PROOF_YEAR` default to the bounded iExile 2009 proof target.
 
 The command prints `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH=/r/<id>`. Configure that value in the deployed app to show **View a witnessed recovery** on the landing page. Re-running the command is idempotent while the configured D1 row exists and matches the target; if the row is missing, the command creates a new recovery through `POST /api/recover` and prints the replacement path. No fixture, seed route, or privileged recovery code is used.
 
