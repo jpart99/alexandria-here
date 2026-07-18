@@ -271,37 +271,81 @@ test("a requested era can select only a ranked deterministic candidate", () => {
   assert.throws(() => selectTemporalWindow(captures, "03"), /exactly four digits/);
 });
 
-test("inventory budgeting preserves a requested lower-coverage era and ranked alternatives", async () => {
-  const paths = ["/", "/about", "/work", "/links", "/contact", "/news", "/people", "/archive"];
-  const rows = [
+test("year-scoped inventory recovers a requested era outside the general 400 rows", async () => {
+  const paths = Array.from({ length: 20 }, (_, index) => index === 0 ? "/" : `/recent-${index}`);
+  const generalRows = [
     ["timestamp", "original", "statuscode", "mimetype", "digest"],
-    ...["2008", "2009"].flatMap((year) => paths.map((path, index) => [
-      `${year}010${index + 1}000000`,
-      `http://lost-web.org${path}`,
+    ...Array.from({ length: 400 }, (_, index) => {
+      const year = index % 2 === 0 ? "2009" : "2010";
+      const capturedAt = new Date(Date.UTC(Number(year), 0, 1, 0, index)).toISOString();
+      return [
+      capturedAt.replace(/[-:TZ.]/g, "").slice(0, 14),
+      `http://lost-web.org${paths[index % paths.length]}`,
       "200",
       "text/html",
-      `${year}-${index}`,
-    ])),
-    ...paths.slice(0, 2).map((path, index) => [
-      `2007010${index + 1}000000`,
-      `http://lost-web.org${path}`,
-      "200",
-      "text/html",
-      `2007-${index}`,
-    ]),
+      `recent-${index}`,
+      ];
+    }),
   ];
+  const requestedRows = [
+    ["timestamp", "original", "statuscode", "mimetype", "digest"],
+    [
+      "20070101000000",
+      "http://lost-web.org/forgotten",
+      "200",
+      "text/html",
+      "2007-forgotten",
+    ],
+    [
+      "20070102000000",
+      "http://lost-web.org/forgotten/about",
+      "200",
+      "text/html",
+      "2007-forgotten-about",
+    ],
+  ];
+  const calls: URL[] = [];
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => Response.json(rows);
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    calls.push(url);
+    return Response.json(url.searchParams.get("from") === "2007" ? requestedRows : generalRows);
+  };
   try {
     const inventory = await discoverCaptures("http://lost-web.org/", "2007");
+    assert.equal(calls.length, 2);
+    const scopedCall = calls.find((url) => url.searchParams.get("from") === "2007");
+    assert.ok(scopedCall);
+    assert.equal(scopedCall.searchParams.get("to"), "2007");
+    assert.equal(scopedCall.searchParams.get("limit"), "400");
     assert.equal(inventory.selectedYear, "2007");
     assert.equal(inventory.selected.length, 2);
     assert.equal(inventory.all.length, RECOVERY_BUDGETS.maxInventoryRecords);
-    assert.deepEqual(
-      inventory.temporalCandidates.map((candidate) => candidate.year),
-      ["2009", "2008", "2007"],
-    );
+    assert.ok(inventory.selected.every((capture) => canonicalPath(capture.originalUrl).startsWith("/forgotten")));
+    assert.ok(inventory.temporalCandidates.some((candidate) => candidate.year === "2009" || candidate.year === "2010"));
     assert.equal(inventory.temporalCandidates.find((candidate) => candidate.year === "2007")?.selected, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("an empty requested-year inventory still fails with supported alternatives", async () => {
+  const generalRows = [
+    ["timestamp", "original", "statuscode", "mimetype", "digest"],
+    ["20090101000000", "http://lost-web.org/", "200", "text/html", "2009-home"],
+  ];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    return Response.json(url.searchParams.has("from") ? [generalRows[0]] : generalRows);
+  };
+  try {
+    await assert.rejects(
+      () => discoverCaptures("http://lost-web.org/", "2007"),
+      (error) => error instanceof RequestedEraUnavailableError
+        && error.requestedYear === "2007"
+        && error.availableYears.includes("2009"),
+    );
   } finally {
     globalThis.fetch = originalFetch;
   }

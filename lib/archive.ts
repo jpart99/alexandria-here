@@ -65,7 +65,7 @@ async function fetchJson(url: URL, externalSignal?: AbortSignal): Promise<unknow
   }
 }
 
-function cdxUrl(originalUrl: string, matchType: "exact" | "prefix", limit: number) {
+function cdxUrl(originalUrl: string, matchType: "exact" | "prefix", limit: number, year?: string) {
   const url = new URL(CDX_ENDPOINT);
   url.searchParams.set("url", originalUrl);
   url.searchParams.set("matchType", matchType);
@@ -75,6 +75,10 @@ function cdxUrl(originalUrl: string, matchType: "exact" | "prefix", limit: numbe
   url.searchParams.append("filter", "mimetype:text/html");
   url.searchParams.set("collapse", "digest");
   url.searchParams.set("limit", String(limit));
+  if (year) {
+    url.searchParams.set("from", year);
+    url.searchParams.set("to", year);
+  }
   return url;
 }
 
@@ -133,6 +137,18 @@ function chooseEditionCaptures(yearCaptures: Capture[]): Capture[] {
 function evenlySampleRows(rows: CdxRow[], limit: number) {
   if (rows.length <= limit) return rows;
   return Array.from({ length: limit }, (_, index) => rows[Math.round(index * (rows.length - 1) / (limit - 1))]);
+}
+
+function sampleRowsForPath(rows: CdxRow[], limit: number, requestedYear?: string) {
+  if (!requestedYear) return evenlySampleRows(rows, limit);
+  const requestedRows = rows.filter((row) => row[0].startsWith(requestedYear));
+  const selectedRequested = evenlySampleRows(requestedRows, limit);
+  if (selectedRequested.length >= limit) return selectedRequested;
+  const otherRows = rows.filter((row) => !row[0].startsWith(requestedYear));
+  return [
+    ...selectedRequested,
+    ...evenlySampleRows(otherRows, limit - selectedRequested.length),
+  ];
 }
 
 function boundInventoryCandidates(captures: Capture[], requestedYear?: string): Capture[] {
@@ -342,13 +358,30 @@ export function selectTemporalWindow(captures: Capture[], requestedYear?: string
 }
 
 export async function discoverCaptures(originalUrl: string, requestedYear?: string, signal?: AbortSignal): Promise<CaptureInventory> {
-  const prefixPayload = await fetchJson(cdxUrl(originalUrl, "prefix", MAX_PREFIX_METADATA_ROWS), signal);
-  const prefixRows = parseRows(prefixPayload).filter((row) => isSameSiteUrl(row[1], originalUrl));
+  const scopedYear = requestedYear && /^\d{4}$/.test(requestedYear) ? requestedYear : undefined;
+  const [prefixPayload, requestedYearPayload] = await Promise.all([
+    fetchJson(cdxUrl(originalUrl, "prefix", MAX_PREFIX_METADATA_ROWS), signal),
+    scopedYear
+      ? fetchJson(cdxUrl(originalUrl, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear), signal)
+      : Promise.resolve(null),
+  ]);
+  const generalRows = parseRows(prefixPayload).filter((row) => isSameSiteUrl(row[1], originalUrl));
+  const requestedYearRows = requestedYearPayload
+    ? parseRows(requestedYearPayload).filter((row) =>
+      row[0].startsWith(scopedYear!) && isSameSiteUrl(row[1], originalUrl))
+    : [];
+  const prefixRows = Array.from(new Map(
+    [...requestedYearRows, ...generalRows].map((row) => [`${row[0]}\n${row[1]}\n${row[4] || ""}`, row]),
+  ).values());
+  const requestedYearPaths = new Set(requestedYearRows.map((row) => canonicalPath(row[1])));
   const originalPath = canonicalPath(originalUrl);
   const distinctUrls = Array.from(
     new Map(prefixRows.map((row) => [canonicalPath(row[1]), row[1]])).entries(),
   )
     .sort(([pathA], [pathB]) => {
+      const requestedA = requestedYearPaths.has(pathA);
+      const requestedB = requestedYearPaths.has(pathB);
+      if (requestedA !== requestedB) return requestedA ? -1 : 1;
       if (pathA === originalPath) return -1;
       if (pathB === originalPath) return 1;
       const depthA = pathA.split("/").filter(Boolean).length;
@@ -365,7 +398,7 @@ export async function discoverCaptures(originalUrl: string, requestedYear?: stri
     rowsByPath.set(path, [...(rowsByPath.get(path) || []), row]);
   }
   const unboundedCaptures = Array.from(rowsByPath.values()).flatMap((rows) =>
-    evenlySampleRows(rows, MAX_CAPTURE_METADATA_PER_URL).flatMap((row) => {
+    sampleRowsForPath(rows, MAX_CAPTURE_METADATA_PER_URL, scopedYear).flatMap((row) => {
       try {
         return [rowToCapture(row)];
       } catch {
