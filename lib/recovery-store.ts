@@ -4,6 +4,7 @@ import { recoveries } from "../db/schema";
 import type { RecoveryResult, RecoveryStage } from "./domain";
 import { serializePersistedRecovery } from "./persistence-budget";
 import { hydrateRecoveryRecord } from "./recovery-compat";
+import { acquireRecoveryClientCooldown } from "./recovery-rate-limit";
 
 let initialized = false;
 const RECOVERY_LOCK_ID = 1;
@@ -39,6 +40,11 @@ export async function ensureRecoverySchema() {
       recovery_id TEXT NOT NULL,
       acquired_at TEXT NOT NULL
     )`),
+    d1.prepare(`CREATE TABLE IF NOT EXISTS recovery_rate_limits (
+      client_key_hash TEXT PRIMARY KEY,
+      last_started_at TEXT NOT NULL
+    )`),
+    d1.prepare("CREATE INDEX IF NOT EXISTS recovery_rate_limits_started_at_idx ON recovery_rate_limits(last_started_at)"),
   ]);
   initialized = true;
 }
@@ -62,11 +68,12 @@ async function releaseRecoveryLock(recoveryId: string) {
     .run();
 }
 
-export async function createRecoveryRecord(id: string, submittedUrl: string, normalizedUrl: string) {
+export async function createRecoveryRecord(id: string, submittedUrl: string, normalizedUrl: string, clientKeyHash: string) {
   await ensureRecoverySchema();
   const now = new Date().toISOString();
   await acquireRecoveryLock(id, now);
   try {
+    await acquireRecoveryClientCooldown(getD1(), clientKeyHash, new Date(now));
     await getDb().insert(recoveries).values({
       id,
       submittedUrl,

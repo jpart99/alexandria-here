@@ -73,6 +73,9 @@ export function validateSubmittedUrl(input: unknown): string {
   if (url.username || url.password) {
     throw new Error("Addresses containing credentials are not allowed.");
   }
+  if (url.search) {
+    throw new Error("Addresses containing query parameters are not allowed because they may contain sensitive information.");
+  }
   const hostname = normalizedHostname(url.hostname);
   const looksLikeIpv6 = hostname.startsWith("[") && hostname.endsWith("]");
   const looksLikeIpv4 = /^\d+(?:\.\d+){3}$/.test(hostname);

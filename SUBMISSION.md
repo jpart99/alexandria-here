@@ -16,7 +16,7 @@ Code repository: https://github.com/jpart99/alexandria-here
 
 Demo video: `[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]`
 
-Codex Session ID: `[ADD /feedback SESSION ID]`
+Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
 
 ## Inspiration
 

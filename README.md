@@ -40,9 +40,11 @@ Requirements: Node.js 22.13 or newer.
 
 ```bash
 npm install
-copy .env.example .env.local
+cp .env.example .env.local
 npm run dev
 ```
+
+In PowerShell, use `Copy-Item .env.example .env.local` instead of `cp`.
 
 Open `http://localhost:3000`. The app remains fully usable without an OpenAI key; it records that the deterministic fallback was used.
 
@@ -62,11 +64,12 @@ Stop the compiled `npm start` preview before running a fresh `npm run build`. Wr
 ```text
 OPENAI_API_KEY=optional
 OPENAI_MODEL=gpt-5.6
+RECOVERY_RATE_LIMIT_SECRET=required-random-hosted-secret
 ```
 
 Do not expose the API key to browser code. The model receives normalized evidence records only and has no browsing tools.
 
-For a hosted release, `OPENAI_API_KEY` is the only secret. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL` and `ALEXANDRIA_REFERENCE_URL` are used only by the reference-production CLI.
+For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL` and `ALEXANDRIA_REFERENCE_URL` are used only by the reference-production CLI.
 
 ## Verification
 

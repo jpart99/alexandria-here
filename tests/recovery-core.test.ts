@@ -14,6 +14,7 @@ import type { Capture, TemporalCandidateWindow, TemporalSelectionScore } from ".
 import {
   buildPageCandidates,
   createManifestAndReceipt,
+  deriveEvidenceNavigation,
   type TemporalPlan,
   validateChronologistPlan,
 } from "../lib/planner";
@@ -77,9 +78,50 @@ test("submitted URLs are normalized and unsafe targets fail closed", () => {
     "ftp://example.org/",
     "http://user:secret@example.org/",
     "https://example.org:8443/",
+    "https://example.org/archive?token=secret",
+    "https://example.org/?email=reader%40example.org&session=private",
   ]) {
     assert.throws(() => validateSubmittedUrl(unsafe));
   }
+  assert.throws(
+    () => validateSubmittedUrl("https://example.org/archive?token=secret"),
+    /query parameters.*sensitive information/i,
+  );
+});
+
+test("rendered navigation ignores invented planner labels and cites exact title evidence", () => {
+  const pages = [
+    {
+      id: "page-home",
+      path: "/",
+      title: "The Surviving Home Title",
+      status: "preserved" as const,
+      sourceIds: ["source-old", "source-primary"],
+      primarySourceId: "source-primary",
+      supportingSourceIds: ["source-old"],
+      blockIds: ["block-home"],
+    },
+    {
+      id: "page-about",
+      path: "/about-us",
+      title: "About Us",
+      status: "preserved" as const,
+      sourceIds: ["source-about"],
+      primarySourceId: "source-about",
+      supportingSourceIds: [],
+      blockIds: ["block-about"],
+    },
+  ];
+  const navigation = deriveEvidenceNavigation([
+    { pageId: "page-about", label: "BUY CRYPTO NOW", sourceIds: ["source-about"] },
+    { pageId: "page-home", label: "Hostile invented claim", sourceIds: ["source-old"] },
+  ], pages);
+
+  assert.deepEqual(navigation, [
+    { pageId: "page-about", label: "About Us", sourceIds: ["source-about"] },
+    { pageId: "page-home", label: "The Surviving Home Title", sourceIds: ["source-primary"] },
+  ]);
+  assert.ok(navigation.every((item) => !/crypto|hostile|invented/i.test(item.label)));
 });
 
 test("archive retrieval cannot leave the single-provider allowlist", () => {

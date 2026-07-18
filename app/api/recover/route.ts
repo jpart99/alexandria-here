@@ -3,6 +3,7 @@ import { waitUntil } from "cloudflare:workers";
 import { createRecoveryRecord, failRecovery, RecoveryBusyError } from "../../../lib/recovery-store";
 import { runRecovery } from "../../../lib/recover";
 import { validateSubmittedUrl } from "../../../lib/url-safety";
+import { recoveryClientKey, RecoveryRateLimitError, recoveryRateLimitResponse } from "../../../lib/recovery-rate-limit";
 
 const RequestSchema = z.object({
   url: z.string().min(1).max(2_048),
@@ -44,10 +45,22 @@ export async function POST(request: Request) {
   }
 
   const recoveryId = crypto.randomUUID();
+  let clientKeyHash: string;
+  try {
+    clientKeyHash = await recoveryClientKey(request);
+  } catch {
+    return Response.json(
+      { error: "Recovery admission control is not configured." },
+      { status: 503, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } },
+    );
+  }
   let createdAt: string;
   try {
-    createdAt = await createRecoveryRecord(recoveryId, submittedUrl, normalizedUrl);
+    createdAt = await createRecoveryRecord(recoveryId, submittedUrl, normalizedUrl, clientKeyHash);
   } catch (error) {
+    if (error instanceof RecoveryRateLimitError) {
+      return recoveryRateLimitResponse(error);
+    }
     if (error instanceof RecoveryBusyError) {
       return Response.json(
         { error: error.message },

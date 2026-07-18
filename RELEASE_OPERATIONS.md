@@ -41,7 +41,7 @@ Do not execute these steps without explicit user approval:
 1. Create or reuse the Sites project and persist only `project_id`, `d1`, and `r2` in `.openai/hosting.json`.
 2. Commit and push the exact validated source using the short-lived Sites source credential without storing the credential in Git configuration or a remote URL.
 3. Package the existing successful build with the Sites packaging helper, save one version, deploy it privately, and wait for a successful deployment result.
-4. Configure `OPENAI_API_KEY` as a hosted secret. `OPENAI_MODEL` may remain at its `gpt-5.6` default.
+4. Configure `RECOVERY_RATE_LIMIT_SECRET` as a random hosted secret of at least 16 characters. Configure `OPENAI_API_KEY` when model planning is enabled. `OPENAI_MODEL` may remain at its `gpt-5.6` default.
 5. Run a real bounded recovery and inspect its receipt. Model execution is proven only when `receipt.planner` is `gpt-5.6`, `receipt.model` is populated, and all mechanical validation results pass. A deterministic fallback is valid product behavior but is not model-execution proof.
 6. Run `reference:produce` against the production URL through the ordinary public API, then persist the printed `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH`. Confirm that the path resolves from production D1 after deployment.
 

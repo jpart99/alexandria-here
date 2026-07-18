@@ -30,3 +30,12 @@ export const recoveryLock = sqliteTable(
   },
   (table) => [check("recovery_lock_singleton_check", sql`${table.id} = 1`)],
 );
+
+export const recoveryRateLimits = sqliteTable(
+  "recovery_rate_limits",
+  {
+    clientKeyHash: text("client_key_hash").primaryKey(),
+    lastStartedAt: text("last_started_at").notNull(),
+  },
+  (table) => [index("recovery_rate_limits_started_at_idx").on(table.lastStartedAt)],
+);

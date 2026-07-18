@@ -68,10 +68,11 @@ const hostingKeys = Object.keys(hosting);
 const invalidHostingKeys = hostingKeys.filter((key) => !["project_id", "d1", "r2"].includes(key));
 check("Static/local", "Sites hosting manifest", invalidHostingKeys.length === 0 && hosting.d1 === "DB" && hosting.r2 === null ? "PASS" : "FAIL", "logical D1 binding DB; no R2; only Sites-owned keys");
 
-const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "NEXT_PUBLIC_REFERENCE_RECOVERY_PATH", "ALEXANDRIA_BASE_URL", "ALEXANDRIA_REFERENCE_URL"];
+const requiredEnv = ["OPENAI_API_KEY", "OPENAI_MODEL", "RECOVERY_RATE_LIMIT_SECRET", "NEXT_PUBLIC_REFERENCE_RECOVERY_PATH", "ALEXANDRIA_BASE_URL", "ALEXANDRIA_REFERENCE_URL"];
 const missingEnv = requiredEnv.filter((name) => !(name in envExample));
 check("Static/local", "Environment contract documented", missingEnv.length ? "FAIL" : "PASS", missingEnv.length ? `missing: ${missingEnv.join(", ")}` : "runtime, public reference, and operator-only variables are separated");
 check("Static/local", "Example contains no API secret", isSafeExampleSecret(envExample.OPENAI_API_KEY) ? "PASS" : "FAIL", "OPENAI_API_KEY must be empty in .env.example");
+check("Static/local", "Example contains no rate-limit secret", isSafeExampleSecret(envExample.RECOVERY_RATE_LIMIT_SECRET) ? "PASS" : "FAIL", "RECOVERY_RATE_LIMIT_SECRET must be empty in .env.example");
 check("Static/local", "Model default is explicit", envExample.OPENAI_MODEL === "gpt-5.6" ? "PASS" : "FAIL", `OPENAI_MODEL=${envExample.OPENAI_MODEL || "(missing)"}`);
 
 const requiredIgnorePatterns = [".env*", "!.env.example", "/dist/", "/.wrangler/", "/node_modules", "/failure-matrix.*.log"];
