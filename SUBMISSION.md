@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: copy-ready draft. Public access, repository, track, `/feedback` Session ID, and receipt-proven GPT-5.6 run are confirmed. Do not submit until the public video URL is added and Jaia personally accepts the official-rules checkbox.
+Status: copy-ready draft. Public access, repository, track, `/feedback` Session ID, and receipt-attributed GPT-5.6 run are confirmed. Do not submit until the public video URL is added and Jaia personally accepts the official-rules checkbox.
 
 ## Project
 
@@ -50,7 +50,7 @@ Its signature interaction is not generation; it is challengeability. A beautiful
 
 ## How we used Codex
 
-Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 7 at audited runtime commit `042215042dd46ded14b501f961f4d9e7debb8178` passes 48 tests, TypeScript, lint, a clean production build, eleven static/local release-contract checks, an eight-scenario failure matrix, receipt validation, public browser regression, and a zero-vulnerability production dependency audit. Codex also localized and repaired real hosted regressions in requested-year discovery and model-decision provenance, then proved each correction through the ordinary public recovery endpoint.
+Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 8 at audited runtime commit `f7f8f529285ed9e01fdbe02e868833fc86de5475` passes 52 tests, TypeScript, lint, a clean production build, eleven static/local release-contract checks, an eight-scenario failure matrix, receipt validation, public browser regression, and a zero-vulnerability production dependency audit. Codex also localized and repaired real hosted regressions in requested-year discovery, model-decision provenance, and receipt warning ownership, then verified each correction through explicit phase gates and the ordinary public recovery endpoint.
 
 ## How GPT-5.6 is used
 
@@ -73,13 +73,15 @@ The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` i
 - 10 of 10 deterministic receipt validations passing
 - durable managed-D1 path: `/r/de5bb377-5b53-4ea4-b074-feb106e02113`
 
-This earlier production proof remains persisted as an ordinary recovery row and directly accessible at the path above. It can be reproduced through the same public endpoint; there is no fixture, seed route, or demo-only engine. The landing page now links the receipt-proven iExile recovery below.
+This earlier production proof remains persisted as an ordinary recovery row and directly accessible at the path above. The same public workflow can be rerun; archive-dependent captures and outcomes need not be identical. There is no fixture, seed route, or demo-only engine. The landing page now links the receipt-backed iExile recovery below.
 
 The same production pipeline explicitly requested iExile's 2009 edition and returned [a witnessed recovery whose receipt attributes page ordering and primary-witness selection to GPT-5.6](https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c) with 5 returned preserved pages plus 2 witnessed Missing states from 8 capture records, 347 rendered blocks, 946 content-addressed extracted evidence blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing.
 
 ## Current build boundary
 
-Production version 7 runs audited runtime commit `042215042dd46ded14b501f961f4d9e7debb8178`. It retains requested-year discovery, durable per-client cooldown enforcement, and sensitive-query rejection; it also records deterministic era selection separately from GPT-5.6 page ordering and primary-witness choices. Supporting witnesses, navigation, citations, and decision records are derived mechanically before validation. The deployed release is proven by the ordinary hosted iExile recovery and corrected receipt above.
+Production version 8 runs audited runtime commit `f7f8f529285ed9e01fdbe02e868833fc86de5475`. It retains requested-year discovery, durable per-client cooldown enforcement, sensitive-query rejection, and truthful decision provenance, while adding capture metadata and exact warning groups with owner occurrences to the receipt. For legacy persisted rows, version 8 derives these additive fields on read without rewriting managed D1 or relabeling the legacy receipt version. Downloaded legacy receipt JSON bytes may therefore change while the recovery ID, manifest hash, source hashes, decisions, and validation results remain unchanged.
+
+The judging recovery above was generated by proof-producing version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`; version 8 serves and audits that persisted row but did not generate its GPT-5.6 decisions. Supporting witnesses, navigation, citations, and decision records were derived mechanically before validation.
 
 ## Challenges
 
@@ -89,7 +91,7 @@ Archive evidence is messy: captures are incomplete, timestamps disagree, URLs dr
 
 - General live recovery within strict, legible budgets.
 - Stable Returned Site and five-panel Recovery Atlas.
-- Block-level provenance and downloadable content-addressed receipts.
+- Block-level provenance and downloadable audit receipts containing manifest and evidence hashes.
 - Honest insufficient-evidence and model-fallback outcomes.
 - Archive-only network boundary and aggressive inert-data sanitization.
 - Durable hosted recovery produced through the same path as every visitor.
@@ -104,7 +106,7 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 
 ## Audited 2:35 demo
 
-The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, a Devpost-preferred 1500×1000 3:2 cover, and six ordered 3:2 gallery cards. The sealed master was captured from [ordinary production row `8ea53a47-437b-4afe-ad2c-29c81637a327`](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) on version 6 runtime `f434249d673911bb5de89689313248b68a389b52` and sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the current judging proof is corrected row `18026989-33be-4011-86ee-19e1754cb22c` on version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`.
+The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, a Devpost-preferred 1500×1000 3:2 cover, and six ordered 3:2 gallery cards. The sealed master was captured from [ordinary production row `8ea53a47-437b-4afe-ad2c-29c81637a327`](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) on version 6 runtime `f434249d673911bb5de89689313248b68a389b52` and sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the current judging proof is corrected row `18026989-33be-4011-86ee-19e1754cb22c`, generated by version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178` and now served by version 8.
 
 **0:00–0:19 — The promise.** Introduce Alexandria as a witnessed restoration engine and iExile as the founder's real lost community.
 
@@ -128,7 +130,7 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Confirm that the Sites deployment is publicly reachable without an authenticated session (`200 OK` verified July 17, 2026 Pacific / July 18 UTC).
 - [x] Publish the public judging repository with setup instructions and reference details: https://github.com/jpart99/alexandria-here
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
-- [x] Produce and link one receipt-proven GPT-5.6 recovery.
+- [x] Produce and link one receipt-attributed GPT-5.6 recovery.
 - [x] Clean-build, package, deploy, and verify the requested-year discovery and decision-provenance fixes in production version 7.
 - [x] Render and audit the public-video master at less than 3:00 with English audio explaining the product, Codex use, and GPT-5.6 integration.
 - [ ] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.
