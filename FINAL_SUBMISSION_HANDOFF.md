@@ -1,6 +1,6 @@
 # Alexandria Here — final submission handoff
 
-Everything below is prepared and audited. The only actions that require Jaia's authority are public YouTube publication, Devpost's official-rules acceptance, and final submission.
+Everything below is prepared and audited. The only actions that require Jaia's authority are transmitting the prepared Devpost media, public YouTube publication, Devpost's official-rules acceptance, and final submission.
 
 ## 1. Publish the YouTube video
 
@@ -10,11 +10,19 @@ Everything below is prepared and audited. The only actions that require Jaia's a
 - Captions: `submission-assets/alexandria-here-build-week-demo.en.vtt`
 - Title, description, chapters, disclosure, and settings: `YOUTUBE_METADATA.md`
 
-Required upload settings:
+Build Week requirements, verified against the [Official Rules](https://openai.devpost.com/rules) and [FAQ](https://openai.devpost.com/details/faqs):
 
+- Runtime: **less than 3:00**; the audited master is 2:35.26
 - Visibility: **Public**
+- Host: **YouTube**; paste the public YouTube URL into Devpost
+- Audio/voiceover: clearly explain what was built, how Codex was used, and how GPT-5.6 is integrated
+- Language: English, or provide an English translation
+- Rights check: no unlicensed third-party trademarks, copyrighted music, or other copyrighted material
+
+Recommended YouTube and accessibility settings:
+
+- Allow embedding: **On**, so Devpost can render the video in its submission player
 - Audience: **No, it is not made for kids**
-- Allow embedding: **On**
 - Age restriction: **None**
 - Synthetic-content disclosure: **Yes — synthetic narration only**
 - Upload the custom thumbnail and English captions before copying the URL
@@ -30,15 +38,21 @@ After processing finishes, verify 1080p playback, audible narration, visible cap
 - GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
 - Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/8ea53a47-437b-4afe-ad2c-29c81637a327/receipt
 - Primary Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
-- Cover: `submission-assets/08-devpost-cover.png` (1500×1000, Devpost-preferred 3:2)
-- Optional gallery: `00-landing.png`, `01-returned-site.png`, `02-show-the-seams.png`, `03-timeline-focused.png`, `04-witnesses-focused.png`, `05-what-survived-focused.png`, `06-receipt-focused.png`
+- Project thumbnail: `submission-assets/08-devpost-cover.png` (1500×1000 PNG, Devpost-preferred 3:2, below the live field's 5 MB cap)
+- Gallery, in upload order: `09-devpost-gallery-returned-site.png`, `10-devpost-gallery-show-the-seams.png`, `11-devpost-gallery-timeline.png`, `12-devpost-gallery-what-survived.png`, `13-devpost-gallery-witnesses.png`, `14-devpost-gallery-receipt.png`
+- Devpost media checksums: `submission-assets/devpost-media.sha256`
 - Copy-ready narrative and checklist: `SUBMISSION.md`
+
+The authenticated live form currently accepts a JPG, PNG, or GIF project thumbnail up to 5 MB and recommends 3:2. Its image gallery accepts up to 15 images with the same displayed format, size, and ratio guidance. The six prepared gallery cards are optional and intentionally stay below those limits.
 
 Final user-controlled actions:
 
-1. Add the public YouTube URL.
-2. Confirm the cover/gallery and embedded video render correctly.
-3. Personally accept the official-rules checkbox.
-4. Submit before **July 21, 2026 at 5:00 PM PT**.
+1. Upload the project thumbnail and the six gallery cards in the listed order.
+2. Add the public YouTube URL.
+3. Confirm the thumbnail, gallery, and embedded video render correctly in Preview.
+4. Personally accept the official-rules checkbox.
+5. Submit before **July 21, 2026 at 5:00 PM PDT (Pacific Time)**.
+
+Submit early: Devpost permits edits to the judged entry until the deadline, when the hackathon submission locks.
 
 Do not replace the recovery path, model metrics, video master, captions, or hashes without re-running the corresponding audit gates.

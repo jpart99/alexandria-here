@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from hashlib import sha256
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -150,7 +151,131 @@ def devpost_cover() -> None:
     canvas.convert("RGB").save(ASSETS / "08-devpost-cover.png", quality=95)
 
 
+def devpost_gallery_card(
+    *,
+    output_name: str,
+    source_name: str,
+    index: int,
+    label: str,
+    title: str,
+    subtitle: str,
+    accent: str,
+) -> None:
+    canvas = Image.new("RGBA", (1500, 1000), BG)
+    draw = ImageDraw.Draw(canvas)
+    draw.rectangle((0, 0, 20, 1000), fill=GOLD)
+    draw.rectangle((60, 45, 110, 95), outline=GOLD, width=2)
+    draw.text((85, 70), "AH", font=font(19, True), fill=GOLD, anchor="mm")
+    draw.text((132, 57), "ALEXANDRIA HERE", font=font(23, True), fill=INK)
+    draw.text((1420, 59), f"{index:02d} / 06", font=font(18, True), fill=MUTED, anchor="ra")
+
+    source = Image.open(ASSETS / source_name).convert("RGB")
+    # Fit the complete verified product frame inside the available stage. The
+    # returned-site capture is 16:10 while the five Atlas captures are 1521:680;
+    # centering a ratio-matched box keeps both classes entirely uncropped.
+    stage_x0, stage_y0, stage_x1, stage_y1 = (60, 125, 1440, 742)
+    stage_width = stage_x1 - stage_x0
+    stage_height = stage_y1 - stage_y0
+    source_ratio = source.width / source.height
+    stage_ratio = stage_width / stage_height
+    if source_ratio < stage_ratio:
+        frame_width = round(stage_height * source_ratio)
+        frame_x0 = stage_x0 + (stage_width - frame_width) // 2
+        frame_box = (frame_x0, stage_y0, frame_x0 + frame_width, stage_y1)
+    else:
+        frame_height = round(stage_width / source_ratio)
+        frame_y0 = stage_y0 + (stage_height - frame_height) // 2
+        frame_box = (stage_x0, frame_y0, stage_x1, frame_y0 + frame_height)
+    paste_rounded(canvas, source, frame_box, 24)
+    badge(draw, (400, 49), label, accent)
+
+    draw.text((60, 792), title, font=font(42, True), fill=INK)
+    draw.text((60, 855), subtitle, font=font(24), fill=MUTED)
+    draw.line((60, 930, 1440, 930), fill=LINE, width=2)
+    draw.text(
+        (60, 951),
+        "NOTHING HERE IS CLAIMED WITHOUT A WITNESS.",
+        font=font(17, True),
+        fill=GOLD,
+    )
+    canvas.convert("RGB").save(ASSETS / output_name, quality=95)
+
+
+def devpost_gallery() -> None:
+    cards = [
+        {
+            "output_name": "09-devpost-gallery-returned-site.png",
+            "source_name": "01-returned-site.png",
+            "label": "RETURNED SITE",
+            "title": "A coherent place, returned.",
+            "subtitle": "Five visible pages from eight capture records, through the same public pipeline.",
+            "accent": BLUE,
+        },
+        {
+            "output_name": "10-devpost-gallery-show-the-seams.png",
+            "source_name": "02-show-the-seams.png",
+            "label": "SHOW THE SEAMS",
+            "title": "Every claim can show its seams.",
+            "subtitle": "Each returned historical block resolves to archived evidence and a content hash.",
+            "accent": GOLD,
+        },
+        {
+            "output_name": "11-devpost-gallery-timeline.png",
+            "source_name": "03-timeline-focused.png",
+            "label": "TIMELINE",
+            "title": "Fragments reconciled into an era.",
+            "subtitle": "Capture dates, URL variants, conflicts, and source relationships stay explicit.",
+            "accent": BLUE,
+        },
+        {
+            "output_name": "12-devpost-gallery-what-survived.png",
+            "source_name": "05-what-survived-focused.png",
+            "label": "WHAT SURVIVED",
+            "title": "Absence remains visible.",
+            "subtitle": "Preserved pages, reconstructed relationships, and eight known absences.",
+            "accent": GOLD,
+        },
+        {
+            "output_name": "13-devpost-gallery-witnesses.png",
+            "source_name": "04-witnesses-focused.png",
+            "label": "WITNESS LEDGER",
+            "title": "Every source stays inspectable.",
+            "subtitle": "The featured recovery retains 946 content-addressed source blocks.",
+            "accent": BLUE,
+        },
+        {
+            "output_name": "14-devpost-gallery-receipt.png",
+            "source_name": "06-receipt-focused.png",
+            "label": "RECOVERY RECEIPT",
+            "title": "A content-addressed recovery receipt.",
+            "subtitle": "GPT-5.6, 347 rendered blocks, and 10 of 10 deterministic validations.",
+            "accent": GOLD,
+        },
+    ]
+    for index, card in enumerate(cards, start=1):
+        devpost_gallery_card(index=index, **card)
+
+
+def write_devpost_manifest() -> None:
+    names = [
+        "08-devpost-cover.png",
+        "09-devpost-gallery-returned-site.png",
+        "10-devpost-gallery-show-the-seams.png",
+        "11-devpost-gallery-timeline.png",
+        "12-devpost-gallery-what-survived.png",
+        "13-devpost-gallery-witnesses.png",
+        "14-devpost-gallery-receipt.png",
+    ]
+    lines = [
+        f"{sha256((ASSETS / name).read_bytes()).hexdigest().upper()}  {name}"
+        for name in names
+    ]
+    (ASSETS / "devpost-media.sha256").write_text("\n".join(lines) + "\n", encoding="ascii")
+
+
 if __name__ == "__main__":
     youtube_thumbnail()
     devpost_cover()
-    print("Rendered 07-youtube-thumbnail.png and 08-devpost-cover.png")
+    devpost_gallery()
+    write_devpost_manifest()
+    print("Rendered YouTube thumbnail, Devpost cover, six gallery cards, and checksums")

@@ -62,7 +62,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 ## Recording checklist
 
-- Keep the finished video at or below 3:00; this script targets 2:35.
+- Keep the finished video strictly under 3:00; this audited master is 2:35.26.
 - Record the public production URL at 1080p, 100% browser zoom, with notifications hidden.
 - Do not use copyrighted music or third-party logos as decorative assets.
 - Keep product UI text legible; pause on the GPT-5.6 receipt and its 10/10 validations.

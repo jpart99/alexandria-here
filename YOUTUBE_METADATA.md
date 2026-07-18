@@ -36,7 +36,7 @@ Nothing here is claimed without a witness.
 
 #OpenAIBuildWeek #DigitalPreservation #AI
 
-## Upload settings
+## Recommended upload settings
 
 - Visibility: Public
 - Audience: No, it is not made for kids
@@ -47,3 +47,5 @@ Nothing here is claimed without a witness.
 - Language: English
 - Thumbnail: `submission-assets/07-youtube-thumbnail.png`
 - Captions: upload `submission-assets/alexandria-here-build-week-demo.en.vtt`; it contains 49 non-overlapping cues aligned to the exact narration and ends before the 2:35.26 master.
+
+Build Week's contest requirements are tracked separately in `FINAL_SUBMISSION_HANDOFF.md`: a public YouTube video under 3:00 and English audio/voiceover explaining the product, Codex use, and GPT-5.6 integration. Embedding remains enabled above as an operational recommendation for Devpost playback.

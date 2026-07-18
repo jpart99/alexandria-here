@@ -12,7 +12,7 @@ The deployed engine remains operational when the model provider is unavailable: 
 
 ## Build Week submission media
 
-The public repository packages the full audited submission media: the 2:35.26 1080p master, exact English captions, 1280×720 YouTube thumbnail, Devpost-preferred 1500×1000 3:2 cover, narration transcript, and copy-ready YouTube metadata. The video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2` and includes real production interaction—returned-site browsing, Show the Seams, provenance markers, and Witnesses—plus receipt-proven GPT-5.6 and Codex workflow coverage. Its SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`; see [`submission-assets`](submission-assets/README.md).
+The public repository packages the full audited submission media: the 2:35.26 1080p master, exact English captions, 1280×720 YouTube thumbnail, Devpost-preferred 1500×1000 3:2 cover, six ordered 3:2 gallery cards, narration transcript, and copy-ready YouTube metadata. The video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2` and includes real production interaction—returned-site browsing, Show the Seams, provenance markers, and Witnesses—plus receipt-proven GPT-5.6 and Codex workflow coverage. Its SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`; see [`submission-assets`](submission-assets/README.md).
 
 ## Evidence boundary
 

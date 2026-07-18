@@ -9,6 +9,13 @@
 - `06-receipt-focused.png` — live GPT-5.6 mechanical receipt.
 - `07-youtube-thumbnail.png` — 1280×720 public-video thumbnail using only verified product frames.
 - `08-devpost-cover.png` — 1500×1000 Devpost-preferred 3:2 cover using only verified product frames.
+- `09-devpost-gallery-returned-site.png` — 3:2 gallery card for the emotional Returned Site reveal.
+- `10-devpost-gallery-show-the-seams.png` — 3:2 gallery card for block-level provenance.
+- `11-devpost-gallery-timeline.png` — 3:2 gallery card for the Timeline's supported evidence windows.
+- `12-devpost-gallery-what-survived.png` — 3:2 gallery card for the Ghost Map and known absences.
+- `13-devpost-gallery-witnesses.png` — 3:2 gallery card for the Witness ledger.
+- `14-devpost-gallery-receipt.png` — 3:2 gallery card for the GPT-5.6 Recovery Receipt.
+- `devpost-media.sha256` — deterministic checksums for the cover and six ordered gallery cards.
 - `alexandria-here-build-week-demo.mp4` — narrated 2:35 Build Week master at 1080p, including a real 40-second production interaction capture; audio is normalized near −16 LUFS at 48 kHz.
 - `alexandria-here-build-week-demo.sha256` — checksum for the full-decode-clean public master.
 - `alexandria-here-build-week-demo.en.vtt` — timed English captions aligned to the narration master.

@@ -104,7 +104,7 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 
 ## Audited 2:35 demo
 
-The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, and a Devpost-preferred 1500×1000 3:2 cover; the audited video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`, while the deployed runtime remains production version 6 commit `f434249d673911bb5de89689313248b68a389b52`.
+The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, a Devpost-preferred 1500×1000 3:2 cover, and six ordered 3:2 gallery cards; the audited video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`, while the deployed runtime remains production version 6 commit `f434249d673911bb5de89689313248b68a389b52`.
 
 **0:00–0:19 — The promise.** Introduce Alexandria as a witnessed restoration engine and iExile as the founder's real lost community.
 
@@ -130,8 +130,10 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
 - [x] Produce and link one receipt-proven GPT-5.6 recovery.
 - [x] Clean-build, package, deploy, and verify the requested-year discovery and model-contract fixes in production version 6.
-- [x] Render and audit the public-video master under three minutes with audio explaining both Codex and GPT-5.6 use.
+- [x] Render and audit the public-video master at less than 3:00 with English audio explaining the product, Codex use, and GPT-5.6 integration.
 - [ ] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.
+- [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
+- [ ] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
-- [ ] Submit before July 21, 2026 at 5:00 PM PT.
+- [ ] Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).
