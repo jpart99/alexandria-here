@@ -6,7 +6,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 ## 0:00–0:18 — The promise
 
-**Screen:** Open the production landing page. Click **View a witnessed recovery**.
+**Screen:** Hold on the production landing page, then cut into the persisted witnessed recovery.
 
 **Narration:**
 
@@ -14,7 +14,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 ## 0:18–0:43 — The returned place
 
-**Screen:** Let the Returned Site reveal land. Browse the home page, then select one internal page while keeping the Atlas rail visible.
+**Screen:** Begin the real production interaction capture. Browse the Returned Site, open one internal page, and return home while the Atlas rail remains visible.
 
 **Narration:**
 
@@ -22,7 +22,7 @@ Production recovery: `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a4
 
 ## 0:43–1:08 — Show the seams
 
-**Screen:** Toggle **Show the Seams**. Pause on preserved and reconstructed markers, then open **Witnesses**.
+**Screen:** Continue the real production interaction capture. Move the visible pointer to **Show the Seams**, toggle it, scroll through provenance markers, then open **Witnesses**.
 
 **Narration:**
 

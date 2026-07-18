@@ -7,7 +7,9 @@
 - `04-witnesses-focused.png` — live block-level witness ledger.
 - `05-what-survived-focused.png` — live Ghost Map.
 - `06-receipt-focused.png` — live GPT-5.6 mechanical receipt.
-- `alexandria-here-build-week-demo.mp4` — narrated 2:35 Build Week master at 1080p.
+- `07-youtube-thumbnail.png` — 1280×720 public-video thumbnail using only verified product frames.
+- `08-devpost-cover.png` — 1600×900 Devpost cover using only verified product frames.
+- `alexandria-here-build-week-demo.mp4` — narrated 2:35 Build Week master at 1080p, including a real 40-second production interaction capture; audio is normalized near −16 LUFS at 48 kHz.
 - `alexandria-here-build-week-demo.sha256` — checksum for the full-decode-clean public master.
 - `alexandria-here-build-week-demo.en.vtt` — timed English captions aligned to the narration master.
 - `narration.txt` — narration transcript for accessibility and re-recording.
