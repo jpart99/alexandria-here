@@ -19,6 +19,7 @@ import {
   CHRONOLOGIST_SYSTEM_PROMPT,
   CHRONOLOGIST_TIMEOUT_MS,
   createManifestAndReceipt,
+  materializePlannerDecisions,
   normalizeChronologistPlan,
   parseChronologistResponse,
   resolveChronologistModel,
@@ -87,7 +88,7 @@ function validPlan(records: SourceRecord[]): TemporalPlan {
       supportingRecordIds: candidate.records.slice(1).map((item) => item.id),
     })),
     decisions: [{
-      kind: "era_selection",
+      kind: "page_order",
       targetIds: candidates.map((candidate) => candidate.id),
       sourceIds: candidates.flatMap((candidate) => candidate.records.map((item) => item.sourceId)),
     }],
@@ -296,6 +297,13 @@ test("Chronologist validation rejects cross-page citations and malformed witness
   const plan = validPlan(records);
   assert.doesNotThrow(() => validateChronologistPlan(plan, pages, candidates, records, graph, "2003"));
 
+  const overriddenYear = structuredClone(plan);
+  overriddenYear.selectedYear = "2004";
+  assert.throws(
+    () => validateChronologistPlan(overriddenYear, pages, candidates, records, graph, "2003"),
+    /override the mechanical era selection/,
+  );
+
   const omittedPageOrder = structuredClone(plan);
   omittedPageOrder.pageOrder = omittedPageOrder.pageOrder.slice(0, -1);
   assert.throws(
@@ -310,18 +318,18 @@ test("Chronologist validation rejects cross-page citations and malformed witness
     /one navigation item for every visible page/,
   );
 
-  const missingEraDecision = structuredClone(plan);
-  missingEraDecision.decisions = [];
+  const missingPageOrderDecision = structuredClone(plan);
+  missingPageOrderDecision.decisions = [];
   assert.throws(
-    () => validateChronologistPlan(missingEraDecision, pages, candidates, records, graph, "2003"),
-    /one era-selection decision covering every visible page/,
+    () => validateChronologistPlan(missingPageOrderDecision, pages, candidates, records, graph, "2003"),
+    /one page-order decision covering every visible page/,
   );
 
-  const partialEraDecision = structuredClone(plan);
-  partialEraDecision.decisions[0].targetIds = partialEraDecision.decisions[0].targetIds.slice(0, -1);
+  const partialPageOrderDecision = structuredClone(plan);
+  partialPageOrderDecision.decisions[0].targetIds = partialPageOrderDecision.decisions[0].targetIds.slice(0, -1);
   assert.throws(
-    () => validateChronologistPlan(partialEraDecision, pages, candidates, records, graph, "2003"),
-    /one era-selection decision covering every visible page/,
+    () => validateChronologistPlan(partialPageOrderDecision, pages, candidates, records, graph, "2003"),
+    /one page-order decision covering every visible page/,
   );
 
   const wrongSupporting = structuredClone(plan);
@@ -428,10 +436,27 @@ test("hostile snippets remain delimited data and deterministic fallback produces
       [],
     ]);
     assert.deepEqual(normalized.decisions, [{
-      kind: "era_selection",
+      kind: "page_order",
       targetIds: normalized.pageOrder,
       sourceIds: records.map((item) => item.sourceId),
     }]);
+    const modelDecisions = materializePlannerDecisions(normalized, "gpt-5.6", candidates, records);
+    const eraDecision = modelDecisions.find((decision) => decision.kind === "era_selection");
+    const pageOrderDecision = modelDecisions.find((decision) => decision.kind === "page_order");
+    const primaryWitnessDecisions = modelDecisions.filter((decision) => decision.kind === "primary_witness");
+    assert.deepEqual(eraDecision, {
+      id: "decision-era-selection",
+      kind: "era_selection",
+      targetIds: candidates.map((candidate) => candidate.id).sort(),
+      sourceIds: records.map((item) => item.sourceId).sort(),
+      proposedBy: "deterministic",
+      validatorRule: "deterministic_temporal_score",
+      result: "accepted",
+    });
+    assert.equal(pageOrderDecision?.proposedBy, "gpt-5.6");
+    assert.deepEqual(pageOrderDecision?.targetIds, normalized.pageOrder);
+    assert.equal(primaryWitnessDecisions.length, candidates.length);
+    assert.ok(primaryWitnessDecisions.every((decision) => decision.proposedBy === "gpt-5.6"));
   });
   const hostileSource = packet.sources.find((source) => source.id === records[0].id);
   assert.equal(hostileSource?.evidenceSnippet.delimiter, "ARCHIVED_HOSTILE_DATA");
@@ -475,6 +500,17 @@ test("hostile snippets remain delimited data and deterministic fallback produces
     assert.equal(
       first.receipt.decisions.filter((decision) => decision.kind === "primary_witness").length,
       first.manifest.pages.filter((page) => page.status !== "missing").length,
+    );
+    assert.deepEqual(
+      first.receipt.decisions.filter((decision) => ["era_selection", "page_order"].includes(decision.kind)).map((decision) => ({
+        kind: decision.kind,
+        proposedBy: decision.proposedBy,
+        validatorRule: decision.validatorRule,
+      })),
+      [
+        { kind: "era_selection", proposedBy: "deterministic", validatorRule: "deterministic_temporal_score" },
+        { kind: "page_order", proposedBy: "deterministic", validatorRule: "known_ids_and_sources_only" },
+      ],
     );
     assert.ok(first.receipt.validationResults.every((result) => result.passed));
     assert.equal(first.receipt.manifestHash, second.receipt.manifestHash);

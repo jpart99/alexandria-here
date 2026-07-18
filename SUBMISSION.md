@@ -37,7 +37,7 @@ When the evidence is insufficient, Alexandria does not fabricate a site. It retu
 - One archive provider, strict URL validation, redirect revalidation, MIME/size/time budgets, and no submitted-origin fetch.
 - Cheerio extraction that treats archived HTML as hostile inert data and strips scripts, forms, embeds, event handlers, and unsafe protocols.
 - Content-addressed evidence blocks using SHA-256.
-- A deterministic temporal score that rewards page coverage and link density while penalizing date spread, conflicts, and duplicate captures.
+- A deterministic temporal score that rewards page coverage and a directory-neighbour density proxy while penalizing date spread, conflicts, and duplicate captures.
 - A constrained GPT-5.6 Chronologist using the Responses API and strict Zod structured output. From a bounded evidence packet, it may return only a complete visible-page order and one supplied primary record ID per page. It cannot browse, choose rendered blocks or supporting sources, or create historical content; those structures are derived mechanically.
 - A deterministic Witness validator that rejects unknown IDs, unsupported decisions, hash mismatches, missing evidence, and invalid page/body states before rendering.
 - A deterministic fallback that keeps the product useful and explicitly records why the model was not used.

@@ -473,7 +473,7 @@ test("duplicate-path fragments choose one mechanical primary and never concatena
         supportingRecordIds: index === 0 ? candidate.records.map((record) => record.id) : candidate.records.slice(1).map((record) => record.id),
       })),
       decisions: [{
-        kind: "era_selection",
+        kind: "page_order",
         targetIds: candidates.map((candidate) => candidate.id),
         sourceIds: candidates.flatMap((candidate) => candidate.records.map((record) => record.sourceId)),
       }],

@@ -130,6 +130,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
     () => (result.receipt.decisions || []).filter((decision) => decision.kind === "primary_witness" && decision.result === "accepted"),
     [result.receipt.decisions],
   );
+  const eraDecision = (result.receipt.decisions || []).find((decision) => decision.kind === "era_selection" && decision.result === "accepted");
+  const pageOrderDecision = (result.receipt.decisions || []).find((decision) => decision.kind === "page_order" && decision.result === "accepted");
   const pageWitnessGroups = useMemo(
     () => result.manifest.pages
       .filter((candidate) => candidate.status !== "missing" && candidate.primarySourceId)
@@ -621,6 +623,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             <div><span>Planner</span><strong>{result.receipt.planner === "gpt-5.6" ? "GPT-5.6 + deterministic validator" : "Deterministic fallback"}</strong></div>
             <div><span>Model used</span><strong>{result.receipt.model || "Not invoked"}</strong></div>
             <div><span>Prompt / schema</span><strong>{result.receipt.promptVersion || "Not invoked"} · {result.receipt.modelSchemaVersion || "legacy receipt"}</strong></div>
+            <div><span>Era selection</span><strong>{eraDecision?.proposedBy === "deterministic" && pageOrderDecision ? "Deterministic temporal score" : "Legacy combined decision"}</strong></div>
+            <div><span>Page order</span><strong>{pageOrderDecision ? (pageOrderDecision.proposedBy === "gpt-5.6" ? "GPT-5.6 proposal · validated" : "Deterministic fallback") : "Not separated in this receipt"}</strong></div>
             <div><span>Rendered blocks</span><strong>{result.receipt.counts.renderedBlocks}</strong></div>
             <div><span>Known absences</span><strong>{result.receipt.counts.knownAbsences}</strong></div>
           </div>

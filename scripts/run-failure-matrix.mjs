@@ -2,15 +2,31 @@ const baseUrl = (process.env.ALEXANDRIA_BASE_URL || "http://127.0.0.1:3100").rep
 const activeTarget = process.env.ALEXANDRIA_MATRIX_ACTIVE_URL || "http://www.911commission.gov/";
 const insufficientTarget = process.env.ALEXANDRIA_MATRIX_INSUFFICIENT_URL
   || "http://info.cern.ch/hypertext/WWW/TheProject.html";
+const parsedBaseUrl = new URL(baseUrl);
+if (!["127.0.0.1", "localhost", "[::1]"].includes(parsedBaseUrl.hostname)) {
+  throw new Error("The destructive failure matrix is loopback-only. Use the production smoke checks for hosted releases.");
+}
+
+const MATRIX_CLIENTS = {
+  active: "198.51.100.10",
+  concurrent: "198.51.100.11",
+  disconnect: "198.51.100.12",
+  insufficient: "198.51.100.13",
+};
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function recoveryRequest(url, signal) {
+async function recoveryRequest(url, signal, clientAddress = MATRIX_CLIENTS.active) {
   return fetch(`${baseUrl}/api/recover`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      // Cloudflare overwrites this header at the edge. The loopback-only matrix
+      // uses reserved TEST-NET addresses to exercise independent client buckets.
+      "cf-connecting-ip": clientAddress,
+    },
     body: JSON.stringify({ url }),
     signal,
   });
@@ -64,9 +80,9 @@ await expectStatus("oversized request body", () => fetch(`${baseUrl}/api/recover
 
 await expectStatus("unsafe submitted URL", () => recoveryRequest("http://127.0.0.1/"), 400);
 
-const activePromise = requestWithWorkerRetry(() => recoveryRequest(activeTarget));
+const activePromise = requestWithWorkerRetry(() => recoveryRequest(activeTarget, undefined, MATRIX_CLIENTS.active));
 await new Promise((resolve) => setTimeout(resolve, 50));
-await expectStatus("singleton concurrent recovery", () => recoveryRequest(activeTarget), 409);
+await expectStatus("singleton concurrent recovery", () => recoveryRequest(activeTarget, undefined, MATRIX_CLIENTS.concurrent), 409);
 const active = await activePromise;
 assert(active.status === 200 && active.body, `Active recovery could not begin: ${active.status} ${await active.text()}`);
 const activeId = active.headers.get("x-recovery-id");
@@ -77,9 +93,14 @@ const completedReceipt = await fetch(`${baseUrl}/api/recover/${activeId}/receipt
 assert(completedReceipt.status === 200, `Completed receipt returned ${completedReceipt.status}.`);
 JSON.parse(await completedReceipt.text());
 results.push({ name: "completed receipt availability", status: completedReceipt.status, result: "pass" });
+await expectStatus(
+  "per-client recovery cooldown",
+  () => recoveryRequest(activeTarget, undefined, MATRIX_CLIENTS.active),
+  429,
+);
 
 const disconnectAbort = new AbortController();
-const disconnectPromise = recoveryRequest(activeTarget, disconnectAbort.signal);
+const disconnectPromise = recoveryRequest(activeTarget, disconnectAbort.signal, MATRIX_CLIENTS.disconnect);
 setTimeout(() => disconnectAbort.abort(new Error("failure-matrix disconnect")), 100);
 let disconnectedId;
 try {
@@ -100,7 +121,7 @@ if (disconnectedId) {
 
 let insufficient;
 for (let attempt = 0; attempt < 40; attempt += 1) {
-  const candidate = await requestWithWorkerRetry(() => recoveryRequest(insufficientTarget));
+  const candidate = await requestWithWorkerRetry(() => recoveryRequest(insufficientTarget, undefined, MATRIX_CLIENTS.insufficient));
   if (candidate.status === 200) {
     insufficient = candidate;
     break;

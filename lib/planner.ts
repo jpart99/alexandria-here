@@ -262,7 +262,7 @@ function deterministicPlan(
     primaryWitnesses: deterministicWitnesses(candidates, windowStart, windowEnd),
     decisions: [
       {
-        kind: "era_selection",
+        kind: "page_order",
         targetIds: visible.map((page) => page.id),
         sourceIds: Array.from(new Set(visible.flatMap((page) => page.sourceIds))),
       },
@@ -342,7 +342,7 @@ export function normalizeChronologistPlan(
     primaryWitnesses,
     navigation: deriveEvidenceNavigation(proposed.pageOrder, pages),
     decisions: [{
-      kind: "era_selection",
+      kind: "page_order",
       targetIds: [...proposed.pageOrder],
       sourceIds: eraSourceIds,
     }],
@@ -373,7 +373,7 @@ export function buildChronologistPacket(
     },
     decisionContract: {
       authoredBy: "deterministic_code",
-      rule: "Do not return selectedYear or decisions; code creates one exact era_selection decision from pageOrder and the chosen witness source IDs.",
+      rule: "Do not return selectedYear or decisions; code records the supplied pageOrder as one exact page_order decision and records era selection separately from the deterministic temporal score.",
     },
     supportingWitnessContract: {
       authoredBy: "deterministic_code",
@@ -489,14 +489,14 @@ export function validateChronologistPlan(
   ) {
     throw new Error("Planner must choose exactly one primary witness for every page candidate.");
   }
-  const eraDecisions = plan.decisions.filter((decision) => decision.kind === "era_selection");
+  const pageOrderDecisions = plan.decisions.filter((decision) => decision.kind === "page_order");
   if (
-    eraDecisions.length !== 1
-    || eraDecisions[0].targetIds.length !== visiblePageIds.size
-    || new Set(eraDecisions[0].targetIds).size !== visiblePageIds.size
-    || eraDecisions[0].targetIds.some((id) => !visiblePageIds.has(id))
+    pageOrderDecisions.length !== 1
+    || pageOrderDecisions[0].targetIds.length !== visiblePageIds.size
+    || new Set(pageOrderDecisions[0].targetIds).size !== visiblePageIds.size
+    || pageOrderDecisions[0].targetIds.some((id) => !visiblePageIds.has(id))
   ) {
-    throw new Error("Planner must include one era-selection decision covering every visible page.");
+    throw new Error("Planner must include one page-order decision covering every visible page.");
   }
   const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
   for (const witness of plan.primaryWitnesses) {
@@ -563,6 +563,53 @@ export function validateChronologistPlan(
       throw new Error("Planner returned an unsupported decision target or source.");
     }
   }
+}
+
+export function materializePlannerDecisions(
+  plan: TemporalPlan,
+  planner: RecoveryReceipt["planner"],
+  candidates: PageCandidate[],
+  records: SourceRecord[],
+): RestorationDecision[] {
+  const proposedBy = planner === "gpt-5.6" ? "gpt-5.6" as const : "deterministic" as const;
+  const decisions: RestorationDecision[] = [{
+    id: "decision-era-selection",
+    kind: "era_selection",
+    targetIds: candidates.map((candidate) => candidate.id).sort(),
+    sourceIds: records.map((record) => record.sourceId).sort(),
+    proposedBy: "deterministic",
+    validatorRule: "deterministic_temporal_score",
+    result: "accepted",
+  }, ...plan.decisions.map((decision, index) => ({
+    id: `decision-page-order-${index + 1}`,
+    ...decision,
+    proposedBy,
+    validatorRule: "known_ids_and_sources_only",
+    result: "accepted" as const,
+  }))];
+  const recordById = new Map(records.map((record) => [record.id, record]));
+  for (const witness of plan.primaryWitnesses) {
+    const primary = recordById.get(witness.primaryRecordId);
+    const supporting = witness.supportingRecordIds.map((id) => recordById.get(id));
+    if (!primary || supporting.some((record) => !record)) {
+      throw new Error("A primary-witness receipt decision could not be resolved.");
+    }
+    const supportingSourceIds = supporting
+      .filter((record): record is SourceRecord => Boolean(record))
+      .map((record) => record.sourceId);
+    decisions.push({
+      id: `decision-primary-${witness.pageId}`,
+      kind: "primary_witness",
+      targetIds: [witness.pageId],
+      sourceIds: [primary.sourceId, ...supportingSourceIds],
+      primarySourceId: primary.sourceId,
+      supportingSourceIds,
+      proposedBy,
+      validatorRule: "primary_record_belongs_to_page_and_blocks_from_primary_only",
+      result: "accepted",
+    });
+  }
+  return decisions;
 }
 
 export async function createManifestAndReceipt(args: {
@@ -729,35 +776,7 @@ export async function createManifestAndReceipt(args: {
     throw new Error("The recovery failed deterministic evidence validation.");
   }
 
-  const decisions: RestorationDecision[] = plan.decisions.map((decision, index) => ({
-    id: `decision-${index + 1}`,
-    ...decision,
-    proposedBy: planner === "gpt-5.6" ? "gpt-5.6" : "deterministic",
-    validatorRule: "known_ids_and_sources_only",
-    result: "accepted",
-  }));
-  const recordById = new Map(args.records.map((record) => [record.id, record]));
-  for (const witness of plan.primaryWitnesses) {
-    const primary = recordById.get(witness.primaryRecordId);
-    const supporting = witness.supportingRecordIds.map((id) => recordById.get(id));
-    if (!primary || supporting.some((record) => !record)) {
-      throw new Error("A primary-witness receipt decision could not be resolved.");
-    }
-    const supportingSourceIds = supporting
-      .filter((record): record is SourceRecord => Boolean(record))
-      .map((record) => record.sourceId);
-    decisions.push({
-      id: `decision-primary-${witness.pageId}`,
-      kind: "primary_witness",
-      targetIds: [witness.pageId],
-      sourceIds: [primary.sourceId, ...supportingSourceIds],
-      primarySourceId: primary.sourceId,
-      supportingSourceIds,
-      proposedBy: planner === "gpt-5.6" ? "gpt-5.6" : "deterministic",
-      validatorRule: "primary_record_belongs_to_page_and_blocks_from_primary_only",
-      result: "accepted",
-    });
-  }
+  const decisions = materializePlannerDecisions(plan, planner, candidates, args.records);
   for (const absence of args.graph.knownAbsences) {
     decisions.push({
       id: `decision-absence-${absence.id}`,
