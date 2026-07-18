@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  discoverCaptures,
   rankTemporalWindows,
   RECOVERY_BUDGETS,
   RequestedEraUnavailableError,
@@ -268,6 +269,42 @@ test("a requested era can select only a ranked deterministic candidate", () => {
     (error) => error instanceof RequestedEraUnavailableError && error.availableYears.length === 2,
   );
   assert.throws(() => selectTemporalWindow(captures, "03"), /exactly four digits/);
+});
+
+test("inventory budgeting preserves a requested lower-coverage era and ranked alternatives", async () => {
+  const paths = ["/", "/about", "/work", "/links", "/contact", "/news", "/people", "/archive"];
+  const rows = [
+    ["timestamp", "original", "statuscode", "mimetype", "digest"],
+    ...["2008", "2009"].flatMap((year) => paths.map((path, index) => [
+      `${year}010${index + 1}000000`,
+      `http://lost-web.org${path}`,
+      "200",
+      "text/html",
+      `${year}-${index}`,
+    ])),
+    ...paths.slice(0, 2).map((path, index) => [
+      `2007010${index + 1}000000`,
+      `http://lost-web.org${path}`,
+      "200",
+      "text/html",
+      `2007-${index}`,
+    ]),
+  ];
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => Response.json(rows);
+  try {
+    const inventory = await discoverCaptures("http://lost-web.org/", "2007");
+    assert.equal(inventory.selectedYear, "2007");
+    assert.equal(inventory.selected.length, 2);
+    assert.equal(inventory.all.length, RECOVERY_BUDGETS.maxInventoryRecords);
+    assert.deepEqual(
+      inventory.temporalCandidates.map((candidate) => candidate.year),
+      ["2009", "2008", "2007"],
+    );
+    assert.equal(inventory.temporalCandidates.find((candidate) => candidate.year === "2007")?.selected, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("duplicate-path fragments choose one mechanical primary and never concatenate bodies", async () => {

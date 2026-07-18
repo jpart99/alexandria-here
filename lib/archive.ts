@@ -135,13 +135,17 @@ function evenlySampleRows(rows: CdxRow[], limit: number) {
   return Array.from({ length: limit }, (_, index) => rows[Math.round(index * (rows.length - 1) / (limit - 1))]);
 }
 
-function boundInventoryCandidates(captures: Capture[]): Capture[] {
+function boundInventoryCandidates(captures: Capture[], requestedYear?: string): Capture[] {
   const byYear = new Map<string, Capture[]>();
   for (const capture of captures) {
     const year = capture.capturedAt.slice(0, 4);
     byYear.set(year, [...(byYear.get(year) || []), capture]);
   }
   const rankedYears = Array.from(byYear.entries()).sort((a, b) => {
+    if (requestedYear) {
+      if (a[0] === requestedYear && b[0] !== requestedYear) return -1;
+      if (b[0] === requestedYear && a[0] !== requestedYear) return 1;
+    }
     const coverageA = new Set(a[1].map((capture) => canonicalPath(capture.originalUrl))).size;
     const coverageB = new Set(b[1].map((capture) => canonicalPath(capture.originalUrl))).size;
     const spread = (items: Capture[]) => Math.max(...items.map(captureTime)) - Math.min(...items.map(captureTime));
@@ -371,6 +375,7 @@ export async function discoverCaptures(originalUrl: string, requestedYear?: stri
   );
   const unique = boundInventoryCandidates(
     Array.from(new Map(unboundedCaptures.map((capture) => [capture.id, capture])).values()),
+    requestedYear,
   );
   if (unique.length === 0) throw new Error("No usable public HTML captures were found.");
 
