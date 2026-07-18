@@ -104,7 +104,7 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 
 ## Audited 2:35 demo
 
-The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, thumbnail, description/chapters, and Devpost cover in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the deployed runtime remains production version 6 commit `f434249d673911bb5de89689313248b68a389b52`.
+The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, and a Devpost-preferred 1500×1000 3:2 cover; the audited video master was sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`, while the deployed runtime remains production version 6 commit `f434249d673911bb5de89689313248b68a389b52`.
 
 **0:00–0:19 — The promise.** Introduce Alexandria as a witnessed restoration engine and iExile as the founder's real lost community.
 

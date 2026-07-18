@@ -30,7 +30,7 @@ After processing finishes, verify 1080p playback, audible narration, visible cap
 - GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
 - Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/8ea53a47-437b-4afe-ad2c-29c81637a327/receipt
 - Primary Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
-- Cover: `submission-assets/08-devpost-cover.png`
+- Cover: `submission-assets/08-devpost-cover.png` (1500×1000, Devpost-preferred 3:2)
 - Optional gallery: `00-landing.png`, `01-returned-site.png`, `02-show-the-seams.png`, `03-timeline-focused.png`, `04-witnesses-focused.png`, `05-what-survived-focused.png`, `06-receipt-focused.png`
 - Copy-ready narrative and checklist: `SUBMISSION.md`
 
