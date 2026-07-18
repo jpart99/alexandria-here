@@ -1,6 +1,7 @@
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { auditBrowserFontReferences } from "./font-browser-contract.mjs";
 import { forbiddenArtifactReason } from "./release-artifact-contract.mjs";
 
 const root = process.cwd();
@@ -268,60 +269,18 @@ if (compiledMode) {
         }
       }
       const inlineStyles = [...landingBody.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/giu)].map((match) => match[1]);
-      const servedBrowserStyles = [...inlineStyles];
-      const servedFontAliases = new Set();
-      const inspectFontReferences = (style, label) => {
-        for (const match of style.matchAll(/url\(\s*(["']?)([^"')]+\.woff2(?:\?[^"')\s]*)?)\1\s*\)/giu)) {
-          try {
-            const fontUrl = new URL(match[2], baseUrl);
-            if (fontUrl.origin !== baseUrl.origin
-              || !fontPublicPaths.includes(fontUrl.pathname)
-              || fontUrl.search
-              || fontUrl.hash) {
-              servedStyleFailures.push(`${label} (unexpected font URL ${fontUrl.href})`);
-            } else {
-              servedFontAliases.add(fontUrl.pathname);
-            }
-          } catch {
-            servedStyleFailures.push(`${label} (invalid font URL)`);
-          }
-        }
-      };
-      for (const [index, inlineStyle] of inlineStyles.entries()) inspectFontReferences(inlineStyle, `inline style ${index + 1}`);
+      const styleAttributes = [...landingBody.matchAll(/\bstyle\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/giu)]
+        .map((match) => match[1] ?? match[2] ?? match[3] ?? "");
       if (inlineStyles.some((style) => unsafeFontReference.test(style))) {
         servedStyleFailures.push("inline style contains an unsafe font reference");
       }
       const nonEmptyInlineStyleCount = inlineStyles.filter((style) => style.trim().length > 0).length;
-      const fontPreloadFailures = [];
-      const preloadTags = [...landingBody.matchAll(/<link\b[^>]*>/giu)].map(([tag]) => tag);
-      for (const [fontIndex, name] of fontAssets.entries()) {
-        const matches = preloadTags.filter((tag) => {
-          const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1] || "";
-          const rel = tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "";
-          const as = tag.match(/\bas=["']([^"']+)["']/iu)?.[1] || "";
-          const type = tag.match(/\btype=["']([^"']+)["']/iu)?.[1] || "";
-          const crossOrigin = tag.match(/\bcrossorigin=["']([^"']*)["']/iu);
-          let pathname = "";
-          try {
-            pathname = new URL(href, baseUrl).pathname;
-          } catch {
-            return false;
-          }
-          return rel.split(/\s+/u).includes("preload")
-            && pathname === fontPublicPaths[fontIndex]
-            && as === "font"
-            && type === "font/woff2"
-            && crossOrigin !== null
-            && (crossOrigin[1] === "" || crossOrigin[1] === "anonymous");
-        });
-        if (matches.length !== 1) fontPreloadFailures.push(`${name} (${matches.length} valid preload tags)`);
-      }
+      const servedStylesheets = [];
       let verifiedStylesheetCount = 0;
       for (const stylesheetUrl of stylesheetLinks) {
         const stylesheet = await fetch(stylesheetUrl, { redirect: "manual" });
         const stylesheetBody = await stylesheet.text();
-        servedBrowserStyles.push(stylesheetBody);
-        inspectFontReferences(stylesheetBody, stylesheetUrl.pathname);
+        servedStylesheets.push({ url: stylesheetUrl, css: stylesheetBody });
         const mime = stylesheet.headers.get("content-type") || "";
         const styleIsValid = stylesheet.status === 200
           && /^text\/css(?:;|$)/iu.test(mime)
@@ -336,21 +295,37 @@ if (compiledMode) {
           verifiedStylesheetCount += 1;
         }
       }
-      for (const [fontIndex, name] of fontAssets.entries()) {
-        if (!servedFontAliases.has(fontPublicPaths[fontIndex])) {
-          servedStyleFailures.push(`${name} (public Worker alias absent from served styles)`);
-        }
-        if (`${linkHeader}\n${landingBody}\n${servedBrowserStyles.join("\n")}`.includes(fontPhysicalAssetPaths[fontIndex])) {
-          servedStyleFailures.push(`${name} (physical asset path leaked into browser output)`);
-        }
+      const browserFontAudit = auditBrowserFontReferences({
+        baseUrl,
+        landingHtml: landingBody,
+        linkHeader,
+        stylesheets: [
+          ...servedStylesheets,
+          ...inlineStyles.map((css, index) => ({
+            url: new URL(`/?inline-style=${index + 1}`, baseUrl),
+            css,
+          })),
+          ...styleAttributes.map((css, index) => ({
+            url: new URL(`/?style-attribute=${index + 1}`, baseUrl),
+            css,
+          })),
+        ],
+        allowedPublicPaths: fontPublicPaths,
+      });
+      servedStyleFailures.push(...browserFontAudit.errors);
+      const expectedBrowserAliases = [...fontPublicPaths].sort();
+      if (JSON.stringify(browserFontAudit.cssAliases) !== JSON.stringify(expectedBrowserAliases)) {
+        servedStyleFailures.push(`served CSS exposes ${browserFontAudit.cssAliases.length} exact Worker font aliases instead of ${fontPublicPaths.length}`);
+      }
+      if (JSON.stringify(browserFontAudit.preloadAliases) !== JSON.stringify(expectedBrowserAliases)) {
+        servedStyleFailures.push(`browser preload surfaces expose ${browserFontAudit.preloadAliases.length} exact Worker font aliases instead of ${fontPublicPaths.length}`);
       }
       const hasStyleSurface = verifiedStylesheetCount > 0 || nonEmptyInlineStyleCount > 0;
       const landingClean = landing.status === 200
         && !unsafeFontReference.test(`${linkHeader}\n${landingBody}`)
         && hasStyleSurface
-        && fontPreloadFailures.length === 0
         && servedStyleFailures.length === 0;
-      check("Compiled local", "Landing route responds", landingClean ? "PASS" : "FAIL", landingClean ? `clean HTTP ${landing.status} from ${baseUrl.origin}; ${verifiedStylesheetCount} linked and ${nonEmptyInlineStyleCount} inline style surface(s); one preload per font` : `unsafe, empty, absent, duplicated, or unavailable served style: ${[...servedStyleFailures, ...fontPreloadFailures].join(", ") || "landing HTML/Link header"}`);
+      check("Compiled local", "Landing route responds", landingClean ? "PASS" : "FAIL", landingClean ? `clean HTTP ${landing.status} from ${baseUrl.origin}; ${verifiedStylesheetCount} linked and ${nonEmptyInlineStyleCount} inline style surface(s); exactly ${fontPublicPaths.length} Worker aliases and preloads` : `unsafe, empty, absent, duplicated, or unavailable served style: ${servedStyleFailures.join(", ") || "landing HTML/Link header"}`);
 
       const servedFontFailures = [];
       const servedFontRangeModes = [];
@@ -389,16 +364,23 @@ if (compiledMode) {
 
         const range = await fetch(fontUrl, { headers: { Range: "bytes=0-3" }, redirect: "manual" });
         const rangeBytes = Buffer.from(await range.arrayBuffer());
+        const rangeLength = range.headers.get("content-length");
         const partialRangeReady = range.status === 206
           && rangeBytes.toString("ascii") === "wOF2"
-          && range.headers.get("content-range") === `bytes 0-3/${expected.length}`;
+          && range.headers.get("content-range") === `bytes 0-3/${expected.length}`
+          && etag !== null
+          && range.headers.get("etag") === etag
+          && (rangeLength === null || Number(rangeLength) === 4);
         // Local Workerd's ASSETS binding may legally ignore Range and return
         // the complete 200 representation. The pure forwarding test proves we
         // do not strip the request; this runtime gate accepts only that exact
         // native fallback or a correct 206 response.
         const fullRangeFallbackReady = range.status === 200
           && range.headers.get("content-range") === null
-          && rangeBytes.equals(expected);
+          && rangeBytes.equals(expected)
+          && etag !== null
+          && range.headers.get("etag") === etag
+          && (rangeLength === null || Number(rangeLength) === expected.length);
         if ((!partialRangeReady && !fullRangeFallbackReady)
           || !/^font\/woff2(?:;|$)/iu.test(range.headers.get("content-type") || "")
           || range.headers.get("cache-control") !== fontCacheControl
@@ -412,8 +394,10 @@ if (compiledMode) {
 
         if (etag) {
           const conditional = await fetch(fontUrl, { headers: { "If-None-Match": etag }, redirect: "manual" });
+          const conditionalType = conditional.headers.get("content-type");
           if (conditional.status !== 304
             || conditional.body !== null
+            || (conditionalType !== null && !/^font\/woff2(?:;|$)/iu.test(conditionalType))
             || conditional.headers.get("cache-control") !== fontCacheControl
             || conditional.headers.get("x-content-type-options") !== "nosniff"
             || conditional.headers.get("x-alexandria-asset-route") !== fontWorkerRouteMarker
@@ -431,7 +415,7 @@ if (compiledMode) {
         servedFontFailures.push(`missing font mislabeled (HTTP ${missingFont.status})`);
       }
       await missingFont.body?.cancel();
-      check("Compiled local", "Self-hosted font protocol", servedFontFailures.length ? "FAIL" : "PASS", servedFontFailures.length ? servedFontFailures.join(", ") : `${fontAssets.length} exact WOFF2 files pass GET, HEAD, native Range (${servedFontRangeModes.join(", ")}), ETag, headers, and negative selectivity`);
+      check("Compiled local", "Self-hosted font protocol", servedFontFailures.length ? "FAIL" : "PASS", servedFontFailures.length ? servedFontFailures.join(", ") : `${fontAssets.length} exact WOFF2 files pass GET, HEAD, Range (${servedFontRangeModes.join(", ")}), ETag, headers, and negative selectivity`);
       const unsafe = await fetch(new URL("/api/recover", baseUrl), {
         method: "POST",
         headers: { "content-type": "application/json" },

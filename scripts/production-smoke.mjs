@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import { isIP } from "node:net";
 import path from "node:path";
 
+import { auditBrowserFontReferences } from "./font-browser-contract.mjs";
+
 const rawBaseUrl = process.env.ALEXANDRIA_BASE_URL;
 if (!rawBaseUrl) throw new Error("Set ALEXANDRIA_BASE_URL to the deployed HTTPS origin.");
 
@@ -69,10 +71,7 @@ const marker = "worker-font-alias-v2";
 const applicationWorkerMarker = "app-worker-v1";
 const cacheControl = "public, max-age=86400";
 const fontNames = ["geist-latin.woff2", "cormorant-garamond-latin.woff2"];
-const fontRoutes = fontNames.map((name) => ({
-  publicPath: `/witness-fonts/${name}`,
-  physicalPath: `/fonts/${name}`,
-}));
+const fontRoutes = fontNames.map((name) => ({ publicPath: `/witness-fonts/${name}` }));
 const checks = [];
 
 function assert(condition, message) {
@@ -148,49 +147,26 @@ for (const stylesheetUrl of new Set(stylesheetUrls)) {
   assert(/^text\/css(?:;|$)/iu.test(stylesheet.headers.get("content-type") || ""), "Stylesheet MIME is unsafe.");
   assert(stylesheet.headers.get("x-alexandria-asset-route") === null, "Ordinary assets entered the font Worker route.");
   assert(stylesheet.headers.get("x-alexandria-worker-route") === null, "Ordinary assets entered the application Worker.");
-  stylesheetBodies.push(stylesheetBody);
+  stylesheetBodies.push({ url: new URL(stylesheetUrl, baseUrl), css: stylesheetBody });
   checks.push([`ordinary asset remains direct: ${stylesheetUrl}`, stylesheet.status]);
 }
 
-const preloadTags = [...landingHtml.matchAll(/<link\b[^>]*>/giu)].map(([tag]) => tag);
-const browserSurface = `${landing.headers.get("link") || ""}\n${landingHtml}\n${stylesheetBodies.join("\n")}`;
-const allowedFontAliases = new Set(fontRoutes.map(({ publicPath }) => publicPath));
-const cssFontAliases = new Set();
-for (const stylesheetBody of stylesheetBodies) {
-  for (const match of stylesheetBody.matchAll(/url\(\s*(["']?)([^"')]+\.woff2(?:\?[^"')\s]*)?)\1\s*\)/giu)) {
-    const fontUrl = new URL(match[2], baseUrl);
-    assert(fontUrl.origin === baseUrl.origin, `Cross-origin font refused: ${fontUrl.origin}.`);
-    assert(allowedFontAliases.has(fontUrl.pathname) && !fontUrl.search && !fontUrl.hash, `Unexpected browser font URL: ${fontUrl.href}.`);
-    cssFontAliases.add(fontUrl.pathname);
-  }
-}
-for (const route of fontRoutes) {
-  const validPreloads = preloadTags.filter((tag) => {
-    const href = tag.match(/\bhref=["']([^"']+)["']/iu)?.[1] || "";
-    const rel = tag.match(/\brel=["']([^"']+)["']/iu)?.[1] || "";
-    const as = tag.match(/\bas=["']([^"']+)["']/iu)?.[1] || "";
-    const type = tag.match(/\btype=["']([^"']+)["']/iu)?.[1] || "";
-    const crossOrigin = tag.match(/\bcrossorigin=["']([^"']*)["']/iu);
-    let url;
-    try {
-      url = new URL(href, baseUrl);
-    } catch {
-      return false;
-    }
-    return rel.split(/\s+/u).some((token) => token.toLowerCase() === "preload")
-      && url.origin === baseUrl.origin
-      && url.pathname === route.publicPath
-      && !url.search
-      && !url.hash
-      && as === "font"
-      && type === "font/woff2"
-      && crossOrigin !== null
-      && (crossOrigin[1] === "" || crossOrigin[1] === "anonymous");
-  });
-  assert(validPreloads.length === 1, `${route.publicPath} has ${validPreloads.length} valid preload tags.`);
-  assert(cssFontAliases.has(route.publicPath), `${route.publicPath} is absent from served CSS.`);
-  assert(!browserSurface.includes(route.physicalPath), `Browser output exposes the physical font path ${route.physicalPath}.`);
-}
+const inlineStyles = [...landingHtml.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/giu)].map((match, index) => ({
+  url: new URL(`/?inline-style=${index + 1}`, baseUrl),
+  css: match[1],
+}));
+const styleAttributes = [...landingHtml.matchAll(/\bstyle=["']([^"']*)["']/giu)].map((match, index) => ({
+  url: new URL(`/?style-attribute=${index + 1}`, baseUrl),
+  css: `.inline-style { ${match[1]} }`,
+}));
+const fontReferenceAudit = auditBrowserFontReferences({
+  baseUrl,
+  landingHtml,
+  linkHeader: landing.headers.get("link") || "",
+  stylesheets: [...stylesheetBodies, ...inlineStyles, ...styleAttributes],
+  allowedPublicPaths: fontRoutes.map(({ publicPath }) => publicPath),
+});
+assert(fontReferenceAudit.errors.length === 0, `Browser font contract failed: ${fontReferenceAudit.errors.join(" ")}`);
 checks.push(["browser font references use only Worker aliases", fontRoutes.map(({ publicPath }) => publicPath)]);
 
 for (const { publicPath: relative } of fontRoutes) {
@@ -216,10 +192,14 @@ for (const { publicPath: relative } of fontRoutes) {
   const rangedBytes = await readBounded(ranged, expected.length + 1);
   const partialReady = ranged.status === 206
     && rangedBytes.toString("ascii") === "wOF2"
-    && ranged.headers.get("content-range") === `bytes 0-3/${expected.length}`;
+    && ranged.headers.get("content-range") === `bytes 0-3/${expected.length}`
+    && ranged.headers.get("etag") === etag
+    && (ranged.headers.get("content-length") === null || Number(ranged.headers.get("content-length")) === 4);
   const exactFallbackReady = ranged.status === 200
     && ranged.headers.get("content-range") === null
-    && rangedBytes.equals(expected);
+    && rangedBytes.equals(expected)
+    && ranged.headers.get("etag") === etag
+    && (ranged.headers.get("content-length") === null || Number(ranged.headers.get("content-length")) === expected.length);
   assert(partialReady || exactFallbackReady, `${name} Range semantics failed: HTTP ${ranged.status}.`);
   assert(responseHasFontHeaders(ranged), `${name} Range headers failed.`);
 
@@ -227,6 +207,8 @@ for (const { publicPath: relative } of fontRoutes) {
   const conditionalBytes = await readBounded(conditional, 1);
   assert(conditional.status === 304 && conditionalBytes.length === 0, `${name} conditional request returned ${conditional.status}.`);
   assert(responseHasFontHeaders(conditional, { contentType: false }), `${name} 304 headers failed.`);
+  const conditionalType = conditional.headers.get("content-type");
+  assert(conditionalType === null || /^font\/woff2(?:;|$)/iu.test(conditionalType), `${name} 304 has an unsafe MIME.`);
   assert(conditional.headers.get("etag") === etag, `${name} 304 changed its ETag.`);
   checks.push([name, {
     protocol: `GET/HEAD/${partialReady ? "206" : "exact-200"}/304`,
