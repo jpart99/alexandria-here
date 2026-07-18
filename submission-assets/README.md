@@ -24,3 +24,5 @@
 The product frames were captured from the public Sites deployment after the
 production version 6 browser gate. Use them for the Devpost gallery and video;
 do not substitute a mock or fixture screenshot.
+
+Run `npm run qa:submission` from the app root immediately before uploading. The command is non-mutating and validates the exact media roles, pinned hashes, image geometry, video duration, captions, narration alignment, gallery order, required claims, and operator contract while leaving external publication actions explicitly pending.

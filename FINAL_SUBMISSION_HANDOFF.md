@@ -2,6 +2,8 @@
 
 Everything below is prepared and audited. The only actions that require Jaia's authority are transmitting the prepared Devpost media, public YouTube publication, Devpost's official-rules acceptance, and final submission.
 
+Immediately before selecting any upload file, run `npm run qa:submission`. It is read-only, uses no network or secrets, prints the canonical absolute upload paths, verifies the sealed video/captions/thumbnails/gallery plus required submission claims and operator contracts, and exits nonzero on local drift. Its three external actions remain `PENDING` until their user-controlled steps are completed. After those actions are recorded, `npm run qa:submission -- --final` also refuses any remaining `PENDING` gate.
+
 ## 1. Publish the YouTube video
 
 - Video: `submission-assets/alexandria-here-build-week-demo.mp4`

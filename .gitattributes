@@ -1,0 +1,4 @@
+*.png binary
+*.mp4 binary
+*.vtt text eol=lf
+*.sha256 text eol=lf

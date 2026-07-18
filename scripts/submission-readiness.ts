@@ -1,0 +1,625 @@
+import { createHash } from "node:crypto";
+import { lstat, readFile, readdir } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+export type GateState = "PASS" | "FAIL" | "PENDING";
+
+export interface SubmissionCheck {
+  section: "Media integrity" | "Submission contracts" | "External authority";
+  name: string;
+  state: GateState;
+  detail: string;
+}
+
+interface PngInfo {
+  width: number;
+  height: number;
+  bitDepth: number;
+  colorType: number;
+  chunkTypes: string[];
+}
+
+interface VttCue {
+  startMs: number;
+  endMs: number;
+  text: string;
+}
+
+const DEFAULT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const VIDEO_NAME = "alexandria-here-build-week-demo.mp4";
+const VIDEO_HASH = "B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA";
+const VIDEO_BYTES = 11_459_389;
+const VIDEO_DURATION_SECONDS = 155.26;
+const CAPTIONS_NAME = "alexandria-here-build-week-demo.en.vtt";
+const CAPTIONS_HASH = "FAD236187D399A8A3B7F2A19F09F0826EF35B68154E34659BB1F94C07F01EA22";
+const YOUTUBE_THUMBNAIL_NAME = "07-youtube-thumbnail.png";
+const YOUTUBE_THUMBNAIL_HASH = "97BD15C6EC9E65445361A1DC39172AE40866DAA89D5278D64BCBD5DC034145A3";
+const YOUTUBE_THUMBNAIL_BYTES = 265_905;
+const YOUTUBE_TITLE = "Alexandria Here — A Witnessed Restoration Engine for the Lost Web | OpenAI Build Week";
+const DEVPOST_MANIFEST_HASH = "8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044";
+const DEVPOST_MAX_BYTES = 5_000_000;
+const DEVPOST_NAMES = [
+  "08-devpost-cover.png",
+  "09-devpost-gallery-returned-site.png",
+  "10-devpost-gallery-show-the-seams.png",
+  "11-devpost-gallery-timeline.png",
+  "12-devpost-gallery-what-survived.png",
+  "13-devpost-gallery-witnesses.png",
+  "14-devpost-gallery-receipt.png",
+] as const;
+const DEVPOST_HASHES: Readonly<Record<(typeof DEVPOST_NAMES)[number], string>> = {
+  "08-devpost-cover.png": "45CFA6E35743FEDB2CF617F416807409DBD35580EF31041828CFF11BD48F4A6A",
+  "09-devpost-gallery-returned-site.png": "3801712A049C4C2C866D5AB320A1A26BC210B86B3A52803AC3E2394F0A2C1E0C",
+  "10-devpost-gallery-show-the-seams.png": "374CD2466A17475A879F74915CC09D46BA827E091307A326BD7851D07A2E1F2D",
+  "11-devpost-gallery-timeline.png": "7C60525259CD2322DBB9C745CCACC033B5C401E6C8B1F7155EECE3C4381814AD",
+  "12-devpost-gallery-what-survived.png": "B281C13E8D62B2595F6094CDE060C7593386FAE1ECA17D724DDD6E0490709AC9",
+  "13-devpost-gallery-witnesses.png": "26C07D81F76979F9CEA980AF3D452EB498865EE6EC9B1670AEC113B5040BA299",
+  "14-devpost-gallery-receipt.png": "C3C9A7F68D6E2AE50DFB5904AD249F15FE9070B099C4EA1F03A1A560D6212DA8",
+};
+const GALLERY_NAMES = DEVPOST_NAMES.slice(1);
+const YOUTUBE_CHAPTERS = [0, 19, 42, 65, 86, 117, 147] as const;
+const PRODUCTION_URL = "https://alexandria-here.cinemaexile.chatgpt.site";
+const RECOVERY_ID = "8ea53a47-437b-4afe-ad2c-29c81637a327";
+const RECOVERY_URL = `${PRODUCTION_URL}/r/${RECOVERY_ID}`;
+const RECEIPT_URL = `${PRODUCTION_URL}/api/recover/${RECOVERY_ID}/receipt`;
+const REPOSITORY_URL = "https://github.com/jpart99/alexandria-here";
+const SESSION_ID = "019f7304-e394-7f11-ba64-26e415135ff6";
+const YOUTUBE_PLACEHOLDER = "[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]";
+const YOUTUBE_URL_PATTERN = /https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
+const CHECKLIST = {
+  youtubeUpload: "Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.",
+  youtubeVerify: "Verify signed-out public YouTube playback at 1080p with audible narration, captions, and embedding, then paste the same URL into Devpost.",
+  devpostMedia: "Upload the audited Devpost thumbnail and gallery media, then verify the public preview.",
+  rules: "Jaia personally accepts the official-rules checkbox immediately before submission.",
+  submit: "Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).",
+} as const;
+
+function fail(message: string): never {
+  throw new Error(message);
+}
+
+export function sha256(bytes: Uint8Array): string {
+  return createHash("sha256").update(bytes).digest("hex").toUpperCase();
+}
+
+export function verifyPinnedHash(bytes: Uint8Array, expectedHash: string, label: string): void {
+  const actual = sha256(bytes);
+  if (actual !== expectedHash) fail(`${label} hash is ${actual}; expected ${expectedHash}`);
+}
+
+export async function readRegularFile(
+  filePath: string,
+  limits: { exactBytes?: number; maxBytes?: number } = {},
+): Promise<Buffer> {
+  const fileStat = await lstat(filePath);
+  if (!fileStat.isFile() || fileStat.isSymbolicLink()) fail(`${filePath} must be a regular, non-symlink file`);
+  if (limits.exactBytes !== undefined && fileStat.size !== limits.exactBytes) {
+    fail(`${filePath} is ${fileStat.size} bytes; expected ${limits.exactBytes}`);
+  }
+  if (limits.maxBytes !== undefined && fileStat.size > limits.maxBytes) {
+    fail(`${filePath} is ${fileStat.size} bytes; exceeds ${limits.maxBytes}`);
+  }
+  const bytes = await readFile(filePath);
+  if (bytes.length !== fileStat.size) fail(`${filePath} changed while it was being read`);
+  return bytes;
+}
+
+export function validateCandidateNames(actual: readonly string[], expected: readonly string[], label: string): void {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    fail(`${label} candidates are ${actual.join(", ") || "none"}; expected ${expected.join(", ")}`);
+  }
+}
+
+export function parseHashManifest(bytes: Buffer, expectedNames: readonly string[]): Map<string, string> {
+  const raw = bytes.toString("ascii");
+  if (raw.includes("\r")) fail("checksum manifest must use LF line endings");
+  if (!raw.endsWith("\n")) fail("checksum manifest must end with LF");
+  const lines = raw.slice(0, -1).split("\n");
+  if (lines.length !== expectedNames.length) {
+    fail(`checksum manifest has ${lines.length} entries; expected ${expectedNames.length}`);
+  }
+
+  const parsed = new Map<string, string>();
+  lines.forEach((line, index) => {
+    const match = /^([A-F0-9]{64})  ([A-Za-z0-9._-]+)$/.exec(line);
+    if (!match) fail(`checksum manifest line ${index + 1} is malformed`);
+    const [, digest, name] = match;
+    if (name !== expectedNames[index]) {
+      fail(`checksum manifest entry ${index + 1} is ${name}; expected ${expectedNames[index]}`);
+    }
+    if (parsed.has(name)) fail(`checksum manifest repeats ${name}`);
+    parsed.set(name, digest);
+  });
+  return parsed;
+}
+
+export function inspectPng(bytes: Buffer): PngInfo {
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (bytes.length < 33 || !bytes.subarray(0, 8).equals(signature)) fail("invalid PNG signature");
+
+  let offset = 8;
+  const chunkTypes: string[] = [];
+  let width = 0;
+  let height = 0;
+  let bitDepth = -1;
+  let colorType = -1;
+  let sawIend = false;
+
+  while (offset + 12 <= bytes.length) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.toString("ascii", offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const next = dataStart + length + 4;
+    if (next > bytes.length) fail(`PNG ${type || "chunk"} exceeds file bounds`);
+    chunkTypes.push(type);
+
+    if (chunkTypes.length === 1) {
+      if (type !== "IHDR" || length !== 13) fail("PNG must begin with a 13-byte IHDR");
+      width = bytes.readUInt32BE(dataStart);
+      height = bytes.readUInt32BE(dataStart + 4);
+      bitDepth = bytes[dataStart + 8];
+      colorType = bytes[dataStart + 9];
+      if (bytes[dataStart + 10] !== 0 || bytes[dataStart + 11] !== 0 || bytes[dataStart + 12] !== 0) {
+        fail("PNG uses unsupported compression, filtering, or interlacing");
+      }
+    }
+
+    offset = next;
+    if (type === "IEND") {
+      if (length !== 0) fail("PNG IEND must be empty");
+      sawIend = true;
+      break;
+    }
+  }
+
+  if (!sawIend || offset !== bytes.length) fail("PNG must end exactly at IEND");
+  if (!chunkTypes.includes("IDAT")) fail("PNG contains no image data");
+  const unexpected = chunkTypes.filter((type) => !["IHDR", "IDAT", "IEND"].includes(type));
+  if (unexpected.length) fail(`PNG contains metadata or unexpected chunks: ${unexpected.join(", ")}`);
+  return { width, height, bitDepth, colorType, chunkTypes };
+}
+
+export function validatePng(bytes: Buffer, width: number, height: number): PngInfo {
+  const info = inspectPng(bytes);
+  if (info.width !== width || info.height !== height) {
+    fail(`PNG is ${info.width}x${info.height}; expected ${width}x${height}`);
+  }
+  if (info.bitDepth !== 8 || info.colorType !== 2) {
+    fail(`PNG must be 8-bit RGB; found bit depth ${info.bitDepth}, color type ${info.colorType}`);
+  }
+  return info;
+}
+
+interface Mp4Box {
+  type: string;
+  dataStart: number;
+  end: number;
+}
+
+function mp4Boxes(bytes: Buffer, start: number, end: number): Mp4Box[] {
+  const boxes: Mp4Box[] = [];
+  let offset = start;
+  while (offset + 8 <= end) {
+    let size = bytes.readUInt32BE(offset);
+    const type = bytes.toString("ascii", offset + 4, offset + 8);
+    let headerSize = 8;
+    if (size === 1) {
+      if (offset + 16 > end) fail(`truncated extended MP4 box ${type}`);
+      const extended = bytes.readBigUInt64BE(offset + 8);
+      if (extended > BigInt(Number.MAX_SAFE_INTEGER)) fail(`MP4 box ${type} is too large`);
+      size = Number(extended);
+      headerSize = 16;
+    } else if (size === 0) {
+      size = end - offset;
+    }
+    if (size < headerSize || offset + size > end) fail(`invalid MP4 box ${type}`);
+    boxes.push({ type, dataStart: offset + headerSize, end: offset + size });
+    offset += size;
+  }
+  if (offset !== end) fail("MP4 box table has trailing bytes");
+  return boxes;
+}
+
+export function mp4DurationSeconds(bytes: Buffer): number {
+  const topLevel = mp4Boxes(bytes, 0, bytes.length);
+  if (topLevel[0]?.type !== "ftyp") fail("MP4 must begin with an ftyp box");
+  const moov = topLevel.find((box) => box.type === "moov");
+  if (!moov) fail("MP4 contains no moov box");
+  const mvhd = mp4Boxes(bytes, moov.dataStart, moov.end).find((box) => box.type === "mvhd");
+  if (!mvhd) fail("MP4 contains no movie header");
+  const version = bytes[mvhd.dataStart];
+  let timescale: number;
+  let duration: number;
+  if (version === 0) {
+    if (mvhd.dataStart + 20 > mvhd.end) fail("truncated version 0 movie header");
+    timescale = bytes.readUInt32BE(mvhd.dataStart + 12);
+    duration = bytes.readUInt32BE(mvhd.dataStart + 16);
+  } else if (version === 1) {
+    if (mvhd.dataStart + 32 > mvhd.end) fail("truncated version 1 movie header");
+    timescale = bytes.readUInt32BE(mvhd.dataStart + 20);
+    const wideDuration = bytes.readBigUInt64BE(mvhd.dataStart + 24);
+    if (wideDuration > BigInt(Number.MAX_SAFE_INTEGER)) fail("MP4 duration is too large");
+    duration = Number(wideDuration);
+  } else {
+    fail(`unsupported movie header version ${version}`);
+  }
+  if (!timescale || !duration) fail("MP4 has an empty timescale or duration");
+  return duration / timescale;
+}
+
+function vttTimestampMs(value: string): number {
+  const match = /^(\d{2}):(\d{2}):(\d{2})\.(\d{3})$/.exec(value);
+  if (!match) fail(`invalid WebVTT timestamp ${value}`);
+  const [, hours, minutes, seconds, milliseconds] = match.map(Number);
+  if (minutes >= 60 || seconds >= 60) fail(`out-of-range WebVTT timestamp ${value}`);
+  return ((hours * 60 + minutes) * 60 + seconds) * 1000 + milliseconds;
+}
+
+export function validateWebVtt(raw: string, expectedCount = 49, maximumEndMs = Math.round(VIDEO_DURATION_SECONDS * 1000)): VttCue[] {
+  if (raw.includes("\uFFFD")) fail("WebVTT contains replacement characters");
+  const lines = raw.replace(/\r\n/g, "\n").split("\n");
+  if (lines[0] !== "WEBVTT") fail("captions must begin with WEBVTT");
+  const cues: VttCue[] = [];
+  let index = 1;
+
+  while (index < lines.length) {
+    while (index < lines.length && !lines[index].trim()) index += 1;
+    if (index >= lines.length) break;
+    if (lines[index].startsWith("NOTE")) {
+      while (index < lines.length && lines[index].trim()) index += 1;
+      continue;
+    }
+    if (!lines[index].includes("-->")) index += 1;
+    if (index >= lines.length) fail("WebVTT cue identifier has no timing line");
+    const timing = /^(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})$/.exec(lines[index]);
+    if (!timing) fail(`invalid WebVTT timing line: ${lines[index]}`);
+    const startMs = vttTimestampMs(timing[1]);
+    const endMs = vttTimestampMs(timing[2]);
+    index += 1;
+    const body: string[] = [];
+    while (index < lines.length && lines[index].trim()) {
+      body.push(lines[index]);
+      index += 1;
+    }
+    if (!body.length) fail("WebVTT cue has no text");
+    if (endMs <= startMs) fail("WebVTT cue must end after it starts");
+    const previous = cues.at(-1);
+    if (previous && startMs < previous.endMs) fail("WebVTT cues overlap or are out of order");
+    if (endMs > maximumEndMs) fail(`WebVTT cue ends at ${endMs} ms, after the video`);
+    cues.push({ startMs, endMs, text: body.join("\n") });
+  }
+
+  if (cues.length !== expectedCount) fail(`WebVTT has ${cues.length} cues; expected ${expectedCount}`);
+  return cues;
+}
+
+export function normalizedWords(raw: string): string[] {
+  return raw
+    .toLocaleLowerCase("en-US")
+    .normalize("NFKD")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function assertSameWords(left: string, right: string, label: string): void {
+  const leftWords = normalizedWords(left);
+  const rightWords = normalizedWords(right);
+  if (leftWords.length !== rightWords.length || leftWords.some((word, index) => word !== rightWords[index])) {
+    const firstDifference = leftWords.findIndex((word, index) => word !== rightWords[index]);
+    fail(`${label} differs at word ${firstDifference < 0 ? Math.min(leftWords.length, rightWords.length) + 1 : firstDifference + 1}`);
+  }
+}
+
+export function assertOrdered(haystack: string, needles: readonly string[], label: string): void {
+  let offset = -1;
+  for (const needle of needles) {
+    const index = haystack.indexOf(needle, offset + 1);
+    if (index < 0) fail(`${label} is missing ${needle}`);
+    if (index <= offset) fail(`${label} has an invalid order near ${needle}`);
+    offset = index;
+  }
+}
+
+export function classifyYouTubeReference(submission: string): "pending" | "present" {
+  const placeholders = submission.match(/\[(?:ADD|TODO|TBD)[^\]]*\]/g) ?? [];
+  const hasAllowedPlaceholder = placeholders.length === 1 && placeholders[0] === YOUTUBE_PLACEHOLDER;
+  const hasYouTubeUrl = YOUTUBE_URL_PATTERN.test(submission);
+  if (placeholders.some((placeholder) => placeholder !== YOUTUBE_PLACEHOLDER) || placeholders.length > 1) {
+    fail(`submission contains unsupported placeholders: ${placeholders.join(", ")}`);
+  }
+  if (hasAllowedPlaceholder && hasYouTubeUrl) fail("submission contains both the pending marker and a YouTube URL");
+  if (hasAllowedPlaceholder) return "pending";
+  if (!placeholders.length && hasYouTubeUrl) return "present";
+  fail("submission contains neither the sole allowed pending marker nor a YouTube URL");
+}
+
+export function classifyChecklistItem(submission: string, label: string): "pending" | "complete" {
+  const lines = submission.split(/\r?\n/);
+  const pendingLine = `- [ ] ${label}`;
+  const completeLine = `- [x] ${label}`;
+  const pendingCount = lines.filter((line) => line === pendingLine).length;
+  const completeCount = lines.filter((line) => line === completeLine).length;
+  if (pendingCount === 1 && completeCount === 0) return "pending";
+  if (completeCount === 1 && pendingCount === 0) return "complete";
+  fail(`checklist item must appear exactly once as [ ] or [x]: ${label}`);
+}
+
+export function assertCanonicalTiming(text: string, label: string): void {
+  const deadline = "July 21, 2026 at 5:00 PM PDT (Pacific Time)";
+  const deadlineCount = text.split(deadline).length - 1;
+  const dateCount = text.split("July 21, 2026").length - 1;
+  const runtimeCount = text.split("less than 3:00").length - 1;
+  if (deadlineCount !== 1 || dateCount !== 1) fail(`${label} must contain exactly one canonical PDT deadline`);
+  if (runtimeCount !== 1) fail(`${label} must contain exactly one canonical less-than-3:00 claim`);
+  const timeClaims = text.match(/\b\d{1,2}:\d{2} PM(?: [A-Z]+(?: \(Pacific Time\))?)?/g) ?? [];
+  if (JSON.stringify(timeClaims) !== JSON.stringify(["5:00 PM PDT (Pacific Time)"])) {
+    fail(`${label} contains noncanonical deadline time claims: ${timeClaims.join(", ") || "none"}`);
+  }
+  if (/(?:at or below\s*3:00|3:00\s+or\s+(?:under|less)|(?:3|three)\s+minutes?\s+or\s+(?:under|less)|(?:at most|no more than)\s*(?:3:00|(?:3|three)\s+minutes?)|(?:≤|<=)\s*3:00)/i.test(text)) {
+    fail(`${label} contains a noncanonical runtime claim`);
+  }
+}
+
+function requirePhrases(text: string, phrases: readonly string[], label: string): void {
+  const missing = phrases.filter((phrase) => !text.includes(phrase));
+  if (missing.length) fail(`${label} is missing: ${missing.join(" | ")}`);
+}
+
+function extractMarkdownSection(text: string, heading: string, nextHeading: string): string {
+  const start = text.indexOf(heading);
+  const end = text.indexOf(nextHeading, start + heading.length);
+  if (start < 0 || end < 0) fail(`cannot resolve ${heading} section`);
+  return text.slice(start + heading.length, end).trim();
+}
+
+async function addCheck(
+  checks: SubmissionCheck[],
+  section: SubmissionCheck["section"],
+  name: string,
+  run: () => Promise<string> | string,
+): Promise<void> {
+  try {
+    const detail = await run();
+    checks.push({ section, name, state: "PASS", detail });
+  } catch (error) {
+    checks.push({
+      section,
+      name,
+      state: "FAIL",
+      detail: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<SubmissionCheck[]> {
+  const checks: SubmissionCheck[] = [];
+  const assetPath = (name: string) => path.join(root, "submission-assets", name);
+  const document = (name: string) => readFile(path.join(root, name), "utf8");
+
+  await addCheck(checks, "Media integrity", "Audited video master", async () => {
+    const [video, sidecar] = await Promise.all([
+      readRegularFile(assetPath(VIDEO_NAME), { exactBytes: VIDEO_BYTES }),
+      readRegularFile(assetPath("alexandria-here-build-week-demo.sha256"), { maxBytes: 1024 }),
+    ]);
+    const manifest = parseHashManifest(sidecar, [VIDEO_NAME]);
+    verifyPinnedHash(video, VIDEO_HASH, "video master");
+    if (manifest.get(VIDEO_NAME) !== VIDEO_HASH) fail("video sidecar differs from the pinned master hash");
+    const duration = mp4DurationSeconds(video);
+    if (Math.abs(duration - VIDEO_DURATION_SECONDS) > 0.01 || duration >= 180) {
+      fail(`video duration is ${duration.toFixed(3)} seconds; expected ${VIDEO_DURATION_SECONDS} and less than 180`);
+    }
+    return `${VIDEO_HASH}; ${duration.toFixed(3)} seconds; less than 3:00`;
+  });
+
+  await addCheck(checks, "Media integrity", "English captions", async () => {
+    const [bytes, narration, demoScript] = await Promise.all([
+      readRegularFile(assetPath(CAPTIONS_NAME), { maxBytes: 1_000_000 }),
+      readFile(assetPath("narration.txt"), "utf8"),
+      document("DEMO_SCRIPT.md"),
+    ]);
+    verifyPinnedHash(bytes, CAPTIONS_HASH, "English captions");
+    const cues = validateWebVtt(bytes.toString("utf8"));
+    const firstStartMs = cues[0]?.startMs ?? -1;
+    const lastEndMs = cues.at(-1)?.endMs ?? -1;
+    if (firstStartMs !== 258) fail(`first caption starts at ${firstStartMs} ms; expected 258`);
+    if (lastEndMs !== 154_837) fail(`last caption ends at ${lastEndMs} ms; expected 154837`);
+    const cueText = cues.map((cue) => cue.text).join(" ");
+    const scriptNarration = demoScript
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("> "))
+      .map((line) => line.slice(2))
+      .join(" ");
+    assertSameWords(cueText, narration, "captions and narration transcript");
+    assertSameWords(cueText, scriptNarration, "captions and demo script narration");
+    return `${cues.length} exact cues from ${firstStartMs} to ${lastEndMs} ms; transcript and script match`;
+  });
+
+  await addCheck(checks, "Media integrity", "YouTube thumbnail", async () => {
+    const bytes = await readRegularFile(assetPath(YOUTUBE_THUMBNAIL_NAME), { exactBytes: YOUTUBE_THUMBNAIL_BYTES });
+    verifyPinnedHash(bytes, YOUTUBE_THUMBNAIL_HASH, "YouTube thumbnail");
+    validatePng(bytes, 1280, 720);
+    return `${YOUTUBE_THUMBNAIL_NAME}; 1280x720 RGB PNG; ${bytes.length} bytes`;
+  });
+
+  await addCheck(checks, "Media integrity", "Devpost media set", async () => {
+    const manifestBytes = await readRegularFile(assetPath("devpost-media.sha256"), { maxBytes: 10_000 });
+    verifyPinnedHash(manifestBytes, DEVPOST_MANIFEST_HASH, "Devpost manifest");
+    const manifest = parseHashManifest(manifestBytes, DEVPOST_NAMES);
+    const assetNames = await readdir(path.join(root, "submission-assets"));
+    const devpostCandidates = assetNames
+      .filter((name) => /devpost/i.test(name) && /\.(?:png|jpe?g|gif)$/i.test(name))
+      .sort();
+    const youtubeCandidates = assetNames
+      .filter((name) => /youtube-thumbnail/i.test(name) && /\.(?:png|jpe?g|gif)$/i.test(name))
+      .sort();
+    validateCandidateNames(devpostCandidates, [...DEVPOST_NAMES].sort(), "Devpost upload");
+    validateCandidateNames(youtubeCandidates, [YOUTUBE_THUMBNAIL_NAME], "YouTube thumbnail upload");
+    for (const name of DEVPOST_NAMES) {
+      const bytes = await readRegularFile(assetPath(name), { maxBytes: DEVPOST_MAX_BYTES });
+      if (manifest.get(name) !== DEVPOST_HASHES[name]) {
+        fail(`${name} differs from its pinned role hash`);
+      }
+      verifyPinnedHash(bytes, DEVPOST_HASHES[name], name);
+      validatePng(bytes, 1500, 1000);
+    }
+    return `${DEVPOST_NAMES.length} exact 1500x1000 RGB PNGs; cover plus ${GALLERY_NAMES.length} ordered gallery cards`;
+  });
+
+  await addCheck(checks, "Submission contracts", "YouTube copy package", async () => {
+    const metadata = await document("YOUTUBE_METADATA.md");
+    const title = extractMarkdownSection(metadata, "## Title", "## Description").trim();
+    const description = extractMarkdownSection(metadata, "## Description", "## Recommended upload settings");
+    if (title !== YOUTUBE_TITLE) fail(`YouTube title differs from the sealed ${YOUTUBE_TITLE.length}-character title`);
+    if (!description || description.length > 5000) fail(`YouTube description length is ${description.length}; expected 1-5000 characters`);
+    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness"], "YouTube description");
+    const chapters = [...description.matchAll(/^(\d{2}):(\d{2}) (.+)$/gm)].map((match) => Number(match[1]) * 60 + Number(match[2]));
+    if (JSON.stringify(chapters) !== JSON.stringify(YOUTUBE_CHAPTERS)) {
+      fail(`YouTube chapter boundaries are ${chapters.join(", ")}; expected ${YOUTUBE_CHAPTERS.join(", ")}`);
+    }
+    requirePhrases(metadata, ["Visibility: Public", "Allow embedding: On", YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME], "YouTube upload settings");
+    return `${title.length}-character title; ${description.length}-character description; ${chapters.length} valid chapters`;
+  });
+
+  await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
+    const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission"], "final handoff");
+    assertCanonicalTiming(handoff, "final handoff");
+    const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
+    if (!galleryLine) fail("final handoff is missing the exact gallery upload-order line");
+    const handoffGallery = [...galleryLine.matchAll(/`([^`]+)`/g)].map((match) => match[1]);
+    validateCandidateNames(handoffGallery, GALLERY_NAMES, "Devpost handoff gallery");
+    const requirements = extractMarkdownSection(handoff, "Build Week requirements", "Recommended YouTube and accessibility settings");
+    if (/embedding/i.test(requirements)) fail("embedding is incorrectly labeled as an official requirement");
+    const recommended = extractMarkdownSection(handoff, "Recommended YouTube and accessibility settings", "After processing finishes");
+    if (!/Allow embedding: \*\*On\*\*/.test(recommended)) fail("embedding recommendation is missing");
+    return `exact media paths, official/recommended split, gallery order, authority boundary, and PDT deadline`;
+  });
+
+  await addCheck(checks, "Submission contracts", "Evidence-backed submission narrative", async () => {
+    const submission = await document("SUBMISSION.md");
+    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, SESSION_ID, "5 returned pages from 8 capture records", "347 rendered blocks", "946 content-addressed source blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)"], "submission narrative");
+    assertCanonicalTiming(submission, "submission narrative");
+    const youtubeState = classifyYouTubeReference(submission);
+    return `production, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "YouTube URL"} claims are present`;
+  });
+
+  await addCheck(checks, "Submission contracts", "Portable checkout and command contract", async () => {
+    const [attributes, packageJson] = await Promise.all([
+      document(".gitattributes"),
+      document("package.json").then((raw) => JSON.parse(raw) as { scripts?: Record<string, string> }),
+    ]);
+    requirePhrases(attributes, ["*.png binary", "*.mp4 binary", "*.vtt text eol=lf", "*.sha256 text eol=lf"], ".gitattributes");
+    if (packageJson.scripts?.["qa:submission"] !== "tsx scripts/submission-readiness.ts") {
+      fail("package.json does not expose the exact non-mutating submission preflight");
+    }
+    return `binary media and LF text seals survive fresh checkouts; qa:submission is declared`;
+  });
+
+  let submissionText = "";
+  try {
+    submissionText = await document("SUBMISSION.md");
+  } catch (error) {
+    checks.push({ section: "External authority", name: "Submission execution", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+    return checks;
+  }
+
+  try {
+    const youtubeState = classifyYouTubeReference(submissionText);
+    const uploadState = classifyChecklistItem(submissionText, CHECKLIST.youtubeUpload);
+    const verifyState = classifyChecklistItem(submissionText, CHECKLIST.youtubeVerify);
+    if (youtubeState === "pending" && (uploadState === "complete" || verifyState === "complete")) {
+      fail("YouTube checklist cannot be complete while the URL is still pending");
+    }
+    if (youtubeState === "present" && uploadState === "pending" && verifyState === "complete") {
+      fail("signed-out YouTube verification cannot precede the upload checklist");
+    }
+    const pending = youtubeState === "pending" || uploadState === "pending" || verifyState === "pending";
+    checks.push({
+      section: "External authority",
+      name: "Public YouTube URL",
+      state: pending ? "PENDING" : "PASS",
+      detail: youtubeState === "pending"
+        ? "publish the audited master with Jaia's authorization, then replace the sole allowed placeholder"
+        : pending
+          ? "verify signed-out 1080p playback, narration, captions, and embedding, then add the same URL to Devpost"
+          : "the URL, upload, and signed-out playback checks are explicitly recorded",
+    });
+  } catch (error) {
+    checks.push({ section: "External authority", name: "Public YouTube URL", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+  }
+
+  try {
+    const mediaState = classifyChecklistItem(submissionText, CHECKLIST.devpostMedia);
+    checks.push({
+      section: "External authority",
+      name: "Devpost media transmission",
+      state: mediaState === "pending" ? "PENDING" : "PASS",
+      detail: mediaState === "pending" ? "requires Jaia's upload authorization; use the manifest order and verify Preview" : "submission checklist explicitly records the media upload and Preview check",
+    });
+  } catch (error) {
+    checks.push({ section: "External authority", name: "Devpost media transmission", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+  }
+
+  try {
+    const rulesState = classifyChecklistItem(submissionText, CHECKLIST.rules);
+    const submitState = classifyChecklistItem(submissionText, CHECKLIST.submit);
+    if (rulesState === "pending" && submitState === "complete") fail("final submit cannot precede personal rules acceptance");
+    const pending = rulesState === "pending" || submitState === "pending";
+    checks.push({
+      section: "External authority",
+      name: "Rules acceptance and final submit",
+      state: pending ? "PENDING" : "PASS",
+      detail: pending ? "Jaia must personally accept the rules and submit before the recorded deadline" : "submission checklist explicitly records both personal actions",
+    });
+  } catch (error) {
+    checks.push({ section: "External authority", name: "Rules acceptance and final submit", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+  }
+
+  return checks;
+}
+
+export function printSubmissionReadiness(checks: SubmissionCheck[]): void {
+  for (const section of ["Media integrity", "Submission contracts", "External authority"] as const) {
+    console.log(`\n${section}`);
+    for (const item of checks.filter((entry) => entry.section === section)) {
+      console.log(`${item.state.padEnd(7)} ${item.name} — ${item.detail}`);
+    }
+  }
+  const failures = checks.filter((item) => item.state === "FAIL");
+  const pending = checks.filter((item) => item.state === "PENDING");
+  console.log(`\nResult: ${failures.length ? `${failures.length} enforced submission gate(s) failed; external PENDING items do not mask local failures.` : `all enforced local submission gates passed; ${pending.length} external action(s) remain PENDING.`}`);
+}
+
+function printUploadSelections(root: string): void {
+  const asset = (name: string) => path.resolve(root, "submission-assets", name);
+  const line = (label: string, name: string) => console.log(`${label.padEnd(20)}${asset(name)}`);
+  console.log("\nCanonical upload selections");
+  line("YouTube video", VIDEO_NAME);
+  line("YouTube thumbnail", YOUTUBE_THUMBNAIL_NAME);
+  line("YouTube captions", CAPTIONS_NAME);
+  line("Devpost thumbnail", DEVPOST_NAMES[0]);
+  GALLERY_NAMES.forEach((name, index) => line(`Gallery ${String(index + 1).padStart(2, "0")}`, name));
+}
+
+export function submissionExitCode(checks: SubmissionCheck[], finalMode = false): 0 | 1 {
+  return checks.some((item) => item.state === "FAIL" || (finalMode && item.state === "PENDING")) ? 1 : 0;
+}
+
+const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  const checks = await runSubmissionReadiness();
+  const finalMode = process.argv.includes("--final");
+  if (process.argv.includes("--json")) {
+    console.log(JSON.stringify(checks, null, 2));
+  } else {
+    printSubmissionReadiness(checks);
+    if (!checks.some((item) => item.state === "FAIL")) printUploadSelections(DEFAULT_ROOT);
+    if (finalMode && checks.some((item) => item.state === "PENDING")) {
+      console.log("\nFinal mode: PENDING external actions prevent final handoff.");
+    }
+  }
+  process.exitCode = submissionExitCode(checks, finalMode);
+}

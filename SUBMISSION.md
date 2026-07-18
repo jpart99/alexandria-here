@@ -132,7 +132,9 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Clean-build, package, deploy, and verify the requested-year discovery and model-contract fixes in production version 6.
 - [x] Render and audit the public-video master at less than 3:00 with English audio explaining the product, Codex use, and GPT-5.6 integration.
 - [ ] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.
+- [ ] Verify signed-out public YouTube playback at 1080p with audible narration, captions, and embedding, then paste the same URL into Devpost.
 - [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
+- [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [ ] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
