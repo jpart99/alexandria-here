@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: copy-ready draft. Public access is confirmed. Do not submit until the repository URL, public video URL, `/feedback` Codex Session ID, and receipt-proven GPT-5.6 run are filled in.
+Status: copy-ready draft. Public access, repository, track, and `/feedback` Session ID are confirmed. Do not submit until the public video URL and receipt-proven GPT-5.6 run are added and Jaia personally accepts the official-rules checkbox.
 
 ## Project
 
@@ -12,7 +12,7 @@ Tagline: **The lost web, present again—without pretending the gaps were never 
 
 Live product: https://alexandria-here.cinemaexile.chatgpt.site
 
-Code repository: `[ADD JUDGING REPOSITORY URL]`
+Code repository: https://github.com/jpart99/alexandria-here
 
 Demo video: `[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]`
 
@@ -122,14 +122,15 @@ Support multiple genuinely evidenced editions from the same recovery, conflict-a
 
 ## Final submission checklist
 
-- [ ] Join the OpenAI Build Week challenge on Devpost and accept the official rules.
-- [ ] Select Education, unless the final positioning changes.
+- [x] Join the OpenAI Build Week challenge on Devpost.
+- [ ] Jaia personally accepts the official-rules checkbox immediately before submission.
+- [x] Select Education.
 - [x] Confirm that the Sites deployment is publicly reachable without an authenticated session (`200 OK` verified July 17, 2026 Pacific / July 18 UTC).
 - [x] Publish the public judging repository with setup instructions and reference details: https://github.com/jpart99/alexandria-here
 - [x] Add the `/feedback` Codex Session ID (`019f7304-e394-7f11-ba64-26e415135ff6`).
 - [ ] Produce and link one receipt-proven GPT-5.6 recovery.
 - [x] Clean-build, package, deploy, and verify the requested-year discovery fixes in production version 3.
 - [ ] Record a public YouTube demo under three minutes with audio explaining both Codex and GPT-5.6 use.
-- [ ] Replace every bracketed placeholder.
-- [ ] Confirm the production URL, reference recovery, receipt download, mobile layout, and console immediately before submission.
+- [x] Replace every bracketed placeholder except the pending public YouTube URL.
+- [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
 - [ ] Submit before July 21, 2026 at 5:00 PM PT.
