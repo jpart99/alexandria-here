@@ -112,10 +112,7 @@ test("rendered navigation ignores invented planner labels and cites exact title 
       blockIds: ["block-about"],
     },
   ];
-  const navigation = deriveEvidenceNavigation([
-    { pageId: "page-about", label: "BUY CRYPTO NOW", sourceIds: ["source-about"] },
-    { pageId: "page-home", label: "Hostile invented claim", sourceIds: ["source-old"] },
-  ], pages);
+  const navigation = deriveEvidenceNavigation(["page-about", "page-home"], pages);
 
   assert.deepEqual(navigation, [
     { pageId: "page-about", label: "About Us", sourceIds: ["source-about"] },
