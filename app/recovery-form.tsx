@@ -141,10 +141,10 @@ export function RecoveryForm() {
           <input
             id="vanished-url"
             name="url"
-            type="url"
+            type="text"
             inputMode="url"
             autoComplete="url"
-            placeholder="https://example.org"
+            placeholder="example.org or https://example.org"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             disabled={running}
@@ -154,7 +154,7 @@ export function RecoveryForm() {
           />
           <button type="submit" disabled={running}>{running ? "Returning…" : "Return it"}</button>
         </div>
-        <p className="recovery-input-hint" id="recovery-input-hint">Public HTTP(S) only. Alexandria reads surviving archive witnesses—not the live origin.</p>
+        <p className="recovery-input-hint" id="recovery-input-hint">Public HTTP(S) only; you may omit the protocol. Alexandria reads surviving archive witnesses—not the live origin.</p>
       </form>
 
       {running && (

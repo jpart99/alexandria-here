@@ -61,6 +61,9 @@ function inventoryCapture(path: string, capturedAt: string, digest?: string): Ca
 
 test("submitted URLs are normalized and unsafe targets fail closed", () => {
   assert.equal(validateSubmittedUrl("HTTP://Example.org/index.html#old"), "http://example.org/index.html");
+  assert.equal(validateSubmittedUrl("iexile.com"), "http://iexile.com/");
+  assert.equal(validateSubmittedUrl("www.example.org/archive#old"), "http://www.example.org/archive");
+  assert.equal(validateSubmittedUrl("example.org:80/archive"), "http://example.org/archive");
   for (const unsafe of [
     "http://localhost/",
     "http://localhost./",
@@ -81,6 +84,7 @@ test("submitted URLs are normalized and unsafe targets fail closed", () => {
     "https://example.org:8443/",
     "https://example.org/archive?token=secret",
     "https://example.org/?email=reader%40example.org&session=private",
+    "javascript:alert(1)",
   ]) {
     assert.throws(() => validateSubmittedUrl(unsafe));
   }

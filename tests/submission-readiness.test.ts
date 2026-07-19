@@ -3,7 +3,10 @@ import { mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from "node:fs/
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import { RecoveryForm } from "../app/recovery-form";
 import {
   isPathContained,
   normalizePreviewArguments,
@@ -156,6 +159,14 @@ test("the sealed submission package passes locally and exposes only authority-ga
     /exactly one flat CSS rule/u,
   );
   assert.doesNotMatch(layout, /from\s+["']next\/font(?:\/google|\/local)?["']/u);
+  const recoveryFormMarkup = renderToStaticMarkup(createElement(RecoveryForm));
+  const recoveryInputMarkup = recoveryFormMarkup.match(/<input[^>]+name="url"[^>]*>/u)?.[0] || "";
+  assert.match(recoveryInputMarkup, /type="text"/u);
+  assert.match(recoveryInputMarkup, /inputMode="url"/u);
+  assert.match(recoveryInputMarkup, /required=""/u);
+  assert.match(recoveryInputMarkup, /aria-describedby="recovery-input-hint"/u);
+  assert.doesNotMatch(recoveryInputMarkup, /type="url"|pattern=/u);
+  assert.match(recoveryFormMarkup, /you may omit the protocol/u);
   assert.doesNotMatch(`${layout}\n${css}`, unsafeFontReference);
   assert.match(staticHeaders, /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/u);
   assert.match(staticHeaders, /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+Cache-Control:\s*public,\s*max-age=86400\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/u);

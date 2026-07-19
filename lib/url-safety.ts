@@ -60,9 +60,14 @@ export function validateSubmittedUrl(input: unknown): string {
     throw new Error("Enter a public website address.");
   }
 
+  const submitted = input.trim();
+  const explicitScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(submitted)
+    || (/^[a-z][a-z0-9+.-]*:/i.test(submitted) && !/^[^/?#]+:\d+(?:[/?#]|$)/.test(submitted));
+  const parseTarget = explicitScheme ? submitted : `http://${submitted}`;
+
   let url: URL;
   try {
-    url = new URL(input.trim());
+    url = new URL(parseTarget);
   } catch {
     throw new Error("That address is not a valid URL.");
   }
