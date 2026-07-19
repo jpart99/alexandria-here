@@ -6,7 +6,7 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 
 | Boundary | Injected failure | Expected product behavior | Proof |
 |---|---|---|---|
-| Submitted URL | Bare public hostname/path; HTTP and HTTPS archive variants | Normalize shorthand to a public HTTP URL, query both protocol variants, merge/deduplicate witnesses, then retain the same 12-record/8-fetch budgets | Automated URL and dual-CDX unit cases; hosted form contract |
+| Submitted URL | Bare public hostname/path such as `iexile.com`; HTTP and HTTPS archive variants | Accept the bare hostname without requiring the visitor to add a scheme, normalize it to a public HTTP URL for identity, query both protocol variants, merge/deduplicate witnesses, then retain the same 12-record/8-fetch budgets | Automated URL and dual-CDX unit cases; hosted form contract |
 | Submitted URL safety | Scheme-qualified or bare loopback, private, credentialed, non-web protocol, nonstandard port, or query-bearing address | Reject before persistence or retrieval with a clear `400` | Automated URL unit cases; compiled and hosted Worker gates |
 | API body | Wrong content type or body over 4,096 bytes | `415` for non-JSON; clear `400` for oversize; no recovery created | Compiled Worker matrix |
 | Archive allowlist | Redirect outside `https://web.archive.org` or excessive redirect chain | Fail closed before the redirected host is fetched | Automated mocked-fetch test |
@@ -24,6 +24,8 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 | Receipt unavailable | Missing, running, failed, or incompatible persisted result | `409` JSON with `no-store` and `nosniff`; never `200 undefined` | Automated pure response test; compiled Worker matrix while running |
 
 ## Executed local evidence
+
+- The final live version 15 matrix control created recovery `073c246c-75a5-4cf3-a37c-b9777eadff45` at `2026-07-19T07:04:38.705Z`; public Wayback CDX timed out and the recovery failed honestly with `Archive request timed out.` This is recorded as an external archive block, not a passing live matrix result.
 
 - A real bounded recovery of `http://info.cern.ch/hypertext/WWW/TheProject.html`
   completed as `insufficient_evidence` and rendered at its ordinary `/r/:id` route.

@@ -61,7 +61,7 @@ Submit early: Devpost permits edits to the judged entry until the deadline, when
 
 ## Judging availability hold
 
-Keep the Sites deployment, managed D1 judging row `18026989-33be-4011-86ee-19e1754cb22c`, public GitHub repository, and public YouTube video available free and unrestricted through **August 5, 2026 at 5:00 PM PDT (Pacific Time)**. Do not delete, privatize, rotate away, or replace any of those judging surfaces during the hold.
+Keep the public Sites deployment, managed D1 judging row `18026989-33be-4011-86ee-19e1754cb22c`, public GitHub repository, and public YouTube video available free and unrestricted through **August 5, 2026 at 5:00 PM PDT (Pacific Time)**. Do not delete, privatize, rotate away, or replace any of those judging surfaces during the hold.
 
 Run `npm run qa:submission:live` immediately after final submission and at least once per day through the judging deadline. Any failure is a release incident: restore the exact public surface first, then rerun the gate without rewriting the persisted proof row or its receipt.
 
