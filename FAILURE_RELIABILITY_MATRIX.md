@@ -6,7 +6,8 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 
 | Boundary | Injected failure | Expected product behavior | Proof |
 |---|---|---|---|
-| Submitted URL | Loopback, private, credentialed, non-web protocol, nonstandard port | Reject before persistence or retrieval with a clear `400` | Automated URL unit cases; compiled Worker matrix |
+| Submitted URL | Bare public hostname/path; HTTP and HTTPS archive variants | Normalize shorthand to a public HTTP URL, query both protocol variants, merge/deduplicate witnesses, then retain the same 12-record/8-fetch budgets | Automated URL and dual-CDX unit cases; hosted form contract |
+| Submitted URL safety | Scheme-qualified or bare loopback, private, credentialed, non-web protocol, nonstandard port, or query-bearing address | Reject before persistence or retrieval with a clear `400` | Automated URL unit cases; compiled and hosted Worker gates |
 | API body | Wrong content type or body over 4,096 bytes | `415` for non-JSON; clear `400` for oversize; no recovery created | Compiled Worker matrix |
 | Archive allowlist | Redirect outside `https://web.archive.org` or excessive redirect chain | Fail closed before the redirected host is fetched | Automated mocked-fetch test |
 | Archive MIME | Inventory not JSON or capture not HTML | Stop safely; never parse/render the body as archive evidence | Automated mocked-fetch test |

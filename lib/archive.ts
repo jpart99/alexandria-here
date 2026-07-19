@@ -135,6 +135,18 @@ function cdxUrl(originalUrl: string, matchType: "exact" | "prefix", limit: numbe
   return url;
 }
 
+function protocolVariants(originalUrl: string): string[] {
+  const submitted = new URL(originalUrl);
+  const protocols = submitted.protocol === "https:"
+    ? ["https:", "http:"]
+    : ["http:", "https:"];
+  return protocols.map((protocol) => {
+    const variant = new URL(submitted);
+    variant.protocol = protocol;
+    return variant.toString();
+  });
+}
+
 function chooseEditionCaptures(yearCaptures: Capture[]): Capture[] {
   const medianTime = [...yearCaptures].map(captureTime).sort((a, b) => a - b)[Math.floor(yearCaptures.length / 2)];
   const byPath = new Map<string, Capture[]>();
@@ -412,17 +424,21 @@ export function selectTemporalWindow(captures: Capture[], requestedYear?: string
 
 export async function discoverCaptures(originalUrl: string, requestedYear?: string, signal?: AbortSignal): Promise<CaptureInventory> {
   const scopedYear = requestedYear && /^\d{4}$/.test(requestedYear) ? requestedYear : undefined;
-  const [prefixPayload, requestedYearPayload] = await Promise.all([
-    fetchJson(cdxUrl(originalUrl, "prefix", MAX_PREFIX_METADATA_ROWS), signal),
+  const variants = protocolVariants(originalUrl);
+  const [prefixPayloads, requestedYearPayloads] = await Promise.all([
+    Promise.all(variants.map((variant) =>
+      fetchJson(cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS), signal))),
     scopedYear
-      ? fetchJson(cdxUrl(originalUrl, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear), signal)
-      : Promise.resolve(null),
+      ? Promise.all(variants.map((variant) =>
+        fetchJson(cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear), signal)))
+      : Promise.resolve([]),
   ]);
-  const generalRows = parseRows(prefixPayload).filter((row) => isSameSiteUrl(row[1], originalUrl));
-  const requestedYearRows = requestedYearPayload
-    ? parseRows(requestedYearPayload).filter((row) =>
-      row[0].startsWith(scopedYear!) && isSameSiteUrl(row[1], originalUrl))
-    : [];
+  const generalRows = prefixPayloads
+    .flatMap((payload) => parseRows(payload))
+    .filter((row) => isSameSiteUrl(row[1], originalUrl));
+  const requestedYearRows = requestedYearPayloads
+    .flatMap((payload) => parseRows(payload))
+    .filter((row) => row[0].startsWith(scopedYear!) && isSameSiteUrl(row[1], originalUrl));
   const prefixRows = Array.from(new Map(
     [...requestedYearRows, ...generalRows].map((row) => [`${row[0]}\n${row[1]}\n${row[4] || ""}`, row]),
   ).values());

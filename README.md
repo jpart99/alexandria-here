@@ -80,9 +80,9 @@ npm start -- --port 3100 --ip 127.0.0.1 --persist-to .wrangler/production-previe
 ## Environment
 
 ```text
-OPENAI_API_KEY=optional
+OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6
-RECOVERY_RATE_LIMIT_SECRET=required-random-hosted-secret
+RECOVERY_RATE_LIMIT_SECRET=
 ```
 
 Do not expose the API key to browser code. The model receives normalized evidence records only and has no browsing tools.
@@ -124,9 +124,19 @@ The hosted smoke intentionally admits no recovery: it verifies landing and ordin
 
 After deployment, produce the presentation reference through the same public API as every other recovery:
 
+POSIX shells:
+
 ```bash
-set ALEXANDRIA_BASE_URL=https://your-production-host.example
-set ALEXANDRIA_REFERENCE_URL=https://the-real-vanished-target.example
+export ALEXANDRIA_BASE_URL=https://your-production-host.example
+export ALEXANDRIA_REFERENCE_URL=https://the-real-vanished-target.example
+npm run reference:produce
+```
+
+PowerShell:
+
+```powershell
+$env:ALEXANDRIA_BASE_URL = "https://your-production-host.example"
+$env:ALEXANDRIA_REFERENCE_URL = "https://the-real-vanished-target.example"
 npm run reference:produce
 ```
 

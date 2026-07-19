@@ -362,13 +362,18 @@ export function classifyChecklistItem(submission: string, label: string): "pendi
 
 export function assertCanonicalTiming(text: string, label: string): void {
   const deadline = "July 21, 2026 at 5:00 PM PDT (Pacific Time)";
+  const judgingDeadline = "August 5, 2026 at 5:00 PM PDT (Pacific Time)";
   const deadlineCount = text.split(deadline).length - 1;
   const dateCount = text.split("July 21, 2026").length - 1;
+  const judgingDeadlineCount = text.split(judgingDeadline).length - 1;
+  const judgingDateCount = text.split("August 5, 2026").length - 1;
   const runtimeCount = text.split("less than 3:00").length - 1;
   if (deadlineCount !== 1 || dateCount !== 1) fail(`${label} must contain exactly one canonical PDT deadline`);
+  if (judgingDeadlineCount > 1 || judgingDateCount !== judgingDeadlineCount) fail(`${label} contains a noncanonical judging deadline`);
   if (runtimeCount !== 1) fail(`${label} must contain exactly one canonical less-than-3:00 claim`);
   const timeClaims = text.match(/\b\d{1,2}:\d{2} PM(?: [A-Z]+(?: \(Pacific Time\))?)?/g) ?? [];
-  if (JSON.stringify(timeClaims) !== JSON.stringify(["5:00 PM PDT (Pacific Time)"])) {
+  const expectedTimeClaims = Array.from({ length: 1 + judgingDeadlineCount }, () => "5:00 PM PDT (Pacific Time)");
+  if (JSON.stringify(timeClaims) !== JSON.stringify(expectedTimeClaims)) {
     fail(`${label} contains noncanonical deadline time claims: ${timeClaims.join(", ") || "none"}`);
   }
   if (/(?:at or below\s*3:00|3:00\s+or\s+(?:under|less)|(?:3|three)\s+minutes?\s+or\s+(?:under|less)|(?:at most|no more than)\s*(?:3:00|(?:3|three)\s+minutes?)|(?:≤|<=)\s*3:00)/i.test(text)) {
@@ -379,6 +384,20 @@ export function assertCanonicalTiming(text: string, label: string): void {
 function requirePhrases(text: string, phrases: readonly string[], label: string): void {
   const missing = phrases.filter((phrase) => !text.includes(phrase));
   if (missing.length) fail(`${label} is missing: ${missing.join(" | ")}`);
+}
+
+export function assertJudgingAvailability(handoff: string, releaseOperations: string): void {
+  const required = [
+    "Judging availability hold",
+    "managed D1 judging row `18026989-33be-4011-86ee-19e1754cb22c`",
+    "public GitHub repository",
+    "public YouTube video",
+    "available free and unrestricted through **August 5, 2026 at 5:00 PM PDT (Pacific Time)**",
+    "npm run qa:submission:live",
+    "at least once per day through the judging deadline",
+  ] as const;
+  requirePhrases(handoff, required, "final handoff judging hold");
+  requirePhrases(releaseOperations, required, "release operations judging hold");
 }
 
 function assertExclusiveRuntimeClaims(text: string, label: string): void {
@@ -535,7 +554,9 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
 
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
+    const releaseOperations = await document("RELEASE_OPERATIONS.md");
     requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission"], "final handoff");
+    assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
     if (!galleryLine) fail("final handoff is missing the exact gallery upload-order line");
@@ -545,7 +566,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     if (/embedding/i.test(requirements)) fail("embedding is incorrectly labeled as an official requirement");
     const recommended = extractMarkdownSection(handoff, "Recommended YouTube and accessibility settings", "After processing finishes");
     if (!/Allow embedding: \*\*On\*\*/.test(recommended)) fail("embedding recommendation is missing");
-    return `exact media paths, official/recommended split, gallery order, authority boundary, and PDT deadline`;
+    return `exact media paths, official/recommended split, gallery order, authority boundary, submission deadline, and judging hold`;
   });
 
   await addCheck(checks, "Submission contracts", "Evidence-backed submission narrative", async () => {

@@ -85,6 +85,12 @@ test("submitted URLs are normalized and unsafe targets fail closed", () => {
     "https://example.org/archive?token=secret",
     "https://example.org/?email=reader%40example.org&session=private",
     "javascript:alert(1)",
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "user:secret@example.org",
+    "example.org:8443",
+    "example.org/archive?token=secret",
   ]) {
     assert.throws(() => validateSubmittedUrl(unsafe));
   }
@@ -366,11 +372,19 @@ test("year-scoped inventory recovers a requested era outside the general 400 row
   };
   try {
     const inventory = await discoverCaptures("http://lost-web.org/", "2007");
-    assert.equal(calls.length, 2);
-    const scopedCall = calls.find((url) => url.searchParams.get("from") === "2007");
-    assert.ok(scopedCall);
-    assert.equal(scopedCall.searchParams.get("to"), "2007");
-    assert.equal(scopedCall.searchParams.get("limit"), "400");
+    assert.equal(calls.length, 4);
+    const generalCalls = calls.filter((url) => !url.searchParams.has("from"));
+    const scopedCalls = calls.filter((url) => url.searchParams.get("from") === "2007");
+    assert.deepEqual(
+      generalCalls.map((url) => new URL(url.searchParams.get("url")!).protocol).sort(),
+      ["http:", "https:"],
+    );
+    assert.deepEqual(
+      scopedCalls.map((url) => new URL(url.searchParams.get("url")!).protocol).sort(),
+      ["http:", "https:"],
+    );
+    assert.ok(scopedCalls.every((url) => url.searchParams.get("to") === "2007"));
+    assert.ok(scopedCalls.every((url) => url.searchParams.get("limit") === "400"));
     assert.equal(inventory.selectedYear, "2007");
     assert.equal(inventory.selected.length, 2);
     assert.equal(inventory.all.length, RECOVERY_BUDGETS.maxInventoryRecords);

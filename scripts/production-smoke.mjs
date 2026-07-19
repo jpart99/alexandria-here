@@ -129,6 +129,18 @@ const landingHtml = (await readBounded(landing, 1_000_000)).toString("utf8");
 assert(landing.status === 200 && landingHtml.length > 1_000, `Landing failed: HTTP ${landing.status}.`);
 checks.push(["landing", landing.status]);
 
+const recoveryInputs = [...landingHtml.matchAll(/<input\b[^>]*>/giu)]
+  .map(([tag]) => tag)
+  .filter((tag) => /\bname=["']url["']/iu.test(tag));
+assert(recoveryInputs.length === 1, `Landing exposed ${recoveryInputs.length} recovery URL inputs.`);
+const recoveryInput = recoveryInputs[0];
+assert(/\btype=["']text["']/iu.test(recoveryInput), "Landing recovery input still requires a scheme through native URL validation.");
+assert(/\binputmode=["']url["']/iu.test(recoveryInput), "Landing recovery input lost its URL keyboard hint.");
+assert(/\brequired(?:\s|=|>)/iu.test(recoveryInput), "Landing recovery input is no longer required.");
+assert(!/\bpattern=/iu.test(recoveryInput), "Landing recovery input added a pattern that can reject bare public addresses.");
+assert(landingHtml.includes("you may omit the protocol"), "Landing does not explain that the HTTP(S) protocol is optional.");
+checks.push(["bare public address form contract", { type: "text", inputMode: "url", protocolOptional: true }]);
+
 const stylesheetUrls = [];
 const stylesheetBodies = [];
 for (const [tag] of landingHtml.matchAll(/<link\b[^>]*>/giu)) {
@@ -231,12 +243,14 @@ checks.push(["missing font remains outside route", { status: missingFont.status,
 const unsafe = await request("/api/recover", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ url: "http://127.0.0.1/" }),
+  body: JSON.stringify({ url: "127.0.0.1" }),
 });
 const unsafeBytes = await readBounded(unsafe, 64_000);
 assert(unsafe.status === 400, `Unsafe URL returned HTTP ${unsafe.status}.`);
 assert(unsafe.headers.get("x-recovery-id") === null, "Rejected unsafe URL unexpectedly admitted a recovery.");
-checks.push(["unsafe URL admits no recovery", { status: unsafe.status, bytes: unsafeBytes.length }]);
+const unsafePayload = JSON.parse(unsafeBytes.toString("utf8"));
+assert(/private|local|loopback|link-local/iu.test(unsafePayload.error || ""), "Bare private address did not reach Alexandria's safety validator.");
+checks.push(["bare unsafe address admits no recovery", { status: unsafe.status, bytes: unsafeBytes.length }]);
 
 const receipt = await request("/api/recover/00000000-0000-4000-8000-000000000000/receipt");
 const receiptBytes = await readBounded(receipt, 64_000);
