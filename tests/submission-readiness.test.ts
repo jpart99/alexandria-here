@@ -16,6 +16,7 @@ import {
   writeExclusivePreviewConfig,
 } from "../scripts/compiled-preview-files.mjs";
 import { forbiddenArtifactReason, isForbiddenArtifactPath } from "../scripts/release-artifact-contract.mjs";
+import { assertExactReferenceProof, EXACT_REFERENCE_PROOF } from "../scripts/submission-proof-contract.mjs";
 import {
   FONT_ASSET_PATHS,
   FONT_CACHE_CONTROL,
@@ -137,6 +138,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
   const workerSource = await readFile(path.join(root, "worker", "index.ts"), "utf8");
   const fontDeliverySource = await readFile(path.join(root, "lib", "font-delivery.ts"), "utf8");
   const releaseReadiness = await readFile(path.join(root, "scripts", "release-readiness.mjs"), "utf8");
+  const submissionLiveProofWrapper = await readFile(path.join(root, "scripts", "submission-live-proof.mjs"), "utf8");
   const packageContract = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   assert.match("file:///C:/build/font.woff2", unsafeFontReference);
   assert.match("C:/build/font.woff2", unsafeFontReference);
@@ -170,6 +172,97 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.match(releaseReadiness, /forbiddenGeneratedArtifacts\("dist"\)/u);
   assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
   assert.equal(packageContract.scripts["qa:production"], "node scripts/production-smoke.mjs");
+  assert.equal(packageContract.scripts["qa:submission:live"], "node scripts/submission-live-proof.mjs");
+  assert.equal(submissionLiveProofWrapper.replace(/\r\n/g, "\n").trim(), [
+    'process.env.ALEXANDRIA_BASE_URL = "https://alexandria-here.cinemaexile.chatgpt.site";',
+    'process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH = "/r/18026989-33be-4011-86ee-19e1754cb22c";',
+    'process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1";',
+    "",
+    'await import("./production-smoke.mjs");',
+  ].join("\n"));
+  assert.match(releaseReadiness, /Live submission proof pin/u);
+  assert.deepEqual(EXACT_REFERENCE_PROOF, {
+    recoveryId: "18026989-33be-4011-86ee-19e1754cb22c",
+    receiptVersion: "1.0",
+    planner: "gpt-5.6",
+    model: "gpt-5.6-sol",
+    manifestHash: "e4eeddc5cc3a0e1c43c7f0f63e869399d3c566824cd0c44dc1a9af706142e773",
+    captures: 8,
+    preservedPages: 5,
+    missingPages: 2,
+    renderedBlocks: 347,
+    preservedBlocks: 622,
+    sourceHashes: 946,
+    inferredEdges: 36,
+    knownAbsences: 8,
+    validations: 10,
+    decisions: 15,
+  });
+  const exactRecord = {
+    status: "complete",
+    result: {
+      outcome: "restored",
+      captures: Array.from({ length: EXACT_REFERENCE_PROOF.captures }, () => ({})),
+      manifest: {
+        pages: [
+          ...Array.from({ length: EXACT_REFERENCE_PROOF.preservedPages }, () => ({ status: "preserved" })),
+          ...Array.from({ length: EXACT_REFERENCE_PROOF.missingPages }, () => ({ status: "missing" })),
+        ],
+      },
+      warnings: [],
+    },
+  };
+  const exactReceipt: {
+    recoveryId: string;
+    receiptVersion: string;
+    planner: string;
+    model: string;
+    manifestHash: string;
+    captures: object[];
+    sourceHashes: object[];
+    counts: { renderedBlocks: number; preservedBlocks: number; inferredEdges: number; knownAbsences: number };
+    validationResults: Array<{ passed: boolean }>;
+    decisions: Array<{ kind: string; proposedBy: string; result: string }>;
+    warnings: unknown[];
+  } = {
+    recoveryId: EXACT_REFERENCE_PROOF.recoveryId,
+    receiptVersion: EXACT_REFERENCE_PROOF.receiptVersion,
+    planner: EXACT_REFERENCE_PROOF.planner,
+    model: EXACT_REFERENCE_PROOF.model,
+    manifestHash: EXACT_REFERENCE_PROOF.manifestHash,
+    captures: Array.from({ length: EXACT_REFERENCE_PROOF.captures }, () => ({})),
+    sourceHashes: Array.from({ length: EXACT_REFERENCE_PROOF.sourceHashes }, () => ({})),
+    counts: {
+      renderedBlocks: EXACT_REFERENCE_PROOF.renderedBlocks,
+      preservedBlocks: EXACT_REFERENCE_PROOF.preservedBlocks,
+      inferredEdges: EXACT_REFERENCE_PROOF.inferredEdges,
+      knownAbsences: EXACT_REFERENCE_PROOF.knownAbsences,
+    },
+    validationResults: Array.from({ length: EXACT_REFERENCE_PROOF.validations }, () => ({ passed: true })),
+    decisions: [
+      { kind: "era_selection", proposedBy: "deterministic", result: "accepted" },
+      { kind: "page_order", proposedBy: "gpt-5.6", result: "accepted" },
+      ...Array.from({ length: 5 }, () => ({ kind: "primary_witness", proposedBy: "gpt-5.6", result: "accepted" })),
+      ...Array.from({ length: 8 }, () => ({ kind: "known_absence", proposedBy: "deterministic", result: "accepted" })),
+    ],
+    warnings: [],
+  };
+  assert.deepEqual(assertExactReferenceProof({ record: exactRecord, receipt: exactReceipt, recoveryId: EXACT_REFERENCE_PROOF.recoveryId }), EXACT_REFERENCE_PROOF);
+  for (const [mutation, pattern] of [
+    [(receipt: typeof exactReceipt) => { receipt.counts.renderedBlocks += 1; }, /headline counts drifted/u],
+    [(receipt: typeof exactReceipt) => { receipt.planner = "deterministic"; }, /planner drifted/u],
+    [(receipt: typeof exactReceipt) => { receipt.model = "gpt-5.6"; }, /model drifted/u],
+    [(receipt: typeof exactReceipt) => { receipt.decisions[1].proposedBy = "deterministic"; }, /decision attribution drifted/u],
+    [(receipt: typeof exactReceipt) => { receipt.validationResults[0].passed = false; }, /validation contract drifted/u],
+    [(receipt: typeof exactReceipt) => { receipt.manifestHash = "0".repeat(64); }, /manifest hash drifted/u],
+  ] as const) {
+    const mutatedReceipt = structuredClone(exactReceipt);
+    mutation(mutatedReceipt);
+    assert.throws(
+      () => assertExactReferenceProof({ record: exactRecord, receipt: mutatedReceipt, recoveryId: EXACT_REFERENCE_PROOF.recoveryId }),
+      pattern,
+    );
+  }
   const normalizedPreviewArguments = normalizePreviewArguments([
     "--port", "3100",
     "--ip=127.0.0.1",

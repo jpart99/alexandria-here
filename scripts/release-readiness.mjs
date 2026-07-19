@@ -104,6 +104,9 @@ const matrix = await text("FAILURE_RELIABILITY_MATRIX.md");
 const viteSource = await text("vite.config.ts");
 const workerSource = await text("worker/index.ts");
 const fontDeliverySource = await text("lib/font-delivery.ts");
+const productionSmokeSource = await text("scripts/production-smoke.mjs");
+const submissionLiveProofWrapper = await exists("scripts/submission-live-proof.mjs") ? await text("scripts/submission-live-proof.mjs") : "";
+const submissionProofContractExists = await exists("scripts/submission-proof-contract.mjs");
 const staticHeaders = await exists("public/_headers") ? await text("public/_headers") : "";
 const assetCacheHeaderReady = /(?:^|\r?\n)\/assets\/\*\r?\n\s+Cache-Control:\s*public,\s*max-age=31536000,\s*immutable(?:\r?\n|$)/iu.test(staticHeaders);
 const fontFallbackHeaderReady = /(?:^|\r?\n)\/fonts\/\*\.woff2\r?\n\s+Content-Type:\s*font\/woff2\r?\n\s+Cache-Control:\s*public,\s*max-age=86400\r?\n\s+X-Content-Type-Options:\s*nosniff(?:\r?\n|$)/iu.test(staticHeaders);
@@ -128,8 +131,28 @@ const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", 
 const missingScripts = requiredScripts.filter((name) => !packageJson.scripts?.[name]);
 const isolatedCompiledPreview = packageJson.scripts?.start === "node scripts/start-compiled-preview.mjs"
   && await exists("scripts/start-compiled-preview.mjs");
-const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview;
-check("Static/local", "Release commands declared", releaseCommandsReady ? "PASS" : "FAIL", missingScripts.length ? `missing: ${missingScripts.join(", ")}` : isolatedCompiledPreview ? requiredScripts.join(", ") : "start must use the dist-immutable compiled preview launcher");
+const expectedSubmissionLiveProofWrapper = [
+  'process.env.ALEXANDRIA_BASE_URL = "https://alexandria-here.cinemaexile.chatgpt.site";',
+  'process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH = "/r/18026989-33be-4011-86ee-19e1754cb22c";',
+  'process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1";',
+  "",
+  'await import("./production-smoke.mjs");',
+].join("\n");
+const submissionLiveProofReady = packageJson.scripts?.["qa:submission:live"] === "node scripts/submission-live-proof.mjs"
+  && submissionLiveProofWrapper.replace(/\r\n/gu, "\n").trim() === expectedSubmissionLiveProofWrapper.trim()
+  && submissionProofContractExists
+  && /import\s*\{\s*assertExactReferenceProof\s*\}\s*from\s*["']\.\/submission-proof-contract\.mjs["']/u.test(productionSmokeSource)
+  && /assertExactReferenceProof\(\{\s*record,\s*receipt:\s*referenceReceipt,\s*recoveryId\s*\}\)/u.test(productionSmokeSource);
+const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview && submissionLiveProofReady;
+const releaseCommandsDetail = missingScripts.length
+  ? `missing: ${missingScripts.join(", ")}`
+  : !isolatedCompiledPreview
+    ? "start must use the dist-immutable compiled preview launcher"
+    : !submissionLiveProofReady
+      ? "live submission proof command or pin contract drifted"
+      : requiredScripts.join(", ");
+check("Static/local", "Release commands declared", releaseCommandsReady ? "PASS" : "FAIL", releaseCommandsDetail);
+check("Static/local", "Live submission proof pin", submissionLiveProofReady ? "PASS" : "FAIL", submissionLiveProofReady ? "exact command, wrapper, production origin, judging recovery, strict flag, and assertion import/call are pinned" : "live submission proof command or pin contract drifted");
 check("Static/local", "Package cannot be published", packageJson.private === true ? "PASS" : "FAIL", "package.json private must be true");
 
 const hostingKeys = Object.keys(hosting);
