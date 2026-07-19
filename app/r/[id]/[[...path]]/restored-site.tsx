@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { EvidenceBlock, RecoveryEvent, RecoveryResult, RestoredPage, TemporalCandidateWindow } from "../../../../lib/domain";
+import type { EvidenceBlock, KnownAbsence, RecoveryEvent, RecoveryResult, RestoredPage, TemporalCandidateWindow } from "../../../../lib/domain";
+import { canonicalPath } from "../../../../lib/url-safety";
 
 type View = "site" | "timeline" | "witnesses" | "map" | "receipt";
 
@@ -47,6 +48,13 @@ function formatPublicWarning(warning: string) {
   if (warning === "archive_inventory_partial") {
     return "Part of the archive inventory was unavailable; Alexandria returned only witnesses supplied by the validated responses.";
   }
+  if (warning.startsWith("text_truncated:")) {
+    const fragment = warning.slice("text_truncated:".length).replace(/_/g, " ");
+    return `An archived ${fragment} exceeded Alexandria's 2,000-character block limit; the bounded fragment and its exact warning were preserved.`;
+  }
+  if (warning === "missing_link_label") {
+    return "An archived internal link had no surviving text label; Alexandria retained only its witnessed target path.";
+  }
   if (warning.startsWith("capture_failed:")) {
     const captureId = /^capture_failed:([^:]+):/.exec(warning)?.[1];
     return `Selected archive capture${captureId ? ` ${captureId}` : ""} could not be read safely and was excluded.`;
@@ -64,6 +72,78 @@ type PersistedRecovery = {
 
 function waitForPoll(milliseconds: number) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+/**
+ * New manifests persist every bounded known absence. Legacy receipts are kept
+ * byte-for-byte authoritative and derive the same Atlas list only from accepted
+ * absence decisions and their cited link blocks.
+ */
+export function knownAbsencesForResult(result: RecoveryResult): KnownAbsence[] {
+  const blocks = new Map(result.sources.flatMap((source) => source.blocks).map((block) => [block.id, block]));
+  const absences = new Map<string, KnownAbsence>();
+
+  const addAbsence = (id: string, path: string, label: string, candidateBlockIds: readonly string[]) => {
+    const sourceBlockIds = [...new Set(candidateBlockIds)].filter((blockId) => {
+      const block = blocks.get(blockId);
+      if (block?.kind !== "link" || !block.targetUrl) return false;
+      try {
+        return canonicalPath(block.targetUrl) === path;
+      } catch {
+        return false;
+      }
+    });
+    if (sourceBlockIds.length === 0) return;
+    const exactLabel = sourceBlockIds.map((blockId) => blocks.get(blockId)?.exactText || "").find(Boolean);
+    const evidencedLabel = label === path || sourceBlockIds.some((blockId) => blocks.get(blockId)?.exactText === label)
+      ? label
+      : exactLabel || path;
+    const existing = absences.get(path);
+    absences.set(path, {
+      id: existing?.id || id,
+      path,
+      label: existing?.label || evidencedLabel,
+      sourceBlockIds: [...new Set([...(existing?.sourceBlockIds || []), ...sourceBlockIds])],
+    });
+  };
+
+  const persistedAbsences = Array.isArray(result.manifest.knownAbsences) ? result.manifest.knownAbsences : [];
+  for (const absence of persistedAbsences) {
+    if (
+      !absence
+      || typeof absence.id !== "string"
+      || typeof absence.path !== "string"
+      || typeof absence.label !== "string"
+      || !Array.isArray(absence.sourceBlockIds)
+    ) continue;
+    addAbsence(absence.id, absence.path, absence.label, absence.sourceBlockIds);
+  }
+  for (const decision of result.receipt.decisions || []) {
+    if (decision.kind !== "known_absence" || decision.result !== "accepted") continue;
+    const citedLinks = decision.sourceIds.flatMap((blockId) => {
+      const block = blocks.get(blockId);
+      if (block?.kind !== "link" || !block.targetUrl) return [];
+      try {
+        return [{ blockId, path: canonicalPath(block.targetUrl), label: block.exactText }];
+      } catch {
+        return [];
+      }
+    });
+    for (const path of [...new Set(citedLinks.map((link) => link.path))]) {
+      const pathLinks = citedLinks.filter((link) => link.path === path);
+      addAbsence(
+        decision.targetIds[0] || `absence-${path}`,
+        path,
+        pathLinks.map((link) => link.label).find(Boolean) || path,
+        pathLinks.map((link) => link.blockId),
+      );
+    }
+  }
+  for (const page of result.manifest.pages.filter((candidate) => candidate.status === "missing")) {
+    addAbsence(page.id, page.path, page.title, page.sourceIds);
+  }
+
+  return [...absences.values()].slice(0, 8);
 }
 
 export function EvidenceBlockView({ block, witness }: { block: EvidenceBlock; witness: boolean }) {
@@ -151,6 +231,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
     [primaryDecisions, result.manifest.pages, sourceMap],
   );
   const temporalCandidates = (result.temporalCandidates || result.receipt.temporalCandidates || []).slice(0, 3);
+  const knownAbsences = useMemo(() => knownAbsencesForResult(result), [result]);
+  const undisclosedAbsenceCount = Math.max(0, result.receipt.counts.knownAbsences - knownAbsences.length);
 
   async function pollAlternateRecovery(recoveryId: string) {
     for (let attempt = 0; attempt < 150; attempt += 1) {
@@ -291,7 +373,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
               id={`tab-${item}`}
               key={item}
               role="tab"
-              aria-controls={`panel-${item}`}
+              aria-controls={view === item ? `panel-${item}` : undefined}
               aria-selected={view === item}
               tabIndex={view === item ? 0 : -1}
               onClick={() => setView(item)}
@@ -326,7 +408,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                 <p>{result.manifest.insufficientReason}</p>
                 <div className="overview-evidence-summary" aria-label="Surviving evidence summary">
                   <div><strong>{result.captures.length}</strong><span>capture witnesses</span></div>
-                  <div><strong>{witnessBlocks.length}</strong><span>preserved blocks</span></div>
+                  <div><strong>{witnessBlocks.length}</strong><span>extracted evidence blocks</span></div>
                   <div><strong>{result.receipt.counts.knownAbsences}</strong><span>known absences</span></div>
                   <div><strong>{temporalCandidates.length}</strong><span>coherent windows</span></div>
                 </div>
@@ -545,7 +627,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
           )}
 
           <div className="witness-summary" aria-label="Witness summary">
-            <div><strong>{witnessBlocks.length}</strong><span>preserved blocks</span></div>
+            <div><strong>{witnessBlocks.length}</strong><span>extracted evidence blocks</span></div>
             <div><strong>{result.sources.length}</strong><span>source records</span></div>
             <div><strong>{result.receipt.sourceHashes.length}</strong><span>content hashes</span></div>
           </div>
@@ -564,7 +646,9 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                     </div>
                     {block.exactText
                       ? <blockquote>{block.exactText}</blockquote>
-                      : <p className="absence-note">No archived alternative text was present; Alexandria preserved only the witnessed asset URL.</p>}
+                      : block.kind === "link"
+                        ? <p className="absence-note">No archived link label survived; Alexandria preserved only the witnessed target URL.</p>
+                        : <p className="absence-note">No archived alternative text was present; Alexandria preserved only the witnessed asset URL.</p>}
                     <dl>
                       <div><dt>Captured</dt><dd><time dateTime={block.capturedAt}>{formatWitnessDate(block.capturedAt)}</time></dd></div>
                       <div><dt>Source ID</dt><dd><code>{block.sourceId}</code></dd></div>
@@ -592,20 +676,28 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             <p>Solid rooms survived. Hatched rooms were reconstructed from sources. Dashed rooms are known only through surviving references.</p>
           </div>
           <div className="ghost-map">
-            {result.manifest.pages.map((item) => (
+            {result.manifest.pages.filter((item) => item.status !== "missing").map((item) => (
               <Link key={item.id} href={routeFor(result.id, item.path)} className={`map-node ${item.status}`}>
                 <span>{statusLabels[item.status]}</span>
                 <strong>{item.title}</strong>
                 <code>{item.path}</code>
               </Link>
             ))}
+            {knownAbsences.map((absence) => (
+              <div key={absence.id} className="map-node missing">
+                <span>Missing</span>
+                <strong>{absence.label}</strong>
+                <code>{absence.path}</code>
+              </div>
+            ))}
           </div>
           <div className="refused-panel">
             <h3>What Alexandria refused to claim</h3>
             <ul>
-              {result.manifest.pages.filter((item) => item.status === "missing").map((item) => <li key={item.id}>Referenced path <code>{item.path}</code> has no usable selected capture.</li>)}
+              {knownAbsences.map((absence) => <li key={absence.id}>Referenced path <code>{absence.path}</code> has no usable selected capture; cited by {absence.sourceBlockIds.length} surviving link block{absence.sourceBlockIds.length === 1 ? "" : "s"}.</li>)}
+              {undisclosedAbsenceCount > 0 && <li>{undisclosedAbsenceCount} additional known absence{undisclosedAbsenceCount === 1 ? " is" : "s are"} counted in this legacy receipt, but its persisted evidence does not expose enough cited path detail to display safely.</li>}
               {(result.warnings || []).map((warning) => <li key={warning}>{formatPublicWarning(warning)}</li>)}
-              {result.manifest.pages.every((item) => item.status !== "missing") && (result.warnings || []).length === 0 && (
+              {knownAbsences.length === 0 && result.receipt.counts.knownAbsences === 0 && (result.warnings || []).length === 0 && (
                 <li>No unresolved paths or extraction warnings were recorded for this edition.</li>
               )}
             </ul>

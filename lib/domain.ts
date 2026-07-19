@@ -108,6 +108,13 @@ export type RestoredPage = {
   missingReason?: string;
 };
 
+export type KnownAbsence = {
+  id: string;
+  path: string;
+  label: string;
+  sourceBlockIds: string[];
+};
+
 export type RestorationManifest = {
   schemaVersion: "2.0";
   outcome: "restored" | "insufficient_evidence";
@@ -118,6 +125,8 @@ export type RestorationManifest = {
   selectedWindowEnd: string;
   selectedEraLabel: string;
   pages: RestoredPage[];
+  /** Additive in v2: absent on legacy manifests and derived from accepted cited decisions when rendered. */
+  knownAbsences?: KnownAbsence[];
   navigation: Array<{ label: string; pageId: string; sourceIds: string[] }>;
   notes: string[];
 };
@@ -177,7 +186,7 @@ export type RecoveryReceiptWarning = {
 };
 
 export type RecoveryReceipt = {
-  receiptVersion: "1.0" | "1.1";
+  receiptVersion: "1.0" | "1.1" | "1.2";
   recoveryId: string;
   manifestHash: string;
   sourceHashes: Array<{ blockId: string; hash: string }>;
@@ -191,6 +200,8 @@ export type RecoveryReceipt = {
   selectedWindowEnd: string;
   temporalSelection: TemporalSelectionScore;
   temporalCandidates: TemporalCandidateWindow[];
+  /** Receipt v1.2 persists the bounded inventory needed to recompute temporal ranking. */
+  temporalInventory?: Capture[];
   decisions: RestorationDecision[];
   validationResults: ValidationResult[];
   counts: {

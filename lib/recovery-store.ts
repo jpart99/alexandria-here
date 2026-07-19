@@ -5,17 +5,22 @@ import type { RecoveryResult, RecoveryStage } from "./domain";
 import { serializePersistedRecovery } from "./persistence-budget";
 import { hydrateRecoveryRecord } from "./recovery-compat";
 import { acquireRecoveryClientCooldown } from "./recovery-rate-limit";
+import {
+  admitRunningRecovery,
+  cleanupRejectedAdmission,
+  persistCompletedRecoveryWithLease,
+  persistFailedRecoveryWithLease,
+  persistRecoveryStageWithLease,
+  RecoveryBusyError,
+  RecoveryIdCollisionError,
+  RecoveryLeaseLostError,
+  RecoveryPersistenceError,
+  recoveryIdExists,
+} from "./recovery-lease";
 
 let initialized = false;
-const RECOVERY_LOCK_ID = 1;
-const RECOVERY_LOCK_TTL_MS = 15 * 60 * 1_000;
 
-export class RecoveryBusyError extends Error {
-  constructor() {
-    super("Another witnessed recovery is already in progress. Please try again when it finishes.");
-    this.name = "RecoveryBusyError";
-  }
-}
+export { RecoveryBusyError, RecoveryIdCollisionError, RecoveryLeaseLostError, RecoveryPersistenceError };
 
 export async function ensureRecoverySchema() {
   if (initialized) return;
@@ -49,43 +54,28 @@ export async function ensureRecoverySchema() {
   initialized = true;
 }
 
-async function acquireRecoveryLock(recoveryId: string, acquiredAt: string) {
-  const staleBefore = new Date(Date.parse(acquiredAt) - RECOVERY_LOCK_TTL_MS).toISOString();
-  const result = await getD1().prepare(`INSERT INTO recovery_lock (id, recovery_id, acquired_at)
-    VALUES (?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      recovery_id = excluded.recovery_id,
-      acquired_at = excluded.acquired_at
-    WHERE recovery_lock.acquired_at < ?`)
-    .bind(RECOVERY_LOCK_ID, recoveryId, acquiredAt, staleBefore)
-    .run();
-  if (result.meta.changes !== 1) throw new RecoveryBusyError();
-}
-
-async function releaseRecoveryLock(recoveryId: string) {
-  await getD1().prepare("DELETE FROM recovery_lock WHERE id = ? AND recovery_id = ?")
-    .bind(RECOVERY_LOCK_ID, recoveryId)
-    .run();
-}
-
 export async function createRecoveryRecord(id: string, submittedUrl: string, normalizedUrl: string, clientKeyHash: string) {
   await ensureRecoverySchema();
+  const d1 = getD1();
   const now = new Date().toISOString();
-  await acquireRecoveryLock(id, now);
+  // The recovery UUID is also the lease fencing owner. Reject an existing ID
+  // before touching the singleton so an astronomically unlikely UUID reuse
+  // cannot renew or release another recovery's lease (the ABA case).
+  if (await recoveryIdExists(d1, id)) throw new RecoveryIdCollisionError();
+  let admitted = false;
   try {
-    await acquireRecoveryClientCooldown(getD1(), clientKeyHash, new Date(now));
-    await getDb().insert(recoveries).values({
+    await admitRunningRecovery(d1, {
       id,
       submittedUrl,
       normalizedUrl,
-      status: "running",
-      stage: "finding_captures",
-      detail: "Validating the address and asking the public archive for surviving captures.",
       createdAt: now,
-      updatedAt: now,
     });
+    admitted = true;
+    await acquireRecoveryClientCooldown(d1, clientKeyHash, new Date(now));
   } catch (error) {
-    await releaseRecoveryLock(id);
+    if (admitted) {
+      await cleanupRejectedAdmission(d1, id, now);
+    }
     throw error;
   }
   return now;
@@ -93,37 +83,18 @@ export async function createRecoveryRecord(id: string, submittedUrl: string, nor
 
 export async function updateRecoveryStage(id: string, stage: RecoveryStage, detail: string) {
   await ensureRecoverySchema();
-  await getDb().update(recoveries).set({
-    stage,
-    status: stage === "failed" ? "failed" : stage === "complete" ? "complete" : "running",
-    detail,
-    updatedAt: new Date().toISOString(),
-  }).where(eq(recoveries.id, id));
+  await persistRecoveryStageWithLease(getD1(), id, stage, detail, new Date().toISOString());
 }
 
 export async function completeRecovery(id: string, result: RecoveryResult) {
   await ensureRecoverySchema();
   const resultJson = serializePersistedRecovery(result);
-  await getDb().update(recoveries).set({
-    stage: "complete",
-    status: "complete",
-    detail: "The witnessed restoration is ready.",
-    resultJson,
-    updatedAt: new Date().toISOString(),
-  }).where(eq(recoveries.id, id));
-  await releaseRecoveryLock(id);
+  await persistCompletedRecoveryWithLease(getD1(), id, resultJson, new Date().toISOString());
 }
 
 export async function failRecovery(id: string, error: string) {
   await ensureRecoverySchema();
-  await getDb().update(recoveries).set({
-    stage: "failed",
-    status: "failed",
-    detail: "The recovery could not be completed.",
-    error,
-    updatedAt: new Date().toISOString(),
-  }).where(eq(recoveries.id, id));
-  await releaseRecoveryLock(id);
+  await persistFailedRecoveryWithLease(getD1(), id, error, new Date().toISOString());
 }
 
 export async function getRecoveryRecord(id: string) {

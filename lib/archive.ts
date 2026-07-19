@@ -1,5 +1,6 @@
 import type { Capture, TemporalCandidateWindow, TemporalSelectionScore } from "./domain";
 import { canonicalPath, isSameSiteUrl, validateArchiveUrl } from "./url-safety";
+import { sha256 } from "./hash";
 
 const CDX_ENDPOINT = "https://web.archive.org/cdx/search/cdx";
 export const RECOVERY_BUDGETS = {
@@ -17,7 +18,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 
 type CdxRow = [string, string, string, string, string?];
 
-function timestampToIso(timestamp: string): string {
+export function archiveTimestampToIso(timestamp: string): string {
   if (!/^\d{14}$/.test(timestamp)) throw new Error("Archive returned an invalid timestamp.");
   const y = timestamp.slice(0, 4);
   const m = timestamp.slice(4, 6);
@@ -33,12 +34,12 @@ function timestampToIso(timestamp: string): string {
   return iso;
 }
 
-function captureId(originalUrl: string, timestamp: string) {
-  const path = canonicalPath(originalUrl).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home";
-  return `capture-${path}-${timestamp}`;
+export async function deriveCaptureId(originalUrl: string, timestamp: string, digest?: string) {
+  const identityHash = await sha256(`${timestamp}\n${originalUrl}\n${digest || ""}`);
+  return `capture-${timestamp}-${identityHash}`;
 }
 
-function validateCaptureReplayIdentity(url: URL, capture: Capture): void {
+export function validateCaptureReplayIdentity(url: URL, capture: Capture): void {
   if (!/^\d{14}$/.test(capture.timestamp)) {
     throw new Error(`Capture ${capture.id} has an invalid replay identity.`);
   }
@@ -62,7 +63,11 @@ function validateCaptureReplayIdentity(url: URL, capture: Capture): void {
     `https://web.archive.org/web/${capture.timestamp}id_/${originalUrl.toString()}`,
   );
   const persisted = validateArchiveUrl(capture.archiveUrl);
-  if (persisted.href !== expected.href || url.href !== expected.href) {
+  if (
+    Date.parse(capture.capturedAt) !== Date.parse(archiveTimestampToIso(capture.timestamp))
+    || persisted.href !== expected.href
+    || url.href !== expected.href
+  ) {
     throw new Error(`Archive replay changed identity for capture ${capture.id}.`);
   }
 }
@@ -288,7 +293,7 @@ function parseRows(payload: unknown): CdxRow[] {
   );
 }
 
-function rowToCapture(row: CdxRow): Capture {
+async function rowToCapture(row: CdxRow): Promise<Capture> {
   const [timestamp, originalUrl, status, mimeType, digest] = row;
   const parsedOriginal = new URL(originalUrl);
   if (
@@ -300,14 +305,14 @@ function rowToCapture(row: CdxRow): Capture {
   }
   parsedOriginal.hash = "";
   const normalizedOriginal = parsedOriginal.toString();
-  const id = captureId(normalizedOriginal, timestamp);
+  const id = await deriveCaptureId(normalizedOriginal, timestamp, digest);
   return {
     id,
     sourceId: `source-${id}`,
     originalUrl: normalizedOriginal,
     archiveUrl: `https://web.archive.org/web/${timestamp}id_/${normalizedOriginal}`,
     timestamp,
-    capturedAt: timestampToIso(timestamp),
+    capturedAt: archiveTimestampToIso(timestamp),
     statusCode: Number(status),
     mimeType,
     digest,
@@ -514,15 +519,15 @@ export async function discoverCaptures(originalUrl: string, requestedYear?: stri
     if (!selectedPaths.has(path)) continue;
     rowsByPath.set(path, [...(rowsByPath.get(path) || []), row]);
   }
-  const unboundedCaptures = Array.from(rowsByPath.values()).flatMap((rows) =>
-    sampleRowsForPath(rows, MAX_CAPTURE_METADATA_PER_URL, scopedYear).flatMap((row) => {
-      try {
-        return [rowToCapture(row)];
-      } catch {
-        return [];
-      }
-    }),
-  );
+  const sampledRows = Array.from(rowsByPath.values()).flatMap((rows) =>
+    sampleRowsForPath(rows, MAX_CAPTURE_METADATA_PER_URL, scopedYear));
+  const unboundedCaptures = (await Promise.all(sampledRows.map(async (row) => {
+    try {
+      return await rowToCapture(row);
+    } catch {
+      return null;
+    }
+  }))).filter((capture): capture is Capture => capture !== null);
   const unique = boundInventoryCandidates(
     Array.from(new Map(unboundedCaptures.map((capture) => [capture.id, capture])).values()),
     requestedYear,

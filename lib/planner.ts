@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { RECOVERY_BUDGETS } from "./archive";
+import { rankTemporalWindows, RECOVERY_BUDGETS } from "./archive";
 import type {
   Capture,
   RecoveryReceipt,
@@ -15,8 +15,9 @@ import type {
 } from "./domain";
 import type { EvidenceGraph } from "./evidence-graph";
 import { validateEvidencePacket } from "./evidence-packet";
-import { sha256, stableStringify } from "./hash";
+import { evidenceBlockHashInput, sha256, stableStringify } from "./hash";
 import { buildReceiptWarnings, modelFallbackWarning, type ReceiptWarningInput } from "./recovery-warnings";
+import { canonicalPath } from "./url-safety";
 
 function chronologistResponseSchema(visiblePageIds?: readonly string[]) {
   const requiredPageIds = visiblePageIds?.length
@@ -638,6 +639,7 @@ export async function createManifestAndReceipt(args: {
   temporalSelection: TemporalSelectionScore;
   temporalCandidates: TemporalCandidateWindow[];
   captures?: Capture[];
+  inventoryCaptures?: Capture[];
   recoveryWarnings?: ReceiptWarningInput[];
   records: SourceRecord[];
   graph: EvidenceGraph;
@@ -652,7 +654,7 @@ export async function createManifestAndReceipt(args: {
   });
   const preflightBlocks = args.records.flatMap((record) => record.blocks);
   const preflightHashes = await Promise.all(preflightBlocks.map((block) => sha256(
-    `${block.kind}\n${block.exactText}\n${block.targetUrl || ""}\n${block.assetUrl || ""}`,
+    evidenceBlockHashInput(block),
   )));
   if (preflightBlocks.some((block, index) => block.contentHash !== preflightHashes[index])) {
     throw new Error("Evidence packet contains a source block whose content hash does not match.");
@@ -681,6 +683,38 @@ export async function createManifestAndReceipt(args: {
 
   pages = buildPages(candidates, plan.primaryWitnesses, args.graph);
 
+  const selectedCaptures = args.captures || args.records.map((record) => record.capture);
+  const temporalInventory = args.inventoryCaptures || selectedCaptures;
+  if (temporalInventory.length < 1 || temporalInventory.length > RECOVERY_BUDGETS.maxInventoryRecords) {
+    throw new Error("The temporal inventory exceeded its persisted evidence budget.");
+  }
+  const rankedInventory = rankTemporalWindows(temporalInventory);
+  const recomputedSelection = rankedInventory.find((candidate) => candidate.year === args.selectedYear);
+  if (
+    !recomputedSelection
+    || recomputedSelection.selected[0].capturedAt !== args.windowStart
+    || recomputedSelection.selected[recomputedSelection.selected.length - 1].capturedAt !== args.windowEnd
+  ) throw new Error("The selected window does not reconcile with the persisted bounded inventory.");
+  const selectedCaptureIds = [...selectedCaptures.map((capture) => capture.id)].sort();
+  const recomputedCaptureIds = [...recomputedSelection.selected.map((capture) => capture.id)].sort();
+  if (stableStringify(selectedCaptureIds) !== stableStringify(recomputedCaptureIds)) {
+    throw new Error("The selected captures do not reconcile with the persisted bounded inventory.");
+  }
+  const authoritativeTemporalCandidates = rankedInventory.map<TemporalCandidateWindow>((candidate) => ({
+    id: `year-${candidate.year}`,
+    year: candidate.year,
+    windowStart: candidate.selected[0].capturedAt,
+    windowEnd: candidate.selected[candidate.selected.length - 1].capturedAt,
+    captureCount: candidate.selected.length,
+    pageCoverage: candidate.score.coverage,
+    score: candidate.score,
+    selected: candidate.year === args.selectedYear,
+  }));
+  const authoritativeTemporalSelection = recomputedSelection.score;
+  if (args.inventoryCaptures && stableStringify(authoritativeTemporalCandidates) !== stableStringify(args.temporalCandidates)) {
+    throw new Error("The temporal candidates do not reconcile with the persisted bounded inventory.");
+  }
+
   const pageMap = new Map(pages.map((page) => [page.id, page]));
   const orderedPages = [
     ...plan.pageOrder.map((id) => pageMap.get(id)).filter((page): page is RestoredPage => Boolean(page)),
@@ -695,12 +729,16 @@ export async function createManifestAndReceipt(args: {
     selectedWindowEnd: args.windowEnd,
     selectedEraLabel: exactWindowLabel(args.windowStart, args.windowEnd),
     pages: orderedPages,
+    knownAbsences: args.graph.knownAbsences.map((absence) => ({
+      ...absence,
+      sourceBlockIds: [...absence.sourceBlockIds],
+    })),
     navigation: deriveEvidenceNavigation(plan.pageOrder, orderedPages),
     notes: [
       "Historical body content is rendered only from hashed evidence blocks.",
       "Alexandria uses public archival evidence for restoration and claims neither ownership nor historical completeness.",
       "Era years and windows describe archive capture dates, not when the witnessed historical content was originally authored.",
-      `Deterministic era score ${args.temporalSelection.score}: ${args.temporalSelection.reason}.`,
+      `Deterministic era score ${authoritativeTemporalSelection.score}: ${authoritativeTemporalSelection.reason}.`,
     ],
   };
 
@@ -722,6 +760,16 @@ export async function createManifestAndReceipt(args: {
   const blockMap = new Map(allBlocks.map((block) => [block.id, block]));
   const renderableBlockIds = manifest.pages.flatMap((page) => page.blockIds);
   const recomputedHashes = preflightHashes;
+  const knownAbsencesHaveCitedLinks = (manifest.knownAbsences || []).length === args.graph.knownAbsences.length
+    && (manifest.knownAbsences || []).every((absence) =>
+      absence.sourceBlockIds.length > 0
+      && absence.sourceBlockIds.every((id) => {
+        const block = blockMap.get(id);
+        return block?.kind === "link"
+          && Boolean(block.targetUrl)
+          && canonicalPath(block.targetUrl!) === absence.path;
+      })
+      && (absence.label === absence.path || absence.sourceBlockIds.some((id) => blockMap.get(id)?.exactText === absence.label)));
   const validationResults: ValidationResult[] = [
     {
       rule: "all_rendered_blocks_have_evidence",
@@ -740,6 +788,11 @@ export async function createManifestAndReceipt(args: {
       rule: "missing_pages_have_no_body_blocks",
       passed: manifest.pages.filter((page) => page.status === "missing").every((page) => page.blockIds.length === 0),
       detail: "Missing states are structurally prevented from carrying historical body content.",
+    },
+    {
+      rule: "known_absences_have_cited_link_blocks",
+      passed: knownAbsencesHaveCitedLinks,
+      detail: `${(manifest.knownAbsences || []).length} bounded known absences retain only paths and labels supported by their cited link blocks.`,
     },
     {
       rule: "preserved_pages_have_evidence_blocks",
@@ -780,19 +833,19 @@ export async function createManifestAndReceipt(args: {
     },
     {
       rule: "temporal_candidates_are_bounded_and_authoritative",
-      passed: args.temporalCandidates.length >= 1
-        && args.temporalCandidates.length <= 3
-        && args.temporalCandidates.filter((candidate) => candidate.selected).length === 1
-        && args.temporalCandidates.every((candidate) =>
+      passed: authoritativeTemporalCandidates.length >= 1
+        && authoritativeTemporalCandidates.length <= 3
+        && authoritativeTemporalCandidates.filter((candidate) => candidate.selected).length === 1
+        && authoritativeTemporalCandidates.every((candidate) =>
           /^\d{4}$/.test(candidate.year)
           && candidate.captureCount <= RECOVERY_BUDGETS.maxFetchedCaptures
           && candidate.score.inventoryRecordsConsidered <= RECOVERY_BUDGETS.maxInventoryRecords)
-        && args.temporalCandidates.some((candidate) =>
+        && authoritativeTemporalCandidates.some((candidate) =>
           candidate.selected
           && candidate.year === args.selectedYear
           && candidate.windowStart === args.windowStart
           && candidate.windowEnd === args.windowEnd
-          && candidate.score.score === args.temporalSelection.score),
+          && candidate.score.score === authoritativeTemporalSelection.score),
       detail: "One of at most three mechanically ranked candidates exactly matches the selected receipt window and all recovery budgets.",
     },
   ];
@@ -813,7 +866,6 @@ export async function createManifestAndReceipt(args: {
     });
   }
 
-  const selectedCaptures = args.captures || args.records.map((record) => record.capture);
   const receiptCaptures = selectedCaptures.map((capture) => ({
     id: capture.id,
     sourceId: capture.sourceId,
@@ -852,7 +904,7 @@ export async function createManifestAndReceipt(args: {
   const receiptWarnings = buildReceiptWarnings(receiptWarningInputs);
   const manifestHash = await sha256(stableStringify(manifest));
   const receipt: RecoveryReceipt = {
-    receiptVersion: "1.1",
+    receiptVersion: "1.2",
     recoveryId: args.recoveryId,
     manifestHash,
     sourceHashes: allBlocks.map((block) => ({ blockId: block.id, hash: block.contentHash })),
@@ -864,8 +916,9 @@ export async function createManifestAndReceipt(args: {
     planner,
     selectedWindowStart: args.windowStart,
     selectedWindowEnd: args.windowEnd,
-    temporalSelection: args.temporalSelection,
-    temporalCandidates: args.temporalCandidates,
+    temporalSelection: authoritativeTemporalSelection,
+    temporalCandidates: authoritativeTemporalCandidates,
+    temporalInventory: temporalInventory.map((capture) => ({ ...capture, warnings: [...capture.warnings] })),
     decisions,
     validationResults,
     counts: {

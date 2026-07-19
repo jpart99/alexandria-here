@@ -111,7 +111,7 @@ function temporalMetadata(recordCount: number) {
     id: "year-2003",
     year: "2003",
     windowStart: "2003-04-01T00:00:00Z",
-    windowEnd: "2003-04-07T00:00:00Z",
+    windowEnd: `2003-04-${String(recordCount).padStart(2, "0")}T00:00:00Z`,
     captureCount: recordCount,
     pageCoverage: 5,
     score,

@@ -92,7 +92,12 @@ export async function acquireRecoveryClientCooldown(
 
   // Bound pseudonymous-key retention independently of recovery-result retention.
   const retentionCutoff = new Date(now.getTime() - CLIENT_KEY_RETENTION_MS).toISOString();
-  await d1.prepare("DELETE FROM recovery_rate_limits WHERE last_started_at < ?")
-    .bind(retentionCutoff)
-    .run();
+  try {
+    await d1.prepare("DELETE FROM recovery_rate_limits WHERE last_started_at < ?")
+      .bind(retentionCutoff)
+      .run();
+  } catch {
+    // Admission has already succeeded atomically above. Retention pruning is
+    // housekeeping and must not revoke the recovery while leaving its cooldown.
+  }
 }

@@ -79,6 +79,7 @@ a { color: inherit; }
 .recovery-form label { display: block; margin-bottom: 12px; color: var(--paper); font-size: 14px; font-weight: 650; }
 .input-row { display: flex; border-bottom: 1px solid var(--paper); }
 .input-row input { min-width: 0; flex: 1; padding: 17px 2px; border: 0; background: transparent; color: white; font-size: clamp(17px, 1.8vw, 22px); outline: 0; }
+.input-row input:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 4px; }
 .input-row input::placeholder { color: #626b72; }
 .input-row button, .seams-button { border: 0; cursor: pointer; }
 .input-row button { padding: 0 24px; background: var(--paper); color: var(--ink); font-weight: 750; }
@@ -164,16 +165,16 @@ a { color: inherit; }
 .section-intro h2 { margin: 0; font: 500 clamp(42px, 5vw, 72px)/1 var(--font-cormorant), Georgia, serif; }
 .section-intro > p:last-child { color: #919a9f; line-height: 1.7; }
 .ghost-map { margin-top: 42px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; }
-.map-node { min-height: 150px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #5b6670; text-decoration: none; background: #181e23; }
+.map-node { min-width: 0; min-height: 150px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #5b6670; text-decoration: none; background: #181e23; }
 .map-node span { color: #79858d; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
-.map-node strong { font: 500 26px/1.05 var(--font-cormorant), Georgia, serif; }
+.map-node strong { min-width: 0; overflow-wrap: anywhere; font: 500 26px/1.05 var(--font-cormorant), Georgia, serif; }
 .map-node code { color: #77838a; font-size: 10px; overflow-wrap: anywhere; }
 .map-node.reconstructed_from_sources { background-image: repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(125,163,194,.08) 8px, rgba(125,163,194,.08) 10px); }
 .map-node.missing { border-style: dashed; color: #8f8777; }
-.refused-panel { margin-top: 48px; padding: 28px; border: 1px solid #3c454c; }
+.refused-panel { min-width: 0; margin-top: 48px; padding: 28px; border: 1px solid #3c454c; }
 .refused-panel h3, .receipt-surface h3 { font: 600 26px/1 var(--font-cormorant), Georgia, serif; }
-.refused-panel li { margin: 9px 0; color: #89949a; }
-.refused-panel code { color: #beb8a9; }
+.refused-panel li { min-width: 0; margin: 9px 0; color: #89949a; overflow-wrap: anywhere; }
+.refused-panel code { color: #beb8a9; overflow-wrap: anywhere; }
 .edition-card { margin: 42px 0 54px; display: grid; grid-template-columns: minmax(0, 2fr) repeat(2, minmax(150px, .7fr)); border-top: 1px solid var(--rule); border-left: 1px solid var(--rule); }
 .edition-card > div { min-height: 124px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
 .edition-card strong { font: 500 22px/1.25 var(--font-cormorant), Georgia, serif; }

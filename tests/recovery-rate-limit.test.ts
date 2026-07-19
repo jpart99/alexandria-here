@@ -10,7 +10,7 @@ import {
 
 type Row = { last_started_at: string };
 
-function fakeD1() {
+function fakeD1(options: { failRetentionDelete?: boolean } = {}) {
   const rows = new Map<string, Row>();
   return {
     rows,
@@ -30,6 +30,7 @@ function fakeD1() {
             return { meta: { changes: 1 } };
           }
           if (sql.startsWith("DELETE FROM recovery_rate_limits")) {
+            if (options.failRetentionDelete) throw new Error("retention unavailable");
             const [cutoff] = bindings as string[];
             let changes = 0;
             for (const [key, row] of rows) {
@@ -85,6 +86,17 @@ test("durable cooldown admits once, reports an honest retry, and admits after ex
 
   await assert.doesNotReject(
     acquireRecoveryClientCooldown(d1 as unknown as D1Database, "client-a", new Date(now.getTime() + 600_000)),
+  );
+});
+
+test("retention housekeeping cannot revoke an already successful cooldown admission", async () => {
+  const d1 = fakeD1({ failRetentionDelete: true });
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  await assert.doesNotReject(acquireRecoveryClientCooldown(d1 as unknown as D1Database, "client-a", now));
+  assert.equal(d1.rows.get("client-a")?.last_started_at, now.toISOString());
+  await assert.rejects(
+    acquireRecoveryClientCooldown(d1 as unknown as D1Database, "client-a", new Date(now.getTime() + 60_000)),
+    (error: unknown) => error instanceof RecoveryRateLimitError && error.retryAfterSeconds === 540,
   );
 });
 

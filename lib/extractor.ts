@@ -1,6 +1,6 @@
 import { load } from "cheerio";
 import type { Capture, EvidenceBlock, EvidenceBlockKind, SourceRecord } from "./domain";
-import { sha256 } from "./hash";
+import { evidenceBlockHashInput, sha256 } from "./hash";
 import { canonicalPath, isSameSiteUrl } from "./url-safety";
 
 const MAX_BODY_BLOCKS = 80;
@@ -8,7 +8,12 @@ const MAX_LINKS = 40;
 const MAX_TEXT_LENGTH = 2_000;
 
 function normalizeText(value: string) {
-  return value.replace(/<br\s*\/?>/gi, " ").replace(/\s+/g, " ").trim().slice(0, MAX_TEXT_LENGTH);
+  const normalized = value.replace(/<br\s*\/?>/gi, " ").replace(/\s+/g, " ").trim();
+  return {
+    exactText: normalized.slice(0, MAX_TEXT_LENGTH),
+    normalized,
+    truncated: normalized.length > MAX_TEXT_LENGTH,
+  };
 }
 
 function absoluteUrl(value: string | undefined, base: string): string | undefined {
@@ -31,13 +36,12 @@ async function makeBlock(
   options: { targetUrl?: string; assetUrl?: string; warnings?: string[] } = {},
 ): Promise<EvidenceBlock> {
   const id = `block-${capture.id}-${position}`;
-  return {
+  const block = {
     id,
     sourceId: capture.sourceId,
     captureId: capture.id,
     kind,
     exactText,
-    contentHash: await sha256(`${kind}\n${exactText}\n${options.targetUrl || ""}\n${options.assetUrl || ""}`),
     position,
     originalUrl: capture.originalUrl,
     archiveUrl: capture.archiveUrl,
@@ -46,6 +50,7 @@ async function makeBlock(
     assetUrl: options.assetUrl,
     warnings: options.warnings || [],
   };
+  return { ...block, contentHash: await sha256(evidenceBlockHashInput(block)) };
 }
 
 export async function extractSourceRecord(capture: Capture, html: string, rootUrl: string): Promise<SourceRecord> {
@@ -60,9 +65,20 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
 
   const warnings: string[] = [];
   const blocks: EvidenceBlock[] = [];
-  const title = normalizeText($("title").first().text() || $("h1").first().text());
+  const boundedElementText = (element: ReturnType<typeof $>) => {
+    const clone = element.clone();
+    clone.find("br").replaceWith(" ");
+    return normalizeText(clone.text());
+  };
+  const titleElement = $("title").first().length ? $("title").first() : $("h1").first();
+  const titleText = boundedElementText(titleElement);
+  const title = titleText.exactText;
   if (!title) warnings.push("missing_title");
-  if (title) blocks.push(await makeBlock(capture, "title", title, blocks.length));
+  if (title) {
+    blocks.push(await makeBlock(capture, "title", title, blocks.length, {
+      warnings: titleText.truncated ? ["text_truncated:title"] : [],
+    }));
+  }
 
   const root = $("main").first().length
     ? $("main").first()
@@ -76,8 +92,9 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
   let bodyBlockCount = 0;
   let bodyWasTruncated = false;
   for (const element of root.find("h1,h2,h3,h4,p,li,blockquote").toArray()) {
-    const text = normalizeText($(element).text());
-    if (text.length < 2 || seen.has(text)) continue;
+    const bounded = boundedElementText($(element));
+    const text = bounded.exactText;
+    if (text.length < 2 || seen.has(bounded.normalized)) continue;
     if (bodyBlockCount >= MAX_BODY_BLOCKS) {
       bodyWasTruncated = true;
       break;
@@ -90,8 +107,10 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
         : tagName === "blockquote"
           ? "quote"
           : "paragraph";
-    seen.add(text);
-    blocks.push(await makeBlock(capture, kind, text, blocks.length));
+    seen.add(bounded.normalized);
+    blocks.push(await makeBlock(capture, kind, text, blocks.length, {
+      warnings: bounded.truncated ? [`text_truncated:${kind}`] : [],
+    }));
     bodyBlockCount += 1;
   }
 
@@ -99,8 +118,16 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
   for (const element of root.find("a[href]").toArray().slice(0, MAX_LINKS)) {
     const targetUrl = absoluteUrl($(element).attr("href"), capture.originalUrl);
     if (!targetUrl || !isSameSiteUrl(targetUrl, rootUrl)) continue;
-    const label = normalizeText($(element).text()) || canonicalPath(targetUrl);
-    const block = await makeBlock(capture, "link", label, blocks.length, { targetUrl });
+    const boundedLabel = boundedElementText($(element));
+    const label = boundedLabel.exactText || canonicalPath(targetUrl);
+    const blockWarnings = [
+      ...(boundedLabel.truncated ? ["text_truncated:link_label"] : []),
+      ...(!boundedLabel.exactText ? ["missing_link_label"] : []),
+    ];
+    const block = await makeBlock(capture, "link", boundedLabel.exactText, blocks.length, {
+      targetUrl,
+      warnings: blockWarnings,
+    });
     blocks.push(block);
     internalLinks.push({ targetUrl, sourceBlockId: block.id, label });
   }
@@ -108,11 +135,15 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
   for (const element of root.find("img[src]").toArray().slice(0, 12)) {
     const originalAsset = absoluteUrl($(element).attr("src"), capture.originalUrl);
     if (!originalAsset) continue;
-    const alt = normalizeText($(element).attr("alt") || "");
+    const boundedAlt = normalizeText($(element).attr("alt") || "");
+    const alt = boundedAlt.exactText;
     const assetUrl = `https://web.archive.org/web/${capture.timestamp}id_/${originalAsset}`;
     blocks.push(await makeBlock(capture, "image", alt, blocks.length, {
       assetUrl,
-      warnings: alt ? [] : ["missing_image_alt"],
+      warnings: [
+        ...(boundedAlt.truncated ? ["text_truncated:image_alt"] : []),
+        ...(!alt ? ["missing_image_alt"] : []),
+      ],
     }));
   }
 

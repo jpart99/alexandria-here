@@ -84,6 +84,7 @@ export async function runRecovery(args: {
       temporalSelection: inventory.temporalSelection,
       temporalCandidates: inventory.temporalCandidates,
       captures: inventory.selected,
+      inventoryCaptures: inventory.all,
       recoveryWarnings: receiptWarnings,
       records,
       graph,

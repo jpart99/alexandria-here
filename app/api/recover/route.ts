@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { waitUntil } from "cloudflare:workers";
-import { createRecoveryRecord, failRecovery, RecoveryBusyError } from "../../../lib/recovery-store";
+import { createRecoveryRecord, failRecovery, RecoveryBusyError, RecoveryIdCollisionError } from "../../../lib/recovery-store";
 import { runRecovery } from "../../../lib/recover";
 import { validateSubmittedUrl } from "../../../lib/url-safety";
 import { recoveryClientKey, RecoveryRateLimitError, recoveryRateLimitResponse } from "../../../lib/recovery-rate-limit";
+import { allocateRecoveryId } from "../../../lib/recovery-id";
 
 const RequestSchema = z.object({
   url: z.string().min(1).max(2_048),
@@ -44,7 +45,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const recoveryId = crypto.randomUUID();
   let clientKeyHash: string;
   try {
     clientKeyHash = await recoveryClientKey(request);
@@ -54,9 +54,15 @@ export async function POST(request: Request) {
       { status: 503, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } },
     );
   }
+  let recoveryId: string;
   let createdAt: string;
   try {
-    createdAt = await createRecoveryRecord(recoveryId, submittedUrl, normalizedUrl, clientKeyHash);
+    const allocation = await allocateRecoveryId(
+      () => crypto.randomUUID(),
+      (candidateId) => createRecoveryRecord(candidateId, submittedUrl, normalizedUrl, clientKeyHash),
+    );
+    recoveryId = allocation.recoveryId;
+    createdAt = allocation.value;
   } catch (error) {
     if (error instanceof RecoveryRateLimitError) {
       return recoveryRateLimitResponse(error);
@@ -65,6 +71,12 @@ export async function POST(request: Request) {
       return Response.json(
         { error: error.message },
         { status: 409, headers: { "Cache-Control": "no-store", "Retry-After": "15" } },
+      );
+    }
+    if (error instanceof RecoveryIdCollisionError) {
+      return Response.json(
+        { error: "Alexandria could not allocate a recovery identifier. Please try again." },
+        { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "1", "X-Content-Type-Options": "nosniff" } },
       );
     }
     throw error;

@@ -34,6 +34,7 @@ export default async function RestoredPage({
   const requestedPath = path?.length ? `/${path.join("/")}` : "/";
   const page = record.result.manifest.pages.find((candidate) => candidate.path === requestedPath)
     || (requestedPath === "/" ? record.result.manifest.pages[0] : undefined);
+  if (record.result.outcome === "insufficient_evidence" && requestedPath !== "/") notFound();
   if (!page && record.result.outcome === "restored") notFound();
   return <RestoredSite result={record.result} page={page || null} />;
 }

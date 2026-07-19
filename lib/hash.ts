@@ -14,3 +14,41 @@ export function stableStringify(value: unknown): string {
   }
   return JSON.stringify(value);
 }
+
+type EvidenceBlockHashFields = {
+  id: string;
+  sourceId: string;
+  captureId: string;
+  kind: string;
+  exactText: string;
+  position: number;
+  originalUrl: string;
+  archiveUrl: string;
+  capturedAt: string;
+  targetUrl?: string;
+  assetUrl?: string;
+  warnings: string[];
+};
+
+export function legacyEvidenceBlockHashInput(block: Pick<EvidenceBlockHashFields, "kind" | "exactText" | "targetUrl" | "assetUrl">) {
+  return `${block.kind}\n${block.exactText}\n${block.targetUrl || ""}\n${block.assetUrl || ""}`;
+}
+
+/** Receipt v1.2 binds exact content to its persisted order, owner, capture, URLs, and extraction warnings. */
+export function evidenceBlockHashInput(block: EvidenceBlockHashFields) {
+  return stableStringify({
+    version: "evidence-block-v2",
+    id: block.id,
+    sourceId: block.sourceId,
+    captureId: block.captureId,
+    kind: block.kind,
+    exactText: block.exactText,
+    position: block.position,
+    originalUrl: block.originalUrl,
+    archiveUrl: block.archiveUrl,
+    capturedAt: block.capturedAt,
+    targetUrl: block.targetUrl || "",
+    assetUrl: block.assetUrl || "",
+    warnings: block.warnings,
+  });
+}

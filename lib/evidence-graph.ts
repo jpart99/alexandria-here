@@ -1,15 +1,10 @@
-import type { GraphEdge, GraphNode, SourceRecord } from "./domain";
+import type { GraphEdge, GraphNode, KnownAbsence, SourceRecord } from "./domain";
 import { canonicalPath } from "./url-safety";
 
 export type EvidenceGraph = {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  knownAbsences: Array<{
-    id: string;
-    path: string;
-    label: string;
-    sourceBlockIds: string[];
-  }>;
+  knownAbsences: KnownAbsence[];
   conflicts: Array<{
     path: string;
     kind: "title" | "url_variant";

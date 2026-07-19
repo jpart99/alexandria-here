@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
-import { discoverCaptures, fetchCaptureHtml, RequestedEraUnavailableError } from "../lib/archive";
+import { discoverCaptures, fetchCaptureHtml, rankTemporalWindows, RequestedEraUnavailableError } from "../lib/archive";
 import type { Capture, RecoveryResult } from "../lib/domain";
 import { hydrateRecoveryRecord, parsePersistedRecoveryResult } from "../lib/recovery-compat";
 import { createReceiptResponse } from "../lib/receipt-response";
 import { aggregateRecoveryWarnings, buildReceiptWarnings, modelFallbackWarning } from "../lib/recovery-warnings";
+import { stableStringify } from "../lib/hash";
 
 const capture: Capture = {
   id: "capture-home-20030401000000",
@@ -219,27 +221,95 @@ test("archive inventory tolerates one protocol failure and rejects malformed JSO
 });
 
 function legacyResult(warnings: string[] = [], captures: Capture[] = [], sources: unknown[] = []) {
-  return {
+  const effectiveCaptures = captures.length ? captures : [capture];
+  const effectiveSources = sources.length ? sources : [legacySource(effectiveCaptures[0])];
+  const sourceIds = effectiveSources.flatMap((source) => {
+    if (!source || typeof source !== "object" || !("sourceId" in source) || typeof source.sourceId !== "string") return [];
+    return [source.sourceId];
+  });
+  const primarySourceId = sourceIds[0];
+  const temporalSelection = rankTemporalWindows(effectiveCaptures)[0].score;
+  const sourceHashes = effectiveSources.flatMap((source) => {
+    if (!source || typeof source !== "object" || !("blocks" in source) || !Array.isArray(source.blocks)) return [];
+    return source.blocks.flatMap((block) => {
+      if (!block || typeof block !== "object" || !("id" in block) || !("contentHash" in block)
+        || typeof block.id !== "string" || typeof block.contentHash !== "string") return [];
+      return [{ blockId: block.id, hash: block.contentHash }];
+    });
+  });
+  const result = {
     id: "legacy-id",
+    submittedUrl: "http://lostsite.org/",
     normalizedUrl: "http://lostsite.org/",
-    sources,
-    captures,
+    createdAt: "2003-04-02T00:00:00.000Z",
+    outcome: "restored",
+    sources: effectiveSources,
+    captures: effectiveCaptures,
     warnings,
     manifest: {
+      schemaVersion: "2.0",
       outcome: "restored",
+      originalUrl: "http://lostsite.org/",
+      recoveredTitle: "Lost Site",
+      selectedWindowStart: "2003-04-01T00:00:00.000Z",
+      selectedWindowEnd: "2003-04-02T00:00:00.000Z",
+      selectedEraLabel: "Recovered from a coherent window between Apr 1, 2003 and Apr 2, 2003",
       pages: [{
         id: "page-home",
         path: "/",
-        status: "preserved",
-        sourceIds: ["source-primary", "source-supporting"],
-        primarySourceId: "source-primary",
+        title: "Lost Site",
+        status: "reconstructed_from_sources",
+        sourceIds,
+        primarySourceId,
         blockIds: [],
       }],
+      navigation: [{ pageId: "page-home", label: "Lost Site", sourceIds: [primarySourceId] }],
+      notes: [],
     },
     receipt: {
-      sourceHashes: [],
+      receiptVersion: "1.0",
+      recoveryId: "legacy-id",
+      manifestHash: "a".repeat(64),
+      sourceHashes,
+      model: null,
+      promptVersion: null,
+      modelSchemaVersion: "temporal-restoration-plan-v2",
+      planner: "deterministic",
+      selectedWindowStart: "2003-04-01T00:00:00.000Z",
+      selectedWindowEnd: "2003-04-02T00:00:00.000Z",
+      temporalSelection,
       counts: { preservedBlocks: 0, renderedBlocks: 0, inferredEdges: 0, knownAbsences: 0 },
+      generatedAt: "2003-04-02T00:00:00.000Z",
     },
+  };
+  result.receipt.manifestHash = createHash("sha256").update(stableStringify(result.manifest)).digest("hex");
+  return result;
+}
+
+function legacySource(ownerCapture: Capture, warnings: string[] = []) {
+  const titleBlockId = `title-${ownerCapture.id}`;
+  return {
+    id: `page-${ownerCapture.id}`,
+    sourceId: ownerCapture.sourceId,
+    capture: ownerCapture,
+    canonicalPath: new URL(ownerCapture.originalUrl).pathname || "/",
+    title: "Lost Site",
+    titleBlockId,
+    blocks: [{
+      id: titleBlockId,
+      sourceId: ownerCapture.sourceId,
+      captureId: ownerCapture.id,
+      kind: "title",
+      exactText: "Lost Site",
+      contentHash: "20f263bfee8687502b17996f2a9565e2bb3a2aec86884b891502fa5711a288c1",
+      position: 0,
+      originalUrl: ownerCapture.originalUrl,
+      archiveUrl: ownerCapture.archiveUrl,
+      capturedAt: ownerCapture.capturedAt,
+      warnings: [],
+    }],
+    internalLinks: [],
+    warnings,
   };
 }
 
@@ -297,21 +367,15 @@ test("receipt warnings group exact raw values while preserving every owner occur
   assert.equal(warnings.find((warning) => warning.raw === "model_fallback:timeout")?.occurrences.length, 1);
 });
 
-test("legacy additive fields are normalized and corrupt durable JSON becomes unavailable", () => {
-  assert.equal(parsePersistedRecoveryResult("not-json"), null);
-  assert.equal(parsePersistedRecoveryResult(JSON.stringify({ id: "stale" })), null);
+test("legacy additive fields are normalized and corrupt durable JSON becomes unavailable", async () => {
+  assert.equal(await parsePersistedRecoveryResult("not-json"), null);
+  assert.equal(await parsePersistedRecoveryResult(JSON.stringify({ id: "stale" })), null);
 
   const receiptCapture = { ...capture, warnings: ["capture_metadata_warning"] };
-  const parsed = parsePersistedRecoveryResult(JSON.stringify(legacyResult(
+  const parsed = await parsePersistedRecoveryResult(JSON.stringify(legacyResult(
     ["capture_metadata_warning", "model_fallback:timeout"],
     [receiptCapture],
-    [{
-      id: "page-home",
-      sourceId: receiptCapture.sourceId,
-      capture: receiptCapture,
-      blocks: [],
-      warnings: ["block_limit_reached"],
-    }],
+    [legacySource(receiptCapture, ["block_limit_reached"])],
   )));
   assert.ok(parsed);
   assert.deepEqual(parsed.nodes, []);
@@ -319,9 +383,9 @@ test("legacy additive fields are normalized and corrupt durable JSON becomes una
   assert.deepEqual(parsed.temporalCandidates, []);
   assert.deepEqual(parsed.receipt.decisions, []);
   assert.deepEqual(parsed.receipt.validationResults, []);
-  assert.deepEqual(parsed.manifest.pages[0].supportingSourceIds, ["source-supporting"]);
+  assert.deepEqual(parsed.manifest.pages[0].supportingSourceIds, []);
 
-  const normalizedWarnings = parsePersistedRecoveryResult(JSON.stringify(legacyResult([
+  const normalizedWarnings = await parsePersistedRecoveryResult(JSON.stringify(legacyResult([
     "block_limit_reached",
     "block_limit_reached",
     "capture_failed:capture-a:timeout",
@@ -336,10 +400,10 @@ test("legacy additive fields are normalized and corrupt durable JSON becomes una
   const warnedCaptureA = { ...capture, id: "capture-a", sourceId: "source-a", warnings: [] };
   const warnedCaptureB = { ...capture, id: "capture-b", sourceId: "source-b", warnings: [] };
   const warnedSources = [
-    { id: "page-a", sourceId: "source-a", capture: warnedCaptureA, blocks: [], warnings: ["block_limit_reached"] },
-    { id: "page-b", sourceId: "source-b", capture: warnedCaptureB, blocks: [], warnings: ["block_limit_reached"] },
+    legacySource(warnedCaptureA, ["block_limit_reached"]),
+    legacySource(warnedCaptureB, ["block_limit_reached"]),
   ];
-  const warnedLegacy = parsePersistedRecoveryResult(JSON.stringify(legacyResult([
+  const warnedLegacy = await parsePersistedRecoveryResult(JSON.stringify(legacyResult([
     "block_limit_reached",
     "block_limit_reached",
     "capture_failed:capture-b:timeout:with:colons",
@@ -360,8 +424,9 @@ test("legacy additive fields are normalized and corrupt durable JSON becomes una
     { scope: "capture", captureId: "capture-b", sourceId: "source-b" },
   ]);
 
-  const hydrated = hydrateRecoveryRecord({
+  const hydrated = await hydrateRecoveryRecord({
     id: "legacy-id",
+    normalizedUrl: "http://lostsite.org/",
     status: "complete",
     resultJson: JSON.stringify(legacyResult()),
   });
@@ -369,26 +434,62 @@ test("legacy additive fields are normalized and corrupt durable JSON becomes una
   assert.equal(hydrated.result?.id, "legacy-id");
 });
 
-test("partial receipt metadata fails soft by merging valid persisted capture and warning owners", () => {
+test("durable compatibility rejects nested corruption and cross-row identity drift", async () => {
+  const valid = legacyResult();
+  assert.ok(await parsePersistedRecoveryResult(JSON.stringify(valid)));
+
+  const corrupted = [
+    { ...valid, manifest: { ...valid.manifest, pages: [null] } },
+    { ...valid, manifest: { ...valid.manifest, pages: [{ ...valid.manifest.pages[0], sourceIds: "source-primary" }] } },
+    { ...valid, receipt: { ...valid.receipt, sourceHashes: [null] } },
+    { ...valid, receipt: { ...valid.receipt, counts: { ...valid.receipt.counts, renderedBlocks: "0" } } },
+    { ...valid, receipt: { ...valid.receipt, decisions: [null] } },
+    { ...valid, receipt: { ...valid.receipt, validationResults: [{ rule: "shape", passed: "yes", detail: "forged" }] } },
+    { ...valid, temporalCandidates: [null] },
+    { ...valid, receipt: { ...valid.receipt, recoveryId: "other-recovery" } },
+    { ...valid, outcome: "insufficient_evidence" },
+    { ...valid, receipt: { ...valid.receipt, selectedWindowEnd: "2004-01-01T00:00:00.000Z" } },
+  ];
+  for (const candidate of corrupted) {
+    assert.equal(await parsePersistedRecoveryResult(JSON.stringify(candidate)), null);
+  }
+
+  const mismatchedResult = structuredClone(valid);
+  mismatchedResult.id = "result-b";
+  mismatchedResult.receipt.recoveryId = "result-b";
+  assert.equal((await hydrateRecoveryRecord({
+    id: "row-a",
+    normalizedUrl: valid.normalizedUrl,
+    resultJson: JSON.stringify(mismatchedResult),
+  })).result, null);
+  assert.equal((await hydrateRecoveryRecord({
+    id: valid.id,
+    normalizedUrl: "http://other.example/",
+    resultJson: JSON.stringify(valid),
+  })).result, null);
+});
+
+test("partial receipt metadata fails soft by merging valid persisted capture and warning owners", async () => {
   const captureA = { ...capture, id: "capture-a", sourceId: "source-a", warnings: [] };
   const captureB = {
     ...capture,
     id: "capture-b",
     sourceId: "source-b",
-    archiveUrl: "https://web.archive.org/web/20030402000000id_/http://lostsite.org/about",
+    archiveUrl: "https://web.archive.org/web/20030402000000id_/http://lostsite.org/",
+    timestamp: "20030402000000",
     capturedAt: "2003-04-02T00:00:00.000Z",
     warnings: ["capture_metadata_warning"],
   };
   const sources = [
-    { id: "page-a", sourceId: "source-a", capture: captureA, blocks: [], warnings: ["block_limit_reached"] },
-    { id: "page-b", sourceId: "source-b", capture: captureB, blocks: [], warnings: ["block_limit_reached"] },
+    legacySource(captureA, ["block_limit_reached"]),
+    legacySource(captureB, ["block_limit_reached"]),
   ];
   const base = legacyResult(
     ["block_limit_reached", "model_fallback:provider_timeout", "unknown_warning"],
     [captureA, captureB],
     sources,
   );
-  const parsed = parsePersistedRecoveryResult(JSON.stringify({
+  const parsed = await parsePersistedRecoveryResult(JSON.stringify({
     ...base,
     receipt: {
       ...base.receipt,
@@ -458,16 +559,10 @@ test("receipt download is unavailable until a compatible receipt exists", async 
   assert.equal(unavailable.headers.get("x-content-type-options"), "nosniff");
 
   const receiptCapture = { ...capture, warnings: ["capture_metadata_warning"] };
-  const parsed = parsePersistedRecoveryResult(JSON.stringify(legacyResult(
+  const parsed = await parsePersistedRecoveryResult(JSON.stringify(legacyResult(
     ["capture_metadata_warning", "model_fallback:timeout"],
     [receiptCapture],
-    [{
-      id: "page-home",
-      sourceId: receiptCapture.sourceId,
-      capture: receiptCapture,
-      blocks: [],
-      warnings: ["block_limit_reached"],
-    }],
+    [legacySource(receiptCapture, ["block_limit_reached"])],
   )));
   assert.ok(parsed);
   const available = createReceiptResponse(parsed as RecoveryResult, "legacy/id");

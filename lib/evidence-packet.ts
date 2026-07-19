@@ -1,4 +1,5 @@
 import type { SourceRecord } from "./domain";
+import { canonicalPath } from "./url-safety";
 
 export type EvidencePacketBounds = {
   selectedYear: string;
@@ -58,7 +59,13 @@ export function validateEvidencePacket(records: SourceRecord[], bounds: Evidence
     if (record.titleBlockId && !blockIds.has(record.titleBlockId)) {
       throw new Error(`Evidence record ${record.id} references an unknown title block.`);
     }
-    if (record.internalLinks.some((link) => !blockIds.has(link.sourceBlockId))) {
+    if (record.internalLinks.some((link) => {
+      const block = record.blocks.find((candidate) => candidate.id === link.sourceBlockId);
+      return !block
+        || block.kind !== "link"
+        || block.targetUrl !== link.targetUrl
+        || link.label !== (block.exactText || canonicalPath(link.targetUrl));
+    })) {
       throw new Error(`Evidence record ${record.id} contains a link without a local evidence block.`);
     }
   }
