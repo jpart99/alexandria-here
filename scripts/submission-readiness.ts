@@ -101,6 +101,7 @@ const YOUTUBE_URL_PATTERN = /https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|yout
 const CHECKLIST = {
   youtubeUpload: "Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.",
   youtubeVerify: "Verify signed-out public YouTube playback at 1080p with audible narration, captions, and embedding, then paste the same URL into Devpost.",
+  devpostText: "Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `93 passing tests` and the current judging recovery.",
   devpostMedia: "Upload the audited Devpost thumbnail and gallery media, then verify the public preview.",
   rules: "Jaia personally accepts the official-rules checkbox immediately before submission.",
   submit: "Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).",
@@ -376,6 +377,12 @@ export function classifyChecklistItem(submission: string, label: string): "pendi
   if (pendingCount === 1 && completeCount === 0) return "pending";
   if (completeCount === 1 && pendingCount === 0) return "complete";
   fail(`checklist item must appear exactly once as [ ] or [x]: ${label}`);
+}
+
+export function classifyDevpostSynchronization(submission: string): "pending" | "complete" {
+  const textState = classifyChecklistItem(submission, CHECKLIST.devpostText);
+  const mediaState = classifyChecklistItem(submission, CHECKLIST.devpostMedia);
+  return textState === "complete" && mediaState === "complete" ? "complete" : "pending";
 }
 
 export function assertCanonicalTiming(text: string, label: string): void {
@@ -706,7 +713,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "3/5 steps done", "36 passing tests", "video-demo field is empty", "official-rules checkbox is unchecked", "Do not accept the official rules or press **Submit project** during synchronization.", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "3/5 steps done", "36 passing tests", "video-demo field is empty", "official-rules checkbox is unchecked", "Do not accept the official rules or press **Submit project** during synchronization.", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "synchronizing the prepared Devpost text and media", "public YouTube publication", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
@@ -788,15 +795,15 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   }
 
   try {
-    const mediaState = classifyChecklistItem(submissionText, CHECKLIST.devpostMedia);
+    const synchronizationState = classifyDevpostSynchronization(submissionText);
     checks.push({
       section: "External authority",
-      name: "Devpost media transmission",
-      state: mediaState === "pending" ? "PENDING" : "PASS",
-      detail: mediaState === "pending" ? "requires Jaia's upload authorization; use the manifest order and verify Preview" : "submission checklist explicitly records the media upload and Preview check",
+      name: "Devpost text and media synchronization",
+      state: synchronizationState === "pending" ? "PENDING" : "PASS",
+      detail: synchronizationState === "pending" ? "requires Jaia's save/upload authorization; replace both stale text fields, use the media manifest order, and verify Preview" : "submission checklist explicitly records the text replacement, media upload, and Preview checks",
     });
   } catch (error) {
-    checks.push({ section: "External authority", name: "Devpost media transmission", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+    checks.push({ section: "External authority", name: "Devpost text and media synchronization", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
   }
 
   try {

@@ -1,6 +1,7 @@
 import type { Capture, TemporalCandidateWindow, TemporalSelectionScore } from "./domain";
 import { canonicalPath, isSameSiteUrl, validateArchiveUrl } from "./url-safety";
 import { sha256 } from "./hash";
+import { isHtmlMediaType, isJsonMediaType } from "./media-type";
 
 const CDX_ENDPOINT = "https://web.archive.org/cdx/search/cdx";
 export const RECOVERY_BUDGETS = {
@@ -139,8 +140,9 @@ async function fetchJson(url: URL, externalSignal?: AbortSignal): Promise<unknow
       throw new Error("Archive inventory attempted an unapproved redirect.");
     }
     if (!response.ok) throw new Error(`Archive inventory failed with ${response.status}.`);
-    const contentType = response.headers.get("content-type") || "";
-    if (!/\bjson\b/i.test(contentType)) throw new Error("Archive inventory was not JSON.");
+    if (!isJsonMediaType(response.headers.get("content-type"))) {
+      throw new Error("Archive inventory was not JSON.");
+    }
     const length = Number(response.headers.get("content-length") || "0");
     if (length > MAX_RESPONSE_BYTES) throw new Error("Archive inventory exceeded the response budget.");
     const buffer = await readBoundedBody(response, "Archive inventory exceeded the response budget.");
@@ -621,8 +623,9 @@ async function fetchAllowedCapture(
       return fetchAllowedCapture(redirectUrl, capture, remainingRedirects - 1, externalSignal);
     }
     if (!response.ok) throw new Error(`Capture ${capture.id} failed with ${response.status}.`);
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.toLowerCase().includes("html")) throw new Error("Archive capture was not HTML.");
+    if (!isHtmlMediaType(response.headers.get("content-type"))) {
+      throw new Error("Archive capture was not HTML.");
+    }
     const length = Number(response.headers.get("content-length") || "0");
     if (length > MAX_RESPONSE_BYTES) throw new Error("Capture exceeded the response budget.");
     // Await inside this try so the finally block keeps the timeout alive until

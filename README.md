@@ -86,6 +86,8 @@ In PowerShell, use `Copy-Item .env.example .env.local` instead of `cp`.
 
 Open `http://localhost:3000`. The app remains fully usable without an OpenAI key; it records that the deterministic fallback was used.
 
+`npm run dev` generates an in-memory admission secret when `RECOVERY_RATE_LIMIT_SECRET` is blank, so a fresh checkout can perform recoveries without creating a credential. That ephemeral value is local to the development process, is never printed or written, and changes on restart. Hosted environments must still configure their own durable random secret of at least 16 characters.
+
 To rehearse the compiled Cloudflare Worker locally, build first and then start it on a separate port:
 
 ```bash
@@ -107,7 +109,7 @@ RECOVERY_RATE_LIMIT_SECRET=
 
 Do not expose the API key to browser code. The model receives normalized evidence records only and has no browsing tools.
 
-For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL`, `ALEXANDRIA_REFERENCE_URL` (the vanished target), `ALEXANDRIA_REFERENCE_RECOVERY_PATH` (an existing `/r/<UUID>`), `ALEXANDRIA_PROOF_URL`, and `ALEXANDRIA_PROOF_YEAR` are release-operator variables only.
+For a hosted release, configure `RECOVERY_RATE_LIMIT_SECRET` as a random secret of at least 16 characters; it keys the HMAC used for short-lived, pseudonymous client cooldown records. Only the `npm run dev` launcher supplies an ephemeral local fallback. `OPENAI_API_KEY` is optional. `OPENAI_MODEL` is optional and defaults to `gpt-5.6`. `NEXT_PUBLIC_REFERENCE_RECOVERY_PATH` is public build-time configuration, not a secret. `ALEXANDRIA_BASE_URL`, `ALEXANDRIA_REFERENCE_URL` (the vanished target), `ALEXANDRIA_REFERENCE_RECOVERY_PATH` (an existing `/r/<UUID>`), `ALEXANDRIA_PROOF_URL`, and `ALEXANDRIA_PROOF_YEAR` are release-operator variables only.
 
 ## Verification
 

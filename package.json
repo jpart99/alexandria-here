@@ -6,7 +6,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "vinext dev",
+    "dev": "node scripts/start-local-dev.mjs",
     "build": "vinext build",
     "start": "node scripts/start-compiled-preview.mjs",
     "test": "tsx --test tests/*.test.ts",

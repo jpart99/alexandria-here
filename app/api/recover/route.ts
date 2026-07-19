@@ -5,6 +5,8 @@ import { runRecovery } from "../../../lib/recover";
 import { validateSubmittedUrl } from "../../../lib/url-safety";
 import { recoveryClientKey, RecoveryRateLimitError, recoveryRateLimitResponse } from "../../../lib/recovery-rate-limit";
 import { allocateRecoveryId } from "../../../lib/recovery-id";
+import { isJsonMediaType } from "../../../lib/media-type";
+import { readBoundedRequestBody } from "../../../lib/request-body";
 
 const RequestSchema = z.object({
   url: z.string().min(1).max(2_048),
@@ -16,21 +18,14 @@ export async function POST(request: Request) {
   let submittedUrl: string;
   let normalizedUrl: string;
   let requestedEraYear: string | undefined;
-  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+  if (!isJsonMediaType(request.headers.get("content-type"))) {
     return Response.json(
       { error: "Send the recovery address as JSON." },
       { status: 415, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } },
     );
   }
   try {
-    const declaredLength = Number(request.headers.get("content-length") || "0");
-    if (Number.isFinite(declaredLength) && declaredLength > MAX_REQUEST_BYTES) {
-      throw new Error("The recovery request is too large.");
-    }
-    const rawBody = await request.text();
-    if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) {
-      throw new Error("The recovery request is too large.");
-    }
+    const rawBody = await readBoundedRequestBody(request, MAX_REQUEST_BYTES);
     const body = RequestSchema.parse(JSON.parse(rawBody));
     submittedUrl = body.url;
     normalizedUrl = validateSubmittedUrl(body.url);

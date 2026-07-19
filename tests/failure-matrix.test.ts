@@ -7,6 +7,8 @@ import { hydrateRecoveryRecord, parsePersistedRecoveryResult } from "../lib/reco
 import { createReceiptResponse } from "../lib/receipt-response";
 import { aggregateRecoveryWarnings, buildReceiptWarnings, modelFallbackWarning } from "../lib/recovery-warnings";
 import { stableStringify } from "../lib/hash";
+import { isHtmlMediaType, isJsonMediaType } from "../lib/media-type";
+import { readBoundedRequestBody } from "../lib/request-body";
 
 const capture: Capture = {
   id: "capture-home-20030401000000",
@@ -84,6 +86,74 @@ test("capture retrieval rejects unsafe responses and disposes every unread body"
   });
   assert.equal(calls, 1);
   assert.equal(rejectedRedirectCancelled, true);
+});
+
+test("request bodies stop at the byte budget and exact media types reject look-alikes", async () => {
+  let pulls = 0;
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      pulls += 1;
+      if (pulls === 1) controller.enqueue(new Uint8Array(4_090));
+      else if (pulls === 2) controller.enqueue(new Uint8Array(7));
+      else throw new Error("the bounded reader pulled beyond the rejecting chunk");
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const request = new Request("https://alexandria.invalid/api/recover", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+
+  await assert.rejects(() => readBoundedRequestBody(request, 4_096), /too large/);
+  assert.equal(pulls, 2);
+  assert.equal(cancelled, true);
+
+  let declaredOversizePulls = 0;
+  let declaredOversizeCancelled = false;
+  const declaredOversize = new Request("https://alexandria.invalid/api/recover", {
+    method: "POST",
+    headers: { "content-length": "4097", "content-type": "application/json" },
+    body: new ReadableStream<Uint8Array>({
+      pull(controller) {
+        declaredOversizePulls += 1;
+        controller.enqueue(new Uint8Array(1));
+      },
+      cancel() {
+        declaredOversizeCancelled = true;
+      },
+    }),
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+  const pullsBeforeDeclaredCheck = declaredOversizePulls;
+  await assert.rejects(() => readBoundedRequestBody(declaredOversize, 4_096), /too large/);
+  assert.equal(declaredOversizePulls, pullsBeforeDeclaredCheck);
+  assert.equal(declaredOversizeCancelled, true);
+
+  assert.equal(isJsonMediaType("application/json; charset=utf-8"), true);
+  assert.equal(isJsonMediaType("application/problem+json"), true);
+  assert.equal(isJsonMediaType("application/not-json"), false);
+  assert.equal(isJsonMediaType("application/jsonp"), false);
+  assert.equal(isHtmlMediaType("text/html; charset=utf-8"), true);
+  assert.equal(isHtmlMediaType("application/xhtml+xml"), true);
+  assert.equal(isHtmlMediaType("application/nothtml"), false);
+  assert.equal(isHtmlMediaType("text/htmlish"), false);
+});
+
+test("archive MIME boundaries reject JSON and HTML look-alikes", async () => {
+  await withMockFetch(
+    async () => new Response("<p>not html</p>", { headers: { "content-type": "application/nothtml" } }),
+    async () => assert.rejects(() => fetchCaptureHtml(capture), /was not HTML/),
+  );
+
+  await withMockFetch(
+    async () => new Response("[]", { headers: { "content-type": "application/not-json" } }),
+    async () => assert.rejects(() => discoverCaptures("http://lostsite.org/"), /was not JSON/),
+  );
 });
 
 test("capture retrieval follows an exact replay redirect and cancels its body before the next hop", async () => {

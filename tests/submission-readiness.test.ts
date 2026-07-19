@@ -35,6 +35,7 @@ import {
   assertSubmissionRuntimeProvenance,
   assertYouTubeRuntimeProvenance,
   classifyChecklistItem,
+  classifyDevpostSynchronization,
   classifyYouTubeReference,
   inspectPng,
   mp4DurationSeconds,
@@ -96,7 +97,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.deepEqual(checks.filter((check) => check.state === "FAIL"), []);
   assert.deepEqual(
     checks.filter((check) => check.state === "PENDING").map((check) => check.name),
-    ["Public YouTube URL", "Devpost media transmission", "Rules acceptance and final submit"],
+    ["Public YouTube URL", "Devpost text and media synchronization", "Rules acceptance and final submit"],
   );
   assert.equal(submissionExitCode(checks), 0);
   assert.equal(submissionExitCode(checks, true), 1);
@@ -289,6 +290,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
   const workerSource = await readFile(path.join(root, "worker", "index.ts"), "utf8");
   const fontDeliverySource = await readFile(path.join(root, "lib", "font-delivery.ts"), "utf8");
   const releaseReadiness = await readFile(path.join(root, "scripts", "release-readiness.mjs"), "utf8");
+  const localDevLauncher = await readFile(path.join(root, "scripts", "start-local-dev.mjs"), "utf8");
   const submissionLiveProofWrapper = await readFile(path.join(root, "scripts", "submission-live-proof.mjs"), "utf8");
   const packageContract = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
   assert.match("file:///C:/build/font.woff2", unsafeFontReference);
@@ -345,6 +347,11 @@ test("the sealed submission package passes locally and exposes only authority-ga
     await assert.rejects(stat(path.join(root, "public", publicPath.slice(1))), (error: NodeJS.ErrnoException) => error.code === "ENOENT");
   }
   assert.match(releaseReadiness, /forbiddenGeneratedArtifacts\("dist"\)/u);
+  assert.equal(packageContract.scripts.dev, "node scripts/start-local-dev.mjs");
+  assert.match(localDevLauncher, /configuredSecret\s*\|\|\s*randomBytes\(32\)\.toString\("hex"\)/u);
+  assert.match(localDevLauncher, /configuredSecret\.length\s*<\s*16/u);
+  assert.doesNotMatch(localDevLauncher, /console\.log|console\.info/u);
+  assert.match(viteSource, /command\s*===\s*["']serve["'][\s\S]*?vars:\s*\{\s*RECOVERY_RATE_LIMIT_SECRET:\s*localAdmissionSecret\s*\}/u);
   assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
   assert.equal(packageContract.scripts["qa:production"], "node scripts/production-smoke.mjs");
   assert.equal(packageContract.scripts["qa:submission:live"], "node scripts/submission-live-proof.mjs");
@@ -696,6 +703,26 @@ test("authority checklist items are exact, unique, and tri-state", () => {
   assert.throws(() => classifyChecklistItem(`- [ ] ${label}\n- [ ] ${label}`, label), /exactly once/);
   assert.throws(() => classifyChecklistItem(`- [ ] ${label}\n- [x] ${label}`, label), /exactly once/);
   assert.throws(() => classifyChecklistItem(`- [ ] Perform a reworded action.`, label), /exactly once/);
+});
+
+test("final mode cannot bypass either Devpost text or media synchronization", () => {
+  const text = "Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `93 passing tests` and the current judging recovery.";
+  const media = "Upload the audited Devpost thumbnail and gallery media, then verify the public preview.";
+  const state = (textComplete: boolean, mediaComplete: boolean) => classifyDevpostSynchronization([
+    `- [${textComplete ? "x" : " "}] ${text}`,
+    `- [${mediaComplete ? "x" : " "}] ${media}`,
+  ].join("\n"));
+
+  assert.equal(state(false, false), "pending");
+  assert.equal(state(false, true), "pending");
+  assert.equal(state(true, false), "pending");
+  assert.equal(state(true, true), "complete");
+  assert.equal(submissionExitCode([{
+    section: "External authority",
+    name: "Devpost text and media synchronization",
+    state: state(false, true) === "pending" ? "PENDING" : "PASS",
+    detail: "fixture",
+  }], true), 1);
 });
 
 test("canonical timing rejects alternate runtime and deadline claims", () => {

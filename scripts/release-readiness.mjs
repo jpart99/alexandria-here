@@ -105,6 +105,7 @@ const viteSource = await text("vite.config.ts");
 const workerSource = await text("worker/index.ts");
 const fontDeliverySource = await text("lib/font-delivery.ts");
 const productionSmokeSource = await text("scripts/production-smoke.mjs");
+const localDevLauncher = await exists("scripts/start-local-dev.mjs") ? await text("scripts/start-local-dev.mjs") : "";
 const submissionLiveProofWrapper = await exists("scripts/submission-live-proof.mjs") ? await text("scripts/submission-live-proof.mjs") : "";
 const submissionProofContractExists = await exists("scripts/submission-proof-contract.mjs");
 const staticHeaders = await exists("public/_headers") ? await text("public/_headers") : "";
@@ -129,6 +130,11 @@ check("Static/local", "Supported Node runtime", nodeSupported ? "PASS" : "FAIL",
 
 const requiredScripts = ["build", "start", "test", "lint", "qa:failure-matrix", "qa:production", "qa:submission", "qa:submission:live", "reference:produce", "proof:model"];
 const missingScripts = requiredScripts.filter((name) => !packageJson.scripts?.[name]);
+const localDevReady = packageJson.scripts?.dev === "node scripts/start-local-dev.mjs"
+  && /configuredSecret\s*\|\|\s*randomBytes\(32\)\.toString\(["']hex["']\)/u.test(localDevLauncher)
+  && /configuredSecret\.length\s*<\s*16/u.test(localDevLauncher)
+  && !/console\.log|console\.info/u.test(localDevLauncher)
+  && /command\s*===\s*["']serve["'][\s\S]*?vars:\s*\{\s*RECOVERY_RATE_LIMIT_SECRET:\s*localAdmissionSecret\s*\}/u.test(viteSource);
 const isolatedCompiledPreview = packageJson.scripts?.start === "node scripts/start-compiled-preview.mjs"
   && await exists("scripts/start-compiled-preview.mjs");
 const expectedSubmissionLiveProofWrapper = [
@@ -145,9 +151,11 @@ const submissionLiveProofReady = packageJson.scripts?.["qa:submission:live"] ===
   && /assertExactReferenceProof\(\{\s*record,\s*receipt:\s*referenceReceipt,\s*recoveryId\s*\}\)/u.test(productionSmokeSource);
 const lintExcludesGeneratedState = typeof packageJson.scripts?.lint === "string"
   && /(?:^|\s)--ignore-pattern\s+(?:["']?)\.wrangler(?:["']?)(?:\s|$)/u.test(packageJson.scripts.lint);
-const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview && submissionLiveProofReady && lintExcludesGeneratedState;
+const releaseCommandsReady = missingScripts.length === 0 && localDevReady && isolatedCompiledPreview && submissionLiveProofReady && lintExcludesGeneratedState;
 const releaseCommandsDetail = missingScripts.length
   ? `missing: ${missingScripts.join(", ")}`
+  : !localDevReady
+    ? "dev must use the non-persisted local admission launcher"
   : !isolatedCompiledPreview
     ? "start must use the dist-immutable compiled preview launcher"
     : !submissionLiveProofReady

@@ -153,6 +153,7 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
 - [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [x] Add and run the read-only `npm run qa:submission:live` gate against the exact public judging row, receipt metrics, decision attribution, production Atlas, and selective font boundary.
+- [ ] Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `93 passing tests` and the current judging recovery.
 - [ ] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
