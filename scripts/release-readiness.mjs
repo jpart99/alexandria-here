@@ -457,8 +457,29 @@ if (compiledMode) {
         body: JSON.stringify({ url: "http://127.0.0.1/" }),
       });
       check("Compiled local", "Unsafe URL fails before recovery", unsafe.status === 400 ? "PASS" : "FAIL", `HTTP ${unsafe.status}`);
-      const receipt = await fetch(new URL("/api/recover/00000000-0000-4000-8000-000000000000/receipt", baseUrl));
-      check("Compiled local", "Unknown receipt fails closed", receipt.status === 404 ? "PASS" : "FAIL", `HTTP ${receipt.status}`);
+      const recoveryNotFoundFailures = [];
+      for (const pathname of [
+        "/api/recover/00000000-0000-4000-8000-000000000000/receipt",
+        "/api/recover/not-a-recovery-id",
+        "/api/recover/not-a-recovery-id/receipt",
+      ]) {
+        const response = await fetch(new URL(pathname, baseUrl));
+        const body = await response.text();
+        if (response.status !== 404
+          || response.headers.get("cache-control") !== "private, no-store"
+          || response.headers.get("x-content-type-options") !== "nosniff"
+          || body !== '{"error":"Recovery not found."}') {
+          recoveryNotFoundFailures.push(`${pathname} (HTTP ${response.status})`);
+        }
+      }
+      check(
+        "Compiled local",
+        "Recovery read boundaries fail closed",
+        recoveryNotFoundFailures.length ? "FAIL" : "PASS",
+        recoveryNotFoundFailures.length
+          ? recoveryNotFoundFailures.join(", ")
+          : "unknown and malformed API reads return exact private no-store 404 JSON",
+      );
     } catch (error) {
       check("Compiled local", "Compiled Worker is reachable", "FAIL", error instanceof Error ? error.message : String(error));
     }

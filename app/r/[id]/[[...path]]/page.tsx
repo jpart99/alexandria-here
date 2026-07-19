@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { displayRecoveredTitle } from "../../../../lib/recovery-display";
+import { isRecoveryId } from "../../../../lib/recovery-id";
 import { getRecoveryRecord } from "../../../../lib/recovery-store";
 import { RecoveryUnavailable, recoveryUnavailableMetadata } from "./recovery-unavailable";
 import { RestoredSite } from "./restored-site";
@@ -9,6 +10,7 @@ type RestoredPageParams = Promise<{ id: string; path?: string[] }>;
 
 export async function generateMetadata({ params }: { params: RestoredPageParams }): Promise<Metadata> {
   const { id } = await params;
+  if (!isRecoveryId(id)) return { title: "Recovery not found — Alexandria Here" };
   const record = await getRecoveryRecord(id);
   if (!record) return { title: "Recovery not found — Alexandria Here" };
   if (!record.result) return recoveryUnavailableMetadata(record.status);
@@ -33,6 +35,7 @@ export default async function RestoredPage({
   params: RestoredPageParams;
 }) {
   const { id, path } = await params;
+  if (!isRecoveryId(id)) notFound();
   const record = await getRecoveryRecord(id);
   if (!record) notFound();
   if (!record.result) {

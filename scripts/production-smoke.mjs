@@ -258,10 +258,19 @@ const unsafePayload = JSON.parse(unsafeBytes.toString("utf8"));
 assert(/private|local|loopback|link-local/iu.test(unsafePayload.error || ""), "Bare private address did not reach Alexandria's safety validator.");
 checks.push(["bare unsafe address admits no recovery", { status: unsafe.status, bytes: unsafeBytes.length }]);
 
-const receipt = await request("/api/recover/00000000-0000-4000-8000-000000000000/receipt");
-const receiptBytes = await readBounded(receipt, 64_000);
-assert(receipt.status === 404, `Unknown receipt returned HTTP ${receipt.status}.`);
-checks.push(["unknown receipt", { status: receipt.status, bytes: receiptBytes.length }]);
+for (const pathname of [
+  "/api/recover/00000000-0000-4000-8000-000000000000/receipt",
+  "/api/recover/not-a-recovery-id",
+  "/api/recover/not-a-recovery-id/receipt",
+]) {
+  const response = await request(pathname);
+  const body = await readBounded(response, 64_000);
+  assert(response.status === 404, `${pathname} returned HTTP ${response.status}.`);
+  assert(response.headers.get("cache-control") === "private, no-store", `${pathname} was cacheable.`);
+  assert(response.headers.get("x-content-type-options") === "nosniff", `${pathname} omitted nosniff.`);
+  assert(body.toString("utf8") === '{"error":"Recovery not found."}', `${pathname} returned an unexpected body.`);
+  checks.push(["recovery read fails closed", { pathname, status: response.status, bytes: body.length }]);
+}
 
 if (process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH) {
   const match = process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH.match(/^\/r\/([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/?$/iu);
