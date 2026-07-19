@@ -143,13 +143,17 @@ const submissionLiveProofReady = packageJson.scripts?.["qa:submission:live"] ===
   && submissionProofContractExists
   && /import\s*\{\s*assertExactReferenceProof\s*\}\s*from\s*["']\.\/submission-proof-contract\.mjs["']/u.test(productionSmokeSource)
   && /assertExactReferenceProof\(\{\s*record,\s*receipt:\s*referenceReceipt,\s*recoveryId\s*\}\)/u.test(productionSmokeSource);
-const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview && submissionLiveProofReady;
+const lintExcludesGeneratedState = typeof packageJson.scripts?.lint === "string"
+  && /(?:^|\s)--ignore-pattern\s+(?:["']?)\.wrangler(?:["']?)(?:\s|$)/u.test(packageJson.scripts.lint);
+const releaseCommandsReady = missingScripts.length === 0 && isolatedCompiledPreview && submissionLiveProofReady && lintExcludesGeneratedState;
 const releaseCommandsDetail = missingScripts.length
   ? `missing: ${missingScripts.join(", ")}`
   : !isolatedCompiledPreview
     ? "start must use the dist-immutable compiled preview launcher"
     : !submissionLiveProofReady
       ? "live submission proof command or pin contract drifted"
+      : !lintExcludesGeneratedState
+        ? "lint must exclude ignored .wrangler deployment and preview state"
       : requiredScripts.join(", ");
 check("Static/local", "Release commands declared", releaseCommandsReady ? "PASS" : "FAIL", releaseCommandsDetail);
 check("Static/local", "Live submission proof pin", submissionLiveProofReady ? "PASS" : "FAIL", submissionLiveProofReady ? "exact command, wrapper, production origin, judging recovery, strict flag, and assertion import/call are pinned" : "live submission proof command or pin contract drifted");

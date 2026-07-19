@@ -17,7 +17,7 @@
     "qa:submission": "tsx scripts/submission-readiness.ts",
     "qa:submission:live": "node scripts/submission-live-proof.mjs",
     "proof:model": "node scripts/prove-model.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .wrangler",
     "db:generate": "drizzle-kit generate",
     "reference:produce": "node scripts/produce-reference.mjs"
   },
