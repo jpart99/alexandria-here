@@ -41,7 +41,7 @@ export function modelFallbackWarning(error: unknown): string {
 function warningCategory(raw: string): RecoveryReceiptWarning["category"] {
   if (raw.startsWith("capture_failed:")) return "capture_failure";
   if (raw.startsWith("model_fallback:")) return "model_fallback";
-  if (["block_limit_reached", "missing_title", "no_readable_body_blocks"].includes(raw)) return "extraction";
+  if (["block_limit_reached", "missing_title", "missing_image_alt", "no_readable_body_blocks"].includes(raw)) return "extraction";
   return "other";
 }
 

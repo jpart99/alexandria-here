@@ -108,9 +108,12 @@ export async function extractSourceRecord(capture: Capture, html: string, rootUr
   for (const element of root.find("img[src]").toArray().slice(0, 12)) {
     const originalAsset = absoluteUrl($(element).attr("src"), capture.originalUrl);
     if (!originalAsset) continue;
-    const alt = normalizeText($(element).attr("alt") || "Image") || "Image";
+    const alt = normalizeText($(element).attr("alt") || "");
     const assetUrl = `https://web.archive.org/web/${capture.timestamp}id_/${originalAsset}`;
-    blocks.push(await makeBlock(capture, "image", alt, blocks.length, { assetUrl }));
+    blocks.push(await makeBlock(capture, "image", alt, blocks.length, {
+      assetUrl,
+      warnings: alt ? [] : ["missing_image_alt"],
+    }));
   }
 
   if (blocks.filter((block) => !["title", "link", "image"].includes(block.kind)).length === 0) {

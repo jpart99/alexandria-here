@@ -84,7 +84,7 @@ test("capture retrieval rejects unsafe responses and disposes every unread body"
   assert.equal(rejectedRedirectCancelled, true);
 });
 
-test("capture retrieval cancels an allowed redirect body before reading the next hop", async () => {
+test("capture retrieval follows an exact replay redirect and cancels its body before the next hop", async () => {
   let calls = 0;
   let redirectCancelled = false;
   await withMockFetch(async () => {
@@ -97,7 +97,7 @@ test("capture retrieval cancels an allowed redirect body before reading the next
       }), {
         status: 302,
         headers: {
-          location: "https://web.archive.org/web/20030401000000id_/http://lostsite.org/home.html",
+          location: "/web/20030401000000id_/http://lostsite.org/",
         },
       });
     }
@@ -107,6 +107,29 @@ test("capture retrieval cancels an allowed redirect body before reading the next
     assert.equal(await fetchCaptureHtml(capture), "preserved");
   });
   assert.equal(calls, 2);
+});
+
+test("capture retrieval rejects identity-changing replay redirects and disposes their bodies", async () => {
+  for (const location of [
+    "https://web.archive.org/web/20030402000000id_/http://lostsite.org/",
+    "https://web.archive.org/web/20030401000000id_/http://lostsite.org/home.html",
+    "https://web.archive.org/web/20030401000000im_/http://lostsite.org/",
+  ]) {
+    let calls = 0;
+    let redirectCancelled = false;
+    await withMockFetch(async () => {
+      calls += 1;
+      return new Response(new ReadableStream({
+        cancel() {
+          redirectCancelled = true;
+        },
+      }), { status: 302, headers: { location } });
+    }, async () => {
+      await assert.rejects(() => fetchCaptureHtml(capture), /replay changed identity/);
+    });
+    assert.equal(calls, 1);
+    assert.equal(redirectCancelled, true);
+  }
 });
 
 test("capture retrieval keeps its timeout active while the response body is stalled", async (context) => {
@@ -166,6 +189,33 @@ test("empty archive inventory and an unavailable requested era fail explicitly",
         && error.availableYears.includes("2003"),
     );
   });
+});
+
+test("archive inventory tolerates one protocol failure and rejects malformed JSON with bounded language", async () => {
+  const rows = [
+    ["timestamp", "original", "statuscode", "mimetype", "digest"],
+    ["20030401000000", "http://lostsite.org/", "200", "text/html", "home"],
+  ];
+  await withMockFetch(async (input) => {
+    const original = new URL(new URL(String(input)).searchParams.get("url")!);
+    return original.protocol === "http:"
+      ? Response.json(rows)
+      : new Response("", { headers: { "content-type": "application/json" } });
+  }, async () => {
+    const inventory = await discoverCaptures("http://lostsite.org/");
+    assert.equal(inventory.selected.length, 1);
+    assert.deepEqual(inventory.warnings, ["archive_inventory_partial"]);
+  });
+
+  await withMockFetch(
+    async () => new Response("", { headers: { "content-type": "application/json" } }),
+    async () => {
+      await assert.rejects(
+        () => discoverCaptures("http://lostsite.org/"),
+        /Archive inventory returned incomplete or invalid JSON/,
+      );
+    },
+  );
 });
 
 function legacyResult(warnings: string[] = [], captures: Capture[] = [], sources: unknown[] = []) {

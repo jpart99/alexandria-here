@@ -38,6 +38,35 @@ function captureId(originalUrl: string, timestamp: string) {
   return `capture-${path}-${timestamp}`;
 }
 
+function validateCaptureReplayIdentity(url: URL, capture: Capture): void {
+  if (!/^\d{14}$/.test(capture.timestamp)) {
+    throw new Error(`Capture ${capture.id} has an invalid replay identity.`);
+  }
+
+  let originalUrl: URL;
+  try {
+    originalUrl = new URL(capture.originalUrl);
+  } catch {
+    throw new Error(`Capture ${capture.id} has an invalid replay identity.`);
+  }
+  if (
+    !["http:", "https:"].includes(originalUrl.protocol)
+    || originalUrl.username
+    || originalUrl.password
+    || originalUrl.hash
+  ) {
+    throw new Error(`Capture ${capture.id} has an invalid replay identity.`);
+  }
+
+  const expected = validateArchiveUrl(
+    `https://web.archive.org/web/${capture.timestamp}id_/${originalUrl.toString()}`,
+  );
+  const persisted = validateArchiveUrl(capture.archiveUrl);
+  if (persisted.href !== expected.href || url.href !== expected.href) {
+    throw new Error(`Archive replay changed identity for capture ${capture.id}.`);
+  }
+}
+
 async function cancelResponseBody(response: Response | undefined): Promise<void> {
   if (!response?.body || response.bodyUsed) return;
   try {
@@ -111,7 +140,11 @@ async function fetchJson(url: URL, externalSignal?: AbortSignal): Promise<unknow
     if (length > MAX_RESPONSE_BYTES) throw new Error("Archive inventory exceeded the response budget.");
     const buffer = await readBoundedBody(response, "Archive inventory exceeded the response budget.");
     const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
-    return JSON.parse(text);
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("Archive inventory returned incomplete or invalid JSON.");
+    }
   } finally {
     clearTimeout(timeout);
     await cancelResponseBody(response);
@@ -290,6 +323,7 @@ export type CaptureInventory = {
   windowEnd: string;
   temporalSelection: TemporalSelectionScore;
   temporalCandidates: TemporalCandidateWindow[];
+  warnings: string[];
 };
 
 export type ScoredYear = {
@@ -308,6 +342,18 @@ export class RequestedEraUnavailableError extends Error {
     this.requestedYear = requestedYear;
     this.availableYears = availableYears;
   }
+}
+
+async function fetchInventoryVariants(urls: readonly URL[], signal?: AbortSignal) {
+  const settled = await Promise.allSettled(urls.map((url) => fetchJson(url, signal)));
+  signal?.throwIfAborted();
+  const payloads = settled.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
+  if (payloads.length === 0) {
+    const firstFailure = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (firstFailure?.reason instanceof Error) throw firstFailure.reason;
+    throw new Error("Archive inventory is temporarily unavailable.");
+  }
+  return { payloads, partial: payloads.length !== urls.length };
 }
 
 function parentPath(path: string) {
@@ -425,14 +471,16 @@ export function selectTemporalWindow(captures: Capture[], requestedYear?: string
 export async function discoverCaptures(originalUrl: string, requestedYear?: string, signal?: AbortSignal): Promise<CaptureInventory> {
   const scopedYear = requestedYear && /^\d{4}$/.test(requestedYear) ? requestedYear : undefined;
   const variants = protocolVariants(originalUrl);
-  const [prefixPayloads, requestedYearPayloads] = await Promise.all([
-    Promise.all(variants.map((variant) =>
-      fetchJson(cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS), signal))),
+  const [prefixInventory, requestedYearInventory] = await Promise.all([
+    fetchInventoryVariants(variants.map((variant) =>
+      cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS)), signal),
     scopedYear
-      ? Promise.all(variants.map((variant) =>
-        fetchJson(cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear), signal)))
-      : Promise.resolve([]),
+      ? fetchInventoryVariants(variants.map((variant) =>
+        cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear)), signal)
+      : Promise.resolve({ payloads: [] as unknown[], partial: false }),
   ]);
+  const prefixPayloads = prefixInventory.payloads;
+  const requestedYearPayloads = requestedYearInventory.payloads;
   const generalRows = prefixPayloads
     .flatMap((payload) => parseRows(payload))
     .filter((row) => isSameSiteUrl(row[1], originalUrl));
@@ -512,6 +560,9 @@ export async function discoverCaptures(originalUrl: string, requestedYear?: stri
     windowEnd: selected[selected.length - 1].capturedAt,
     temporalSelection: temporalSelection.score,
     temporalCandidates,
+    warnings: prefixInventory.partial || requestedYearInventory.partial
+      ? ["archive_inventory_partial"]
+      : [],
   };
 }
 
@@ -522,6 +573,7 @@ async function fetchAllowedCapture(
   externalSignal?: AbortSignal,
 ): Promise<Uint8Array> {
   validateArchiveUrl(url.toString());
+  validateCaptureReplayIdentity(url, capture);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(new Error("Archive request timed out.")), REQUEST_TIMEOUT_MS);
   let response: Response | undefined;

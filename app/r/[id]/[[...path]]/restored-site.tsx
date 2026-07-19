@@ -44,6 +44,9 @@ function formatPublicWarning(warning: string) {
   if (warning === "block_limit_reached") {
     return "Additional archive content exceeded this recovery’s bounded evidence limit and was not claimed.";
   }
+  if (warning === "archive_inventory_partial") {
+    return "Part of the archive inventory was unavailable; Alexandria returned only witnesses supplied by the validated responses.";
+  }
   if (warning.startsWith("capture_failed:")) {
     const captureId = /^capture_failed:([^:]+):/.exec(warning)?.[1];
     return `Selected archive capture${captureId ? ` ${captureId}` : ""} could not be read safely and was excluded.`;
@@ -63,7 +66,7 @@ function waitForPoll(milliseconds: number) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
-function EvidenceBlockView({ block, witness }: { block: EvidenceBlock; witness: boolean }) {
+export function EvidenceBlockView({ block, witness }: { block: EvidenceBlock; witness: boolean }) {
   const content = block.kind === "image"
     ? (
       <figure className="recovered-image">
@@ -74,7 +77,7 @@ function EvidenceBlockView({ block, witness }: { block: EvidenceBlock; witness: 
             <img src={block.assetUrl} alt={block.exactText} loading="lazy" referrerPolicy="no-referrer" />
           </>
         ) : null}
-        <figcaption>{block.exactText}</figcaption>
+        {block.exactText ? <figcaption>{block.exactText}</figcaption> : null}
       </figure>
     )
     : block.kind === "heading"
@@ -559,7 +562,9 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                       <span className="status-chip preserved">Preserved</span>
                       <span>{block.kind.replace("_", " ")}</span>
                     </div>
-                    <blockquote>{block.exactText}</blockquote>
+                    {block.exactText
+                      ? <blockquote>{block.exactText}</blockquote>
+                      : <p className="absence-note">No archived alternative text was present; Alexandria preserved only the witnessed asset URL.</p>}
                     <dl>
                       <div><dt>Captured</dt><dd><time dateTime={block.capturedAt}>{formatWitnessDate(block.capturedAt)}</time></dd></div>
                       <div><dt>Source ID</dt><dd><code>{block.sourceId}</code></dd></div>

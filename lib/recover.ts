@@ -43,8 +43,10 @@ export async function runRecovery(args: {
       `Reading ${inventory.selected.length} archived page${inventory.selected.length === 1 ? "" : "s"} from ${args.requestedEraYear ? `the requested ${inventory.selectedYear}` : `the strongest coherent ${inventory.selectedYear}`} evidence window.`,
     );
     const records: SourceRecord[] = [];
-    const warnings: string[] = [];
-    const receiptWarnings: ReceiptWarningInput[] = [];
+    const receiptWarnings: ReceiptWarningInput[] = inventory.warnings.map((raw) => ({
+      raw,
+      occurrence: { scope: "recovery" },
+    }));
     const captureResults = await mapSettledWithConcurrency(
       inventory.selected,
       CAPTURE_READ_CONCURRENCY,
@@ -63,7 +65,6 @@ export async function runRecovery(args: {
       } else {
         const capture = inventory.selected[index];
         const detail = result.reason instanceof Error ? result.reason.message : "unknown_error";
-        warnings.push(`capture_failed:${capture.id}:${detail}`);
         receiptWarnings.push({
           raw: `capture_failed:${capture.id}:${detail}`,
           occurrence: { scope: "capture", captureId: capture.id, sourceId: capture.sourceId },

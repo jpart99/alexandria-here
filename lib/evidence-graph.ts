@@ -18,6 +18,12 @@ export type EvidenceGraph = {
   }>;
 };
 
+function hasExactTitleEvidence(record: SourceRecord) {
+  if (!record.titleBlockId) return false;
+  const titleBlock = record.blocks.find((block) => block.id === record.titleBlockId);
+  return titleBlock?.kind === "title" && titleBlock.exactText === record.title;
+}
+
 export function buildEvidenceGraph(records: SourceRecord[]): EvidenceGraph {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -28,7 +34,7 @@ export function buildEvidenceGraph(records: SourceRecord[]): EvidenceGraph {
       id: record.id,
       kind: "page",
       label: record.title,
-      status: record.blocks.length ? "preserved" : "reconstructed_from_sources",
+      status: record.blocks.length && hasExactTitleEvidence(record) ? "preserved" : "reconstructed_from_sources",
       sourceIds: [record.sourceId],
     });
     for (const block of record.blocks) {
@@ -91,6 +97,7 @@ export function buildEvidenceGraph(records: SourceRecord[]): EvidenceGraph {
 
   const titlesByPath = new Map<string, Array<{ title: string; sourceId: string }>>();
   for (const record of records) {
+    if (!hasExactTitleEvidence(record)) continue;
     titlesByPath.set(record.canonicalPath, [
       ...(titlesByPath.get(record.canonicalPath) || []),
       { title: record.title, sourceId: record.sourceId },

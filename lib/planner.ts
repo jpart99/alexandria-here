@@ -138,6 +138,20 @@ export type PageCandidate = {
 
 const RENDERABLE_KINDS = new Set(["heading", "paragraph", "list_item", "quote", "image"]);
 
+function hasExactTitleEvidence(record: SourceRecord) {
+  if (!record.titleBlockId) return false;
+  const titleBlock = record.blocks.find((block) => block.id === record.titleBlockId);
+  return titleBlock?.kind === "title" && titleBlock.exactText === record.title;
+}
+
+export function preservedPageTitlesHaveExactEvidence(pages: readonly RestoredPage[], records: readonly SourceRecord[]) {
+  const recordBySourceId = new Map(records.map((record) => [record.sourceId, record]));
+  return pages.filter((page) => page.status === "preserved").every((page) => {
+    const primary = page.primarySourceId ? recordBySourceId.get(page.primarySourceId) : undefined;
+    return Boolean(primary && page.title === primary.title && hasExactTitleEvidence(primary));
+  });
+}
+
 function pathTitle(path: string) {
   if (path === "/") return "Home";
   return path.split("/").filter(Boolean).pop()!.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -211,11 +225,12 @@ function buildPages(
     const supporting = witness.supportingRecordIds.map((id) => candidate.records.find((record) => record.id === id));
     if (supporting.some((record) => !record)) throw new Error(`A supporting witness for ${candidate.id} is invalid.`);
     const blockIds = primary.blocks.filter((block) => RENDERABLE_KINDS.has(block.kind)).map((block) => block.id);
+    const hasPreservedBody = blockIds.some((id) => primary.blocks.some((block) => block.id === id && block.kind !== "image"));
     return {
       id: candidate.id,
       path: candidate.path,
       title: primary.title,
-      status: blockIds.some((id) => primary.blocks.some((block) => block.id === id && block.kind !== "image"))
+      status: hasPreservedBody && hasExactTitleEvidence(primary)
         ? "preserved"
         : "reconstructed_from_sources",
       sourceIds: candidate.records.map((record) => record.sourceId),
@@ -730,6 +745,11 @@ export async function createManifestAndReceipt(args: {
       rule: "preserved_pages_have_evidence_blocks",
       passed: manifest.pages.filter((page) => page.status === "preserved").every((page) => page.blockIds.length > 0),
       detail: "Every page labelled Preserved contains at least one evidence-bearing body block.",
+    },
+    {
+      rule: "preserved_page_titles_have_exact_evidence",
+      passed: preservedPageTitlesHaveExactEvidence(manifest.pages, args.records),
+      detail: "Every page labelled Preserved displays a title copied from its chosen primary witness's exact title block.",
     },
     {
       rule: "source_block_hashes_match_content",

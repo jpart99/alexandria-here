@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { EvidenceBlockView } from "../app/r/[id]/[[...path]]/restored-site";
 import {
   discoverCaptures,
   rankTemporalWindows,
@@ -15,6 +18,7 @@ import {
   buildPageCandidates,
   createManifestAndReceipt,
   deriveEvidenceNavigation,
+  preservedPageTitlesHaveExactEvidence,
   type TemporalPlan,
   validateChronologistPlan,
 } from "../lib/planner";
@@ -165,6 +169,25 @@ test("extraction treats archived HTML as inert data and hashes exact evidence bl
   assert.ok(record.blocks.every((block) => block.kind !== "image"));
 });
 
+test("missing image alt text stays unclaimed in evidence and rendering", async () => {
+  const record = await extractSourceRecord(
+    capture,
+    `<html><head><title>Images</title></head><body><main><p>Witnessed body.</p>
+      <img src="/unlabelled.png"><img src="/blank.png" alt="  "><img src="/labelled.png" alt="Witnessed portrait">
+    </main></body></html>`,
+    "http://example.org/",
+  );
+  const images = record.blocks.filter((block) => block.kind === "image");
+  assert.deepEqual(images.map((block) => block.exactText), ["", "", "Witnessed portrait"]);
+  assert.ok(images.slice(0, 2).every((block) => block.warnings.includes("missing_image_alt")));
+  assert.deepEqual(images[2].warnings, []);
+  assert.ok(images.every((block) => block.exactText !== "Image"));
+
+  const markup = renderToStaticMarkup(createElement(EvidenceBlockView, { block: images[0], witness: false }));
+  assert.match(markup, /<img[^>]+alt=""/u);
+  assert.doesNotMatch(markup, /<figcaption>|>Image</u);
+});
+
 test("extraction preserves source DOM order and reports only real body truncation", async () => {
   const ordered = await extractSourceRecord(
     capture,
@@ -220,6 +243,81 @@ test("literal archived line-break markers do not leak into titles or navigation 
     "http://example.org/",
   );
   assert.equal(record.title, "Africa March 1998");
+});
+
+test("body-rich pages without an exact title witness are reconstructed, never Preserved", async () => {
+  const paths = ["/", "/about", "/work", "/links", "/contact"];
+  const records = await Promise.all(paths.map((path, index) => {
+    const sourceCapture = inventoryCapture(path, `2003-04-0${index + 1}T00:00:00Z`, `title-integrity-${index}`);
+    const title = path === "/" ? "" : `<title>${path.slice(1)}</title>`;
+    const nextPath = paths[(index + 1) % paths.length];
+    return extractSourceRecord(
+      sourceCapture,
+      `<html><head>${title}</head><body><main><p>Exact body ${index}.</p><a href="${nextPath}">Next</a></main></body></html>`,
+      "http://example.org/",
+    );
+  }));
+  const graph = buildEvidenceGraph(records);
+  const homeRecord = records.find((record) => record.canonicalPath === "/")!;
+  assert.equal(homeRecord.titleBlockId, undefined);
+  assert.ok(homeRecord.warnings.includes("missing_title"));
+  assert.equal(graph.nodes.find((node) => node.id === homeRecord.id)?.status, "reconstructed_from_sources");
+
+  const score: TemporalSelectionScore = {
+    version: "deterministic-year-v1",
+    score: 70,
+    reason: "5 distinct pages supported; bounded title-integrity fixture",
+    coverage: 5,
+    densityProxy: 1,
+    timeSpreadDays: 4,
+    duplicateCount: 0,
+    conflictCount: 0,
+    inventoryRecordsConsidered: 5,
+  };
+  const temporalCandidates: TemporalCandidateWindow[] = [{
+    id: "year-2003",
+    year: "2003",
+    windowStart: "2003-04-01T00:00:00Z",
+    windowEnd: "2003-04-05T00:00:00Z",
+    captureCount: 5,
+    pageCoverage: 5,
+    score,
+    selected: true,
+  }];
+  const previousKey = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  try {
+    const planned = await createManifestAndReceipt({
+      recoveryId: "test-title-integrity",
+      originalUrl: "http://example.org/",
+      selectedYear: "2003",
+      windowStart: temporalCandidates[0].windowStart,
+      windowEnd: temporalCandidates[0].windowEnd,
+      temporalSelection: score,
+      temporalCandidates,
+      records,
+      graph,
+      createdAt: "2003-04-06T00:00:00Z",
+    });
+    const home = planned.manifest.pages.find((page) => page.path === "/")!;
+    assert.equal(home.status, "reconstructed_from_sources");
+    assert.ok(home.blockIds.length > 0, "exact body blocks remain renderable at block-level provenance");
+    assert.equal(planned.manifest.outcome, "insufficient_evidence");
+    assert.equal(planned.receipt.validationResults.find((result) => result.rule === "preserved_page_titles_have_exact_evidence")?.passed, true);
+
+    const forged = structuredClone(home);
+    forged.status = "preserved";
+    assert.equal(preservedPageTitlesHaveExactEvidence([forged], records), false);
+
+    const preserved = planned.manifest.pages.find((page) => page.status === "preserved")!;
+    assert.ok(preserved, "fixture must retain a preserved page with exact title evidence");
+    const forgedTitle = structuredClone(preserved);
+    forgedTitle.title = "Invented title";
+    assert.equal(preservedPageTitlesHaveExactEvidence([forgedTitle], records), false);
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
 });
 
 test("the evidence graph records witnessed links to uncaptured paths as known absences", async () => {
