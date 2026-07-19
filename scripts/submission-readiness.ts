@@ -724,7 +724,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "3/5 steps done", "36 passing tests", "video-demo field is empty", "official-rules checkbox is unchecked", "Do not accept the official rules or press **Submit project** during synchronization.", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "synchronizing the prepared Devpost text and media", "public YouTube publication", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "Devpost text is saved and Preview-verified", "Authenticated synchronization on July 19, 2026", "Preview was then verified", "96 passing tests", RECOVERY_ID, "3/5 steps done", "project thumbnail is still the placeholder", "video-demo field is empty", "official-rules checkbox is unchecked", "Do not accept the official rules or press **Submit project** during synchronization.", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "completing the prepared Devpost media synchronization", "public YouTube publication", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
@@ -806,12 +806,18 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   }
 
   try {
+    const textState = classifyChecklistItem(submissionText, CHECKLIST.devpostText);
+    const mediaState = classifyChecklistItem(submissionText, CHECKLIST.devpostMedia);
     const synchronizationState = classifyDevpostSynchronization(submissionText);
     checks.push({
       section: "External authority",
       name: "Devpost text and media synchronization",
       state: synchronizationState === "pending" ? "PENDING" : "PASS",
-      detail: synchronizationState === "pending" ? "requires Jaia's save/upload authorization; replace both stale text fields, use the media manifest order, and verify Preview" : "submission checklist explicitly records the text replacement, media upload, and Preview checks",
+      detail: synchronizationState === "pending"
+        ? textState === "complete" && mediaState === "pending"
+          ? "authenticated text save and Preview verification are recorded; upload the thumbnail and ordered gallery, then verify Preview"
+          : "save and Preview-verify both canonical text fields, then upload the thumbnail and ordered gallery"
+        : "submission checklist explicitly records the text replacement, media upload, and Preview checks",
     });
   } catch (error) {
     checks.push({ section: "External authority", name: "Devpost text and media synchronization", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });

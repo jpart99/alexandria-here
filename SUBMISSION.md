@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: copy-ready draft. Public access, repository, track, `/feedback` Session ID, and receipt-attributed GPT-5.6 run are confirmed. Do not submit until the public video URL is added and Jaia personally accepts the official-rules checkbox.
+Status: authenticated Devpost About and judge instructions synchronized and Preview-verified. The project thumbnail, six-image gallery, public YouTube video, rules acceptance, and final submission remain pending.
 
 ## Project
 
@@ -156,7 +156,7 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
 - [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [x] Add and run the read-only `npm run qa:submission:live` gate against the exact public judging row, receipt metrics, decision attribution, production Atlas, and selective font boundary.
-- [ ] Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `96 passing tests` and the current judging recovery.
+- [x] Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `96 passing tests` and the current judging recovery.
 - [ ] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
