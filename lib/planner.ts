@@ -720,11 +720,12 @@ export async function createManifestAndReceipt(args: {
     ...plan.pageOrder.map((id) => pageMap.get(id)).filter((page): page is RestoredPage => Boolean(page)),
     ...pages.filter((page) => !plan.pageOrder.includes(page.id)),
   ];
+  const visiblePages = orderedPages.filter((page) => page.status !== "missing");
   const manifest: RestorationManifest = {
     schemaVersion: "2.0",
     outcome: "restored",
     originalUrl: args.originalUrl,
-    recoveredTitle: orderedPages.find((page) => page.path === "/")?.title || orderedPages[0]?.title || new URL(args.originalUrl).hostname,
+    recoveredTitle: visiblePages.find((page) => page.path === "/")?.title || visiblePages[0]?.title || new URL(args.originalUrl).hostname,
     selectedWindowStart: args.windowStart,
     selectedWindowEnd: args.windowEnd,
     selectedEraLabel: exactWindowLabel(args.windowStart, args.windowEnd),

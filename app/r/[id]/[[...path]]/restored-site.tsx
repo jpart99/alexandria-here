@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { EvidenceBlock, KnownAbsence, RecoveryEvent, RecoveryResult, RestoredPage, TemporalCandidateWindow } from "../../../../lib/domain";
+import { displayRecoveredTitle } from "../../../../lib/recovery-display";
 import { canonicalPathForReceipt } from "../../../../lib/url-safety";
 
 type View = "site" | "timeline" | "witnesses" | "map" | "receipt";
@@ -192,6 +193,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
   const [eraEvents, setEraEvents] = useState<RecoveryEvent[]>([]);
   const [eraError, setEraError] = useState<string | null>(null);
   const [busyEra, setBusyEra] = useState<TemporalCandidateWindow | null>(null);
+  const recoveredTitle = displayRecoveredTitle(result);
   const blockMap = useMemo(
     () => new Map(result.sources.flatMap((source) => source.blocks).map((block) => [block.id, block])),
     [result.sources],
@@ -369,7 +371,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
 
       <section className="returned-masthead">
         <p className="eyebrow">{result.outcome === "restored" ? "Witnessed restoration" : "Insufficient connected evidence"}</p>
-        <h1>{result.manifest.recoveredTitle}</h1>
+        <h1>{recoveredTitle}</h1>
         <p className="era-label">{result.manifest.selectedEraLabel}</p>
         <div className="view-tabs" role="tablist" aria-label="Restoration views" onKeyDown={moveTabFocus}>
           {views.map((item) => (

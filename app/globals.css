@@ -129,6 +129,11 @@ a { color: inherit; }
 .returned-masthead { padding: 55px clamp(24px, 5vw, 72px) 0; }
 .returned-masthead h1 { max-width: 940px; font-size: clamp(46px, 7vw, 92px); line-height: .95; }
 .era-label { color: #8f989e; font-size: 13px; }
+.recovery-unavailable { max-width: 1040px; padding-bottom: 72px; }
+.recovery-unavailable h1 { max-width: 880px; }
+.recovery-unavailable .era-label { max-width: 720px; font-size: 15px; line-height: 1.65; }
+.recovery-unavailable-actions { display: flex; flex-wrap: wrap; gap: 24px; }
+.recovery-home-link { display: inline-block; margin-top: 28px; padding-bottom: 5px; border-bottom: 1px solid var(--ochre); color: var(--paper); text-decoration: none; font-size: 12px; font-weight: 700; }
 .view-tabs { margin-top: 38px; display: flex; gap: 28px; border-bottom: 1px solid var(--rule); }
 .view-tabs button { flex: none; padding: 0 0 14px; border: 0; border-bottom: 2px solid transparent; background: none; color: #7e888e; cursor: pointer; white-space: nowrap; }
 .view-tabs button[aria-selected="true"] { color: var(--paper); border-bottom-color: var(--ochre); }

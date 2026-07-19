@@ -739,7 +739,18 @@ async function evidenceRelationshipsAreCompatible(args: {
   const expectedRecoveredTitle = String(visiblePages.find((page) => page.path === "/")?.title
     || visiblePages[0]?.title
     || new URL(args.normalizedUrl).hostname);
-  return args.recoveredTitle === expectedRecoveredTitle;
+  if (args.recoveredTitle === expectedRecoveredTitle) return true;
+
+  // The first receipt-1.3 producer could select a structurally witnessed
+  // Missing `/` page as the recovered title when every surviving capture had
+  // a query-bearing path. Accept only that exact, already-validated legacy
+  // producer output. The persisted manifest remains byte-for-byte authoritative;
+  // visitor-facing code derives a readable title from visible pages separately.
+  const legacyMissingRoot = pages.find((page) => page.path === "/" && page.status === "missing");
+  return receiptVersion === "1.3"
+    && !visiblePages.some((page) => page.path === "/")
+    && legacyMissingRoot !== undefined
+    && args.recoveredTitle === legacyMissingRoot.title;
 }
 
 function normalizeCaptureCandidates(candidates: unknown[]): RecoveryReceiptCapture[] {

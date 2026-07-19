@@ -34,6 +34,7 @@ import {
 } from "../lib/url-safety";
 import { MAX_PERSISTED_RECOVERY_BYTES, serializePersistedRecovery } from "../lib/persistence-budget";
 import { parsePersistedRecoveryResult } from "../lib/recovery-compat";
+import { displayRecoveredTitle } from "../lib/recovery-display";
 import { aggregateRecoveryWarnings } from "../lib/recovery-warnings";
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "../lib/hash";
 import { sha256HexSync } from "../lib/sha256-sync";
@@ -713,6 +714,101 @@ test("all bounded known absences persist and legacy receipts derive them from ci
       knownAbsencesForResult(legacy).map((absence) => absence.path),
       absencePaths,
     );
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
+});
+
+test("query-bearing sites never promote a Missing root to the recovered title", async () => {
+  const queryPaths = [
+    "/?page=1&topic=anthropology",
+    "/?page=2&topic=anthropology",
+    "/?page=3&topic=anthropology",
+    "/?page=4&topic=anthropology",
+    "/?page=5&topic=anthropology",
+  ];
+  const records = await Promise.all(queryPaths.map(async (path, index) => {
+    const sourceCapture = await durableInventoryCapture(
+      path,
+      `2003-05-0${index + 1}T00:00:00Z`,
+      `query-title-${index}`,
+    );
+    const nextPath = queryPaths[(index + 1) % queryPaths.length].replaceAll("&", "&amp;");
+    return extractSourceRecord(
+      sourceCapture,
+      `<html><head><title>Witnessed Query Page ${index + 1}</title></head><body><main><p>Exact surviving query-page body ${index + 1}.</p><a href="${nextPath}">Next witnessed page</a><a href="/">Root entrance</a></main></body></html>`,
+      "http://example.org/",
+    );
+  }));
+  const captures = records.map((record) => record.capture);
+  const ranked = rankTemporalWindows(captures);
+  const selected = ranked[0];
+  const temporalCandidates: TemporalCandidateWindow[] = ranked.map((candidate) => ({
+    id: `year-${candidate.year}`,
+    year: candidate.year,
+    windowStart: candidate.selected[0].capturedAt,
+    windowEnd: candidate.selected.at(-1)!.capturedAt,
+    captureCount: candidate.selected.length,
+    pageCoverage: candidate.score.coverage,
+    score: candidate.score,
+    selected: candidate.year === selected.year,
+  }));
+  const previousKey = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  try {
+    const graph = buildEvidenceGraph(records);
+    const planned = await createManifestAndReceipt({
+      recoveryId: "query-title-regression",
+      originalUrl: "http://example.org/",
+      selectedYear: selected.year,
+      windowStart: selected.selected[0].capturedAt,
+      windowEnd: selected.selected.at(-1)!.capturedAt,
+      temporalSelection: selected.score,
+      temporalCandidates,
+      records,
+      captures,
+      inventoryCaptures: captures,
+      graph,
+      createdAt: "2003-05-06T00:00:00Z",
+    });
+    const missingRoot = planned.manifest.pages.find((page) => page.path === "/" && page.status === "missing");
+    const firstVisible = planned.manifest.pages.find((page) => page.status !== "missing");
+    assert.ok(missingRoot);
+    assert.ok(firstVisible);
+    assert.equal(planned.receipt.receiptVersion, "1.3");
+    assert.equal(planned.manifest.recoveredTitle, firstVisible.title);
+    assert.notEqual(planned.manifest.recoveredTitle, missingRoot.title);
+
+    const result: RecoveryResult = {
+      id: "query-title-regression",
+      submittedUrl: "example.org",
+      normalizedUrl: "http://example.org/",
+      createdAt: "2003-05-06T00:00:00Z",
+      outcome: planned.manifest.outcome,
+      captures,
+      sources: records,
+      nodes: graph.nodes,
+      edges: graph.edges,
+      manifest: planned.manifest,
+      receipt: planned.receipt,
+      temporalCandidates: planned.receipt.temporalCandidates,
+      warnings: planned.receipt.warnings.map((warning) => warning.raw),
+    };
+    assert.ok(await parsePersistedRecoveryResult(JSON.stringify(result)));
+
+    const historicalProducer = structuredClone(result);
+    historicalProducer.manifest.recoveredTitle = missingRoot.title;
+    historicalProducer.receipt.manifestHash = await sha256(stableStringify(historicalProducer.manifest));
+    const hydratedHistorical = await parsePersistedRecoveryResult(JSON.stringify(historicalProducer));
+    assert.ok(hydratedHistorical);
+    assert.equal(hydratedHistorical.manifest.recoveredTitle, missingRoot.title);
+    assert.equal(displayRecoveredTitle(hydratedHistorical), firstVisible.title);
+
+    const forgedTitle = structuredClone(historicalProducer);
+    forgedTitle.manifest.recoveredTitle = "A title no witness supplied";
+    forgedTitle.receipt.manifestHash = await sha256(stableStringify(forgedTitle.manifest));
+    assert.equal(await parsePersistedRecoveryResult(JSON.stringify(forgedTitle)), null);
   } finally {
     if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousKey;
