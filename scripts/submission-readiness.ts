@@ -65,6 +65,7 @@ const RECOVERY_URL = `${PRODUCTION_URL}/r/${RECOVERY_ID}`;
 const RECEIPT_URL = `${PRODUCTION_URL}/api/recover/${RECOVERY_ID}/receipt`;
 const VIDEO_CAPTURE_RECOVERY_ID = "8ea53a47-437b-4afe-ad2c-29c81637a327";
 const VIDEO_CAPTURE_RECOVERY_URL = `${PRODUCTION_URL}/r/${VIDEO_CAPTURE_RECOVERY_ID}`;
+const VIDEO_CAPTURE_FAIL_CLOSED_CLAIM = "The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.";
 const REPOSITORY_URL = "https://github.com/jpart99/alexandria-here";
 const SESSION_ID = "019f7304-e394-7f11-ba64-26e415135ff6";
 const CURRENT_RUNTIME_COMMIT = "6c7d8df04db7c9b4ac56b05e61b367f1b025d529";
@@ -490,7 +491,7 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
 }
 
 export function assertYouTubeRuntimeProvenance(metadata: string): void {
-  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, EXAMPLE_SCOPE_CLAIM], "YouTube runtime provenance");
+  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, EXAMPLE_SCOPE_CLAIM], "YouTube runtime provenance");
   assertExclusiveRuntimeClaims(metadata, "YouTube runtime provenance");
 }
 
@@ -518,6 +519,7 @@ export function assertDevpostFieldCopy(fieldCopy: string): { storyLength: number
     RECEIPT_URL,
     VIDEO_CAPTURE_RECOVERY_URL,
     "video-capture provenance, not the current decision-attribution judging proof",
+    VIDEO_CAPTURE_FAIL_CLOSED_CLAIM,
     "may fail honestly",
     EXAMPLE_SCOPE_CLAIM,
   ], "Devpost judge instructions");
@@ -735,7 +737,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${PUBLIC_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, PUBLIC_YOUTUBE_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "Devpost media and video synchronization are complete", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${PUBLIC_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "Devpost media and video synchronization are complete", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
@@ -765,7 +767,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       document("FAILURE_RELIABILITY_MATRIX.md"),
     ]);
     assertReleaseDocumentRuntimeProvenance({ failureMatrix, readme, judgeEvidence, releaseOperations, submission, youtubeMetadata });
-    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, PUBLIC_YOUTUBE_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
+    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
     assertCanonicalTiming(submission, "submission narrative");
     const youtubeState = classifyYouTubeReference(submission);
     return `v20 release documents, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "YouTube URL"} claims are present`;

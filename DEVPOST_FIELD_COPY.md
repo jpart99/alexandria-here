@@ -92,7 +92,7 @@ Live product (public; no login): https://alexandria-here.cinemaexile.chatgpt.sit
 
 Open the exact persisted judging recovery at https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c and its mechanical receipt at https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt. The receipt records planner `gpt-5.6`, model `gpt-5.6-sol`, GPT-attributed page ordering and primary-witness choices, and 10 of 10 deterministic validations. Test Returned Site, Timeline, What Survived, Witnesses, Receipt, Show the Seams, and receipt download.
 
-The sealed video displays earlier ordinary production row https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327; that URL is video-capture provenance, not the current decision-attribution judging proof.
+The sealed video displays earlier ordinary production row https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327; that URL is video-capture provenance, not the current decision-attribution judging proof. The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.
 
 You may also enter any vanished public address. Every run uses the same archive-only bounded pipeline and may fail honestly when connected evidence is insufficient. iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.
 

@@ -45,7 +45,7 @@ Publication verification passed: an unauthenticated HTTP fetch returned `200` wi
 - GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
 - Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt
 - Claim-to-witness index: `JUDGE_EVIDENCE.md`
-- Sealed-video capture provenance (earlier ordinary production row, not the current decision-attribution proof): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
+- Sealed-video capture provenance (earlier ordinary production row, not the current decision-attribution proof): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327. The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.
 - Primary Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
 - Project thumbnail: `submission-assets/08-devpost-cover.png` (1500×1000 PNG, Devpost-preferred 3:2, below the live field's 5 MB cap)
 - Gallery, in upload order: `09-devpost-gallery-returned-site.png`, `10-devpost-gallery-show-the-seams.png`, `11-devpost-gallery-timeline.png`, `12-devpost-gallery-what-survived.png`, `13-devpost-gallery-witnesses.png`, `14-devpost-gallery-receipt.png`

@@ -18,6 +18,8 @@ Mechanical receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover
 
 Sealed-video capture provenance (earlier ordinary production row shown on screen): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
 
+The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable. Use the witnessed GPT-5.6 recovery above for current judging proof.
+
 Source: https://github.com/jpart99/alexandria-here
 
 Built for OpenAI Build Week in the Education track. Codex accelerated architecture, archive retrieval, security, testing, deployment, and browser audits. In model-backed recoveries, GPT-5.6 acts as a constrained Chronologist: it orders the returned preserved pages and selects one primary witness for each from a bounded evidence packet. Deterministic code fixes the temporal window and verifies every rendered block against recorded evidence; the deterministic planner remains an honest fallback when the model is unavailable.
