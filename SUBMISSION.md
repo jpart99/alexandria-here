@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: authenticated Devpost About, judge instructions, project thumbnail, and six-image gallery synchronized and Preview-verified. The public YouTube video, rules acceptance, and final submission remain pending.
+Status: authenticated Devpost About, judge instructions, project thumbnail, six-image gallery, and public YouTube video synchronized and Preview-verified. Rules acceptance and final submission remain pending.
 
 ## Project
 
@@ -14,7 +14,7 @@ Live product: https://alexandria-here.cinemaexile.chatgpt.site
 
 Code repository: https://github.com/jpart99/alexandria-here
 
-Demo video: `[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]`
+Demo video: https://youtu.be/z1FJLdJS93o
 
 Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
 
@@ -151,13 +151,13 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Accept production Sites version 18 only after its hosted content-neutral/query-bearing URL, font-alias/browser boundary, exact reference-recovery, persisted iExile rescue, and live submission gates passed.
 - [x] Accept production Sites version 19 only after its 96-test source gate, compiled matrix, hosted/live proof gates, exact MIME boundary, and streamed request-body admission passed.
 - [x] Render and audit the public-video master at less than 3:00 with English audio explaining the product, Codex use, and GPT-5.6 integration.
-- [ ] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions and custom thumbnail, and add the URL above.
-- [ ] Verify signed-out public YouTube playback at 1080p with audible narration, captions, and embedding, then paste the same URL into Devpost.
+- [x] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions, add the URL above, and record the account-level thumbnail state.
+- [x] Verify the unauthenticated public YouTube page exposes 1080p, audio, captions, and embedding, then paste the same URL into Devpost and verify its embedded player.
 - [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
 - [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [x] Add and run the read-only `npm run qa:submission:live` gate against the exact public judging row, receipt metrics, decision attribution, production Atlas, and selective font boundary.
 - [x] Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `96 passing tests` and the current judging recovery.
 - [x] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
-- [x] Replace every bracketed placeholder except the pending public YouTube URL.
+- [x] Replace every bracketed placeholder.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
 - [ ] Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).

@@ -97,7 +97,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.deepEqual(checks.filter((check) => check.state === "FAIL"), []);
   assert.deepEqual(
     checks.filter((check) => check.state === "PENDING").map((check) => check.name),
-    ["Public YouTube URL", "Rules acceptance and final submit"],
+    ["Rules acceptance and final submit"],
   );
   assert.equal(submissionExitCode(checks), 0);
   assert.equal(submissionExitCode(checks, true), 1);
@@ -105,7 +105,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.doesNotThrow(() => assertSubmissionRuntimeProvenance(submission));
   assert.throws(
     () => assertSubmissionRuntimeProvenance(submission.replace(
-      "Status: authenticated Devpost About, judge instructions, project thumbnail, and six-image gallery synchronized and Preview-verified. The public YouTube video, rules acceptance, and final submission remain pending.",
+      "Status: authenticated Devpost About, judge instructions, project thumbnail, six-image gallery, and public YouTube video synchronized and Preview-verified. Rules acceptance and final submission remain pending.",
       "Status: authenticated Devpost About and judge instructions synchronized and Preview-verified. The project thumbnail, six-image gallery, public YouTube video, rules acceptance, and final submission remain pending.",
     )),
     /submission runtime provenance/,

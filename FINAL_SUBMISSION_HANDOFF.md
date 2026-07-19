@@ -1,10 +1,14 @@
 # Alexandria Here — final submission handoff
 
-Everything below is prepared and audited. The Devpost text, project thumbnail, and six-card gallery are saved and Preview-verified. The only remaining actions that require Jaia's authority are public YouTube publication, adding its URL to Devpost, Devpost's official-rules acceptance, and final submission.
+Everything below is prepared and audited. The Devpost text, project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified. The only remaining actions that require Jaia's authority are Devpost's official-rules acceptance and final submission.
 
-Immediately before selecting any upload file, run `npm run qa:submission`. It is read-only, uses no network or secrets, prints the canonical absolute upload paths, verifies the sealed video/captions/thumbnails/gallery plus required submission claims and operator contracts, and exits nonzero on local drift. Its two remaining external actions stay `PENDING` until their user-controlled steps are completed. After those actions are recorded, `npm run qa:submission -- --final` also refuses any remaining `PENDING` gate.
+Immediately before final submission, run `npm run qa:submission`. It is read-only, uses no network or secrets, prints the canonical absolute media paths, verifies the sealed video/captions/thumbnails/gallery plus required submission claims and operator contracts, and exits nonzero on local drift. Its one remaining aggregate external action stays `PENDING` until Jaia completes it. After that action is recorded, `npm run qa:submission -- --final` also refuses any remaining `PENDING` gate.
 
-## 1. Publish the YouTube video
+## 1. Public YouTube video — complete
+
+- Public URL: https://youtu.be/z1FJLdJS93o
+- Channel: **Julian A** (`@JulianA-r6o8b`)
+- Published: **July 19, 2026**
 
 - Video: `submission-assets/alexandria-here-build-week-demo.mp4`
 - SHA-256: `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`
@@ -27,9 +31,10 @@ Recommended YouTube and accessibility settings:
 - Audience: **No, it is not made for kids**
 - Age restriction: **None**
 - Synthetic-content disclosure: **Yes — synthetic narration only**
-- Upload the custom thumbnail and English captions before copying the URL
+- English captions: **Published** from the exact audited WebVTT file
+- Custom thumbnail: the exact asset remains ready, but YouTube blocked custom-thumbnail upload until this channel completes phone verification; the public video currently uses YouTube's strongest generated frame
 
-After processing finishes, verify 1080p playback, audible narration, visible captions, public access in a signed-out window, and embedding. Then paste the public URL into `SUBMISSION.md` and Devpost.
+Publication verification passed: an unauthenticated HTTP fetch returned `200` with the exact title and exposed 1080p, audio, caption-track, and `playableInEmbed` metadata; YouTube Studio shows the audited English captions as Published; and authenticated Devpost Preview rendered the public YouTube player with the exact title and channel. The exact public URL is saved in `SUBMISSION.md` and Devpost.
 
 ## 2. Finish the Devpost draft
 
@@ -50,23 +55,21 @@ After processing finishes, verify 1080p playback, audible narration, visible cap
 
 Keep this scope sentence verbatim in both the public YouTube description and the Devpost narrative: **iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.**
 
-Authenticated synchronization on July 19, 2026 saved the exact About story and judge instructions from `DEVPOST_FIELD_COPY.md`, the exact audited project thumbnail, and the six ordered gallery cards; the Devpost Preview was then verified to show `96 passing tests`, judging recovery `18026989-33be-4011-86ee-19e1754cb22c`, the general lost-public-web scope, and gallery tabs `1 of 6` through `6 of 6`. The draft remains at **3/5 steps done**. Project name, elevator pitch, technology tags, live-product link, Individual submitter type, United States, Education, repository URL, and Codex Session ID remain saved correctly. The remaining live state is exact:
+Authenticated synchronization on July 19, 2026 saved the exact About story and judge instructions from `DEVPOST_FIELD_COPY.md`, the exact audited project thumbnail, the six ordered gallery cards, and public video https://youtu.be/z1FJLdJS93o; Devpost Preview was then verified to show the embedded player, `96 passing tests`, judging recovery `18026989-33be-4011-86ee-19e1754cb22c`, the general lost-public-web scope, and gallery tabs `1 of 6` through `6 of 6`. The draft is now at **4/5 steps done**. Project name, elevator pitch, technology tags, live-product link, Individual submitter type, United States, Education, repository URL, and Codex Session ID remain saved correctly. The remaining live state is exact:
 
 - The project thumbnail is the exact audited `08-devpost-cover.png`, persisted after an authenticated reload.
 - The image gallery contains exactly six audited cards in numbered order, and the public Preview exposes all six slides.
-- The required video-demo field is empty.
+- The required video-demo field contains https://youtu.be/z1FJLdJS93o, and Preview renders the public embedded player.
 - The official-rules checkbox is unchecked and the project remains an unsubmitted Draft.
 
-Devpost media synchronization is complete. Add the public YouTube URL, save, open Preview, and verify the embedded video without disturbing the already verified category boundary, current judging recovery, receipt, project thumbnail, or six-slide gallery. Do not accept the official rules or press **Submit project** during synchronization.
+Devpost media and video synchronization are complete. Do not disturb the already verified category boundary, current judging recovery, receipt, public video, project thumbnail, or six-slide gallery.
 
 The authenticated live form currently accepts a JPG, PNG, or GIF project thumbnail up to 5 MB and recommends 3:2. Its image gallery accepts up to 15 images with the same displayed format, size, and ratio guidance. The six prepared gallery cards are optional and intentionally stay below those limits.
 
 Final user-controlled actions:
 
-1. Publish the audited YouTube video and add its public URL to Devpost.
-2. Confirm signed-out playback and the embedded video in Devpost Preview.
-3. Personally accept the official-rules checkbox.
-4. Submit before **July 21, 2026 at 5:00 PM PDT (Pacific Time)**.
+1. Personally accept the official-rules checkbox.
+2. Submit before **July 21, 2026 at 5:00 PM PDT (Pacific Time)**.
 
 Submit early: Devpost permits edits to the judged entry until the deadline, when the hackathon submission locks.
 
