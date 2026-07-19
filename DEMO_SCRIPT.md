@@ -1,6 +1,6 @@
 # Alexandria Here — Build Week demo script
 
-Status: historical 2:35 placeholder script and publication provenance. Do not record or republish it as the final version 22 submission. The final script is generated only after the application and iExile/Mars Pathfinder presentation sequence are locked.
+Status: historical 2:35 placeholder script and publication provenance. Do not record or republish it as the final version 23 submission. The final script is generated only after the application and iExile/Mars Pathfinder presentation sequence are locked.
 
 Sealed video-capture recovery (ordinary production row; do not replace): `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
 
@@ -67,4 +67,4 @@ Sealed video-capture recovery (ordinary production row; do not replace): `https:
 - Do not use copyrighted music or third-party logos as decorative assets.
 - Keep product UI text legible; pause on the GPT-5.6 receipt and its 10/10 validations.
 - The narration audibly explains the working product, Codex's build role, and GPT-5.6's runtime role.
-- Preserve the existing public placeholder until the final version 22 replacement package is audited; do not regenerate it piecemeal.
+- Preserve the existing public placeholder until the final version 23 replacement package is audited; do not regenerate it piecemeal.

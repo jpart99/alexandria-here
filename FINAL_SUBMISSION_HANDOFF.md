@@ -1,6 +1,6 @@
 # Alexandria Here — final submission handoff
 
-The application is on accepted production version 22, but the submission media has not been finalized. The current public YouTube video and Devpost media are placeholder presentation media, not the final version 22 submission set. Final media and Devpost synchronization remain pending; Jaia's official-rules acceptance and final submission must follow those gates.
+The application is on accepted production version 23, but the submission media has not been finalized. The current public YouTube video and Devpost media are placeholder presentation media, not the final version 23 submission set. Final media and Devpost synchronization remain pending; Jaia's official-rules acceptance and final submission must follow those gates.
 
 Immediately before final submission, run `npm run qa:submission`. It is read-only, uses no network or secrets, prints the canonical absolute placeholder-media paths, verifies their byte integrity plus required submission claims and operator contracts, and exits nonzero on local drift. Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked. `npm run qa:submission -- --final` refuses every remaining `PENDING` gate.
 
@@ -71,7 +71,7 @@ The authenticated live form currently accepts a JPG, PNG, or GIF project thumbna
 Ordered completion actions:
 
 1. Lock the application and presentation sequence.
-2. Regenerate, audit, publish, and synchronize the final version 22 video, captions, thumbnail, gallery, hashes, YouTube metadata, and Devpost fields as one unit.
+2. Regenerate, audit, publish, and synchronize the final version 23 video, captions, thumbnail, gallery, hashes, YouTube metadata, and Devpost fields as one unit.
 3. Jaia personally accepts the official-rules checkbox; this remains within Jaia's authority.
 4. Jaia submits before **July 21, 2026 at 5:00 PM PDT (Pacific Time)**.
 

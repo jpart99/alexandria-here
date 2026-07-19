@@ -1,6 +1,6 @@
 # Placeholder submission assets
 
-These files are the integrity-pinned historical presentation set. They are not the final version 22 media package. Regenerate the final video, captions, thumbnails, gallery, hashes, metadata, and Devpost synchronization together only after the application and presentation sequence are locked.
+These files are the integrity-pinned historical presentation set. They are not the final version 23 media package. Regenerate the final video, captions, thumbnails, gallery, hashes, metadata, and Devpost synchronization together only after the application and presentation sequence are locked.
 
 - `00-landing.png` — public production landing page at 1440×900.
 - `01-returned-site.png` — persisted iExile 2009 Returned Site at 1440×900.
@@ -25,6 +25,6 @@ These files are the integrity-pinned historical presentation set. They are not t
 
 The product frames were captured from the public Sites deployment after the
 production version 6 browser gate. Preserve them as historical publication
-provenance; do not use them as the final version 22 upload set.
+provenance; do not use them as the final version 23 upload set.
 
 Run `npm run qa:submission` from the app root to verify placeholder byte integrity and the fail-closed final-media gates. The command is non-mutating and validates the exact media roles, pinned hashes, image geometry, video duration, captions, narration alignment, gallery order, required claims, and operator contract while leaving final replacement/publication actions explicitly pending.
