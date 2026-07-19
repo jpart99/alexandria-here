@@ -4,10 +4,12 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 `npm test`; Worker/API checks are run against the compiled local Worker with
 `npm run qa:failure-matrix`.
 
+Production version 18 at audited runtime commit `174e05a38d5a49a17d5d116cb79f8a3c53963286` passes 93 tests. The accepted Sites record is saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_29be18fd06788191b4499c75b4bdabad`, deployment `appgdep_6a5caab525508191ac8eb45c0b3e7fae`, environment revision 7.
+
 | Boundary | Injected failure | Expected product behavior | Proof |
 |---|---|---|---|
 | Submitted URL | Bare public hostname/path such as `iexile.com`; HTTP and HTTPS archive variants | Accept the bare hostname without requiring the visitor to add a scheme, normalize it to a public HTTP URL for identity, query both protocol variants, merge/deduplicate witnesses, then retain the same 12-record/8-fetch budgets | Automated URL and dual-CDX unit cases; hosted form contract |
-| Submitted URL boundary | Scheme-qualified or bare loopback, private, credentialed, non-web protocol, or nonstandard port; plus valid query-bearing and archived `.onion` HTTP(S) locators | Reject unsafe network targets before persistence or retrieval with a clear `400`; preserve valid query identity and never contact the submitted origin | Automated URL/CDX unit cases, compiled Worker gate, and hosted production v16 gate |
+| Submitted URL boundary | Scheme-qualified or bare loopback, private, credentialed, non-web protocol, or nonstandard port; plus valid query-bearing and archived `.onion` HTTP(S) locators | Reject unsafe network targets before persistence or retrieval with a clear `400`; preserve valid query identity and never contact the submitted origin | Automated URL/CDX unit cases, compiled Worker gate, and hosted production v18 gate |
 | API body | Wrong content type or body over 4,096 bytes | `415` for non-JSON; clear `400` for oversize; no recovery created | Compiled Worker matrix |
 | Archive allowlist | Redirect outside `https://web.archive.org` or excessive redirect chain | Fail closed before the redirected host is fetched | Automated mocked-fetch test |
 | Archive MIME | Inventory not JSON or capture not HTML | Stop safely; never parse/render the body as archive evidence | Automated mocked-fetch test |
@@ -20,12 +22,18 @@ This is a release gate, not a hypothetical checklist. Unit coverage is run with
 | Durable result cap | Serialized result exceeds 1.8 MB | Fail before D1's 2 MB row limit with the durable-storage-budget reason | Automated persistence-budget test |
 | Legacy result | Additive v2 arrays are missing from an otherwise compatible row | Normalize safe empty arrays and supporting witness IDs; continue rendering | Automated compatibility test |
 | Stale/corrupt result | Invalid JSON or incompatible durable result shape | Treat result as unavailable instead of throwing from every read route | Automated compatibility test |
+| Persisted query-title compatibility | Receipt `1.3` has no visible `/`, retains an evidenced Missing `/`, and carries that Missing page's title from the historical producer | Accept only that exact already-validated producer shape; leave the content-addressed manifest untouched; derive visitor-facing title from visible witnessed pages; reject unrelated rehashed titles | Adversarial planner/parser/display test; rescued public v17 row served by v18 |
+| Existing row without a verified hydrated result | Row is running, failed, or complete with an incompatible persisted packet | Render a branded, generic, noindex state without exposing stored provider/internal error detail; reserve `404` for an absent recovery or invalid nested path | Direct static-render tests for all three states; compiled and hosted route checks |
 | Completed polling payload | Internal `result_json` exists beside its parsed result | Return only parsed `result`; never duplicate the full evidence packet in public JSON | Automated hydration test |
 | Receipt unavailable | Missing, running, failed, or incompatible persisted result | `409` JSON with `no-store` and `nosniff`; never `200 undefined` | Automated pure response test; compiled Worker matrix while running |
 
 ## Executed local evidence
 
-- The Phase 38 compiled candidate passed all eight matrix scenarios once, including an ordinary public-archive recovery that completed honestly as `insufficient_evidence`. After the final receipt-identity compatibility corrections and clean rebuild, compiled packaging/smoke passed. The exact final version 16 rerun reached active control recovery `acf8f871-0291-4396-8d32-15a0bcfb3772`, but public Wayback CDX timed out while `finding_captures` and the recovery failed honestly with `Archive request timed out.` The final rerun is recorded as an external archive block, not a passing matrix result; no timeout was relaxed.
+- Production version 18 passed the full eight-boundary compiled failure matrix. Its ordinary public-archive control completed honestly as `insufficient_evidence`, concurrency and cooldown boundaries held, cancellation persisted the authoritative stopped state and released the singleton, the receipt remained unavailable until a compatible result existed, and preview reachability survived every destructive case.
+
+- The exact final version 16 failure-matrix rerun was externally blocked because public Wayback CDX returned zero bytes or timed out; no timeout was relaxed. That historical run reached active control recovery `acf8f871-0291-4396-8d32-15a0bcfb3772` and failed honestly with `Archive request timed out.` The earlier Phase 38 compiled candidate had passed all eight matrix scenarios once; neither historical fact is substituted for the completed v18 run.
+
+- Production version 18 restored ordinary production recovery `52a87f55-914f-4f17-a2b3-40021351f442` to HTTP 200 without rewriting its receipt 1.3 manifest or relabeling its `insufficient_evidence` outcome. The public Atlas and receipt both returned HTTP 200 and displayed the exact surviving witnessed title. Fresh ordinary production recovery `ec9ab849-611a-4644-86d9-2ef82de1c61e` independently completed, hydrated, and rendered at HTTP 200 with its Missing root retained, receipt `1.3`, planner `gpt-5.6`, model `gpt-5.6-sol`, and manifest hash `c615fc3375be9a0d7c10e8fd3753fc9f29701d54f7901ccfd5db94a867f4ec3c`; it does not replace the historical judging proof row.
 
 - A real bounded recovery of `http://info.cern.ch/hypertext/WWW/TheProject.html`
   completed as `insufficient_evidence` and rendered at its ordinary `/r/:id` route.
