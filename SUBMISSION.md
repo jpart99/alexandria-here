@@ -48,6 +48,8 @@ Alexandria is content-neutral memory infrastructure. It has no topic or viewpoin
 
 Wayback shows snapshots. Alexandria returns a place—with witnesses.
 
+Alexandria calls this the **Papyrus Principle**: when the page is gone, its neighbors become witnesses. In the current release, those neighbors are bounded same-site archive records and their surviving internal references: direct captures may supply exact body blocks, while linked evidence may support only structure or known absence; unwitnessed material remains missing.
+
 Its signature interaction is not generation; it is challengeability. A beautiful returned site can be toggled into an evidentiary view where every seam becomes visible. Alexandria's most important output may be where the record breaks: uncaptured paths, unresolved variants, conflicts, and missing assets supported only by surviving references.
 
 ## How we used Codex

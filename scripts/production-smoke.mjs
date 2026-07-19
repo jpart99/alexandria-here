@@ -141,7 +141,11 @@ assert(!/\bpattern=/iu.test(recoveryInput), "Landing recovery input added a patt
 assert(landingHtml.includes("you may omit the protocol"), "Landing does not explain that the HTTP(S) protocol is optional.");
 assert(landingHtml.includes("query strings are preserved"), "Landing does not explain that query-bearing archive identities are preserved.");
 assert(landingHtml.includes("does not decide which history deserves recovery"), "Landing lost Alexandria's content-neutral doctrine.");
-checks.push(["content-neutral address form contract", { type: "text", inputMode: "url", protocolOptional: true, queryIdentity: true }]);
+assert(!landingHtml.includes("When the page is gone, its neighbors become witnesses."), "Landing must reserve the Papyrus Principle for the evidenced Atlas context.");
+const invocationIndex = landingHtml.indexOf("Return it");
+const evidenceContractIndex = landingHtml.indexOf("Not a screenshot.");
+assert(invocationIndex >= 0 && evidenceContractIndex > invocationIndex, "Landing evidence contract must follow the recovery invocation.");
+checks.push(["content-neutral address form contract", { type: "text", inputMode: "url", protocolOptional: true, queryIdentity: true, invocationFirst: true }]);
 
 const stylesheetUrls = [];
 const stylesheetBodies = [];

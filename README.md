@@ -8,6 +8,16 @@ Alexandria Here is a witnessed restoration engine for the lost web. Give it one 
 
 Network controls protect systems, not sensibilities. Evidence validation protects provenance, not people from ideas. Alexandria has no topic or viewpoint moderation layer; politically, culturally, or personally contentious material receives the same evidence contract as every other archived page.
 
+## The Papyrus Principle
+
+> When the page is gone, its neighbors become witnesses.
+
+A search engine finds pages. Alexandria reconstructs vanished places from the traces they left in one another. The submitted address is the first shard, not a moral or intellectual boundary: Alexandria follows mechanically connected archive paths, neighboring captures, internal references, alternate witnesses, and contradictions inside its bounded evidence window.
+
+That reconstruction never licenses invention. A direct archived witness may supply exact historical body blocks. Another witnessed page may support identity, existence, containment, placement, or a link, but its words never silently become the missing page's words. Conflicts remain visible in parallel and unwitnessed material remains missing. Alexandria evaluates evidentiary connection, never whether an archived idea is acceptable.
+
+The current release applies this principle within one allowlisted public archive and one bounded site evidence neighborhood. Federated contextual witnesses across independent sites and source types are a future expansion, not a capability this release claims.
+
 ## Live product
 
 The public production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). An unauthenticated request returned `200 OK` on July 17, 2026 Pacific / July 18 UTC. Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path. The judge-facing [`JUDGE_EVIDENCE.md`](JUDGE_EVIDENCE.md) maps the headline claims to the corrected production receipt, pinned source, executable checks, and explicit non-claims.

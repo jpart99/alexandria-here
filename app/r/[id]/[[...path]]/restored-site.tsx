@@ -677,6 +677,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
           <div className="section-intro">
             <p className="eyebrow">Ghost Map</p>
             <h2 id="map-heading">The shape of what remains</h2>
+            <p className="papyrus-principle">When the page is gone, its neighbors become witnesses.</p>
+            <p className="papyrus-boundary">Here, neighbors are bounded same-site archive records and their surviving internal references. Direct captures may supply exact blocks; linked evidence supports only structure or known absence. Unwitnessed material remains missing.</p>
             <p>Solid rooms survived. Hatched rooms were reconstructed from sources. Dashed rooms are known only through surviving references.</p>
           </div>
           <div className="ghost-map">

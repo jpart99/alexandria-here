@@ -193,6 +193,8 @@ test("the sealed submission package passes locally and exposes only authority-ga
 
   const layout = await readFile(path.join(root, "app", "layout.tsx"), "utf8");
   const css = await readFile(path.join(root, "app", "globals.css"), "utf8");
+  const homeSource = await readFile(path.join(root, "app", "page.tsx"), "utf8");
+  const restoredSiteSource = await readFile(path.join(root, "app", "r", "[id]", "[[...path]]", "restored-site.tsx"), "utf8");
   const staticHeaders = await readFile(path.join(root, "public", "_headers"), "utf8");
   const viteSource = await readFile(path.join(root, "vite.config.ts"), "utf8");
   const workerSource = await readFile(path.join(root, "worker", "index.ts"), "utf8");
@@ -216,6 +218,22 @@ test("the sealed submission package passes locally and exposes only authority-ga
     /exactly one flat CSS rule/u,
   );
   assert.doesNotMatch(layout, /from\s+["']next\/font(?:\/google|\/local)?["']/u);
+  assert.doesNotMatch(homeSource, /When the page is gone, its neighbors become witnesses\./u);
+  assert.doesNotMatch(homeSource, /className="landing-aside"/u);
+  assert.match(homeSource, /returns only what surviving public evidence can support/u);
+  assert.ok(
+    homeSource.indexOf("<RecoveryForm />") < homeSource.indexOf('id="evidence-contract-title"'),
+    "the recovery invocation must precede the evidence contract",
+  );
+  assert.equal(
+    [...restoredSiteSource.matchAll(/When the page is gone, its neighbors become witnesses\./gu)].length,
+    1,
+    "the Papyrus Principle must appear exactly once in the restored-site interface",
+  );
+  assert.match(
+    restoredSiteSource,
+    /view === "map"[\s\S]*?id="map-heading"[\s\S]*?When the page is gone, its neighbors become witnesses\.[\s\S]*?bounded same-site archive records[\s\S]*?structure or known absence[\s\S]*?Unwitnessed material remains missing\./u,
+  );
   const recoveryFormMarkup = renderToStaticMarkup(createElement(RecoveryForm));
   const recoveryInputMarkup = recoveryFormMarkup.match(/<input[^>]+name="url"[^>]*>/u)?.[0] || "";
   assert.match(recoveryInputMarkup, /type="text"/u);

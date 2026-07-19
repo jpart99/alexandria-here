@@ -8,6 +8,8 @@ Alexandria Here — A Witnessed Restoration Engine for the Lost Web | OpenAI Bui
 
 Alexandria Here returns a lost website as a coherent, browsable place—without pretending the gaps were never there.
 
+Alexandria calls this the Papyrus Principle: when the page is gone, its neighbors become witnesses. In the current release, those neighbors are bounded same-site archive records and their surviving internal references: direct captures may supply exact body blocks, while linked evidence may support only structure or known absence; unwitnessed material remains missing.
+
 Live product: https://alexandria-here.cinemaexile.chatgpt.site
 
 Witnessed GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
