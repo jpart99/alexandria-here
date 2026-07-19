@@ -1,6 +1,6 @@
 # Alexandria Here — Build Week demo script
 
-Target: 2:35. Public YouTube upload. Screen recording with clear narration; face camera is not required.
+Status: historical 2:35 placeholder script and publication provenance. Do not record or republish it as the final version 22 submission. The final script is generated only after the application and iExile/Mars Pathfinder presentation sequence are locked.
 
 Sealed video-capture recovery (ordinary production row; do not replace): `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
 
@@ -60,11 +60,11 @@ Sealed video-capture recovery (ordinary production row; do not replace): `https:
 
 > Alexandria Here returns a place—with witnesses. The lost web, present again, without pretending the gaps were never there.
 
-## Recording checklist
+## Placeholder recording record
 
 - Keep the finished video strictly under 3:00; this audited master is 2:35.26.
 - Record the public production URL at 1080p, 100% browser zoom, with notifications hidden.
 - Do not use copyrighted music or third-party logos as decorative assets.
 - Keep product UI text legible; pause on the GPT-5.6 receipt and its 10/10 validations.
 - The narration audibly explains the working product, Codex's build role, and GPT-5.6's runtime role.
-- Upload the finished video as **Public** on YouTube, not Unlisted or Private.
+- Preserve the existing public placeholder until the final version 22 replacement package is audited; do not regenerate it piecemeal.

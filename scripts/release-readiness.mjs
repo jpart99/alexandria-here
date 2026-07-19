@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -16,6 +17,7 @@ const fontPublicPaths = fontAssets.map((name) => `/witness-fonts/${name}`);
 const fontCacheControl = "public, max-age=86400";
 const fontWorkerRouteMarker = "worker-font-alias-v2";
 const applicationWorkerRouteMarker = "app-worker-v1";
+const submissionLiveProofSha256 = "59a9fbf90d4617db21870b7574fcb772d6d574f934209a126bac30cc5d7a1516";
 
 function check(section, name, state, detail) {
   checks.push({ section, name, state, detail });
@@ -137,15 +139,21 @@ const localDevReady = packageJson.scripts?.dev === "node scripts/start-local-dev
   && /command\s*===\s*["']serve["'][\s\S]*?vars:\s*\{\s*RECOVERY_RATE_LIMIT_SECRET:\s*localAdmissionSecret\s*\}/u.test(viteSource);
 const isolatedCompiledPreview = packageJson.scripts?.start === "node scripts/start-compiled-preview.mjs"
   && await exists("scripts/start-compiled-preview.mjs");
-const expectedSubmissionLiveProofWrapper = [
-  'process.env.ALEXANDRIA_BASE_URL = "https://alexandria-here.cinemaexile.chatgpt.site";',
-  'process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH = "/r/18026989-33be-4011-86ee-19e1754cb22c";',
-  'process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1";',
-  "",
-  'await import("./production-smoke.mjs");',
-].join("\n");
+const normalizedSubmissionLiveProofWrapper = `${submissionLiveProofWrapper.replace(/\r\n/gu, "\n").trimEnd()}\n`;
+const exactSubmissionLiveProofWrapper = createHash("sha256")
+  .update(normalizedSubmissionLiveProofWrapper, "utf8")
+  .digest("hex") === submissionLiveProofSha256;
+const pathfinderSubmissionProofReady = normalizedSubmissionLiveProofWrapper.includes('await import("./production-smoke.mjs");')
+  && /assertExactPathfinderProof,\s*EXACT_PATHFINDER_PROOF/u.test(normalizedSubmissionLiveProofWrapper)
+  && /readJson\(`\/api\/recover\/\$\{recoveryId\}`\)/u.test(normalizedSubmissionLiveProofWrapper)
+  && /readJson\(`\/api\/recover\/\$\{recoveryId\}\/receipt`\)/u.test(normalizedSubmissionLiveProofWrapper)
+  && /assertExactPathfinderProof\(\{\s*record,\s*receipt,\s*recoveryId\s*\}\)/u.test(normalizedSubmissionLiveProofWrapper);
 const submissionLiveProofReady = packageJson.scripts?.["qa:submission:live"] === "node scripts/submission-live-proof.mjs"
-  && submissionLiveProofWrapper.replace(/\r\n/gu, "\n").trim() === expectedSubmissionLiveProofWrapper.trim()
+  && exactSubmissionLiveProofWrapper
+  && normalizedSubmissionLiveProofWrapper.includes('process.env.ALEXANDRIA_BASE_URL = "https://alexandria-here.cinemaexile.chatgpt.site";')
+  && normalizedSubmissionLiveProofWrapper.includes('process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH = "/r/18026989-33be-4011-86ee-19e1754cb22c";')
+  && normalizedSubmissionLiveProofWrapper.includes('process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1";')
+  && pathfinderSubmissionProofReady
   && submissionProofContractExists
   && /import\s*\{\s*assertExactReferenceProof\s*\}\s*from\s*["']\.\/submission-proof-contract\.mjs["']/u.test(productionSmokeSource)
   && /assertExactReferenceProof\(\{\s*record,\s*receipt:\s*referenceReceipt,\s*recoveryId\s*\}\)/u.test(productionSmokeSource);
@@ -164,7 +172,7 @@ const releaseCommandsDetail = missingScripts.length
         ? "lint must exclude ignored .wrangler deployment and preview state"
       : requiredScripts.join(", ");
 check("Static/local", "Release commands declared", releaseCommandsReady ? "PASS" : "FAIL", releaseCommandsDetail);
-check("Static/local", "Live submission proof pin", submissionLiveProofReady ? "PASS" : "FAIL", submissionLiveProofReady ? "exact command, wrapper, production origin, judging recovery, strict flag, and assertion import/call are pinned" : "live submission proof command or pin contract drifted");
+check("Static/local", "Live submission proof pin", submissionLiveProofReady ? "PASS" : "FAIL", submissionLiveProofReady ? "exact command, production origin, iExile proof, Pathfinder proof, strict flag, and assertion calls are pinned" : "live submission proof command or pin contract drifted");
 check("Static/local", "Package cannot be published", packageJson.private === true ? "PASS" : "FAIL", "package.json private must be true");
 
 const hostingKeys = Object.keys(hosting);

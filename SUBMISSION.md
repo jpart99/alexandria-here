@@ -1,6 +1,8 @@
 # OpenAI Build Week submission draft
 
-Status: authenticated Devpost version 20 About and judge instructions, project thumbnail, six-image gallery, and public YouTube video are synchronized and Preview-verified. Rules acceptance and final submission remain pending.
+Status: the current public video and Devpost media are placeholder presentation media; final version 22 media and Devpost synchronization remain pending, followed by rules acceptance and final submission.
+
+The current public YouTube video and Devpost media are placeholder presentation media, not the final version 22 submission set. Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked.
 
 ## Project
 
@@ -14,7 +16,7 @@ Live product: https://alexandria-here.cinemaexile.chatgpt.site
 
 Code repository: https://github.com/jpart99/alexandria-here
 
-Demo video: https://youtu.be/z1FJLdJS93o
+Placeholder demo video: https://youtu.be/z1FJLdJS93o
 
 Codex Session ID: `019f7304-e394-7f11-ba64-26e415135ff6`
 
@@ -56,7 +58,7 @@ Its signature interaction is not generation; it is challengeability. A beautiful
 
 ## How we used Codex
 
-Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 20 at audited runtime commit `6c7d8df04db7c9b4ac56b05e61b367f1b025d529` passes 99 tests, TypeScript, lint, a clean production build, fourteen static/local release-contract checks, receipt validation, public browser regression, the hosted content-neutral/query-bearing URL and font-alias boundary gates, malformed-ID rejection before D1, private no-store recovery 404s, the live submission proof, and a zero-vulnerability production dependency audit. Production version 20 passed the full eight-boundary compiled failure matrix. Codex also localized and repaired real hosted regressions in requested-year discovery, model-decision provenance, receipt warning ownership, production font delivery, protocol reconciliation, exact replay identity, synthetic-label provenance, query-bearing identity, legacy-receipt temporal replay, persisted query-title hydration, streamed request admission, media-type validation, and recovery-read boundaries, then verified each correction through explicit phase gates.
+Codex served as the build integrator across architecture, implementation, security hardening, release operations, deployment, and audit. Work was split into bounded archive, chronology, witness, reliability, deployment, and browser-QA tracks, then merged behind explicit phase gates. Production version 22 at audited runtime commit `8291a2ef5d92503349ba7346cc9c3f6d1de3b17a` passes 99 tests, TypeScript, lint, a clean production build, fourteen static/local release-contract checks, receipt validation, public browser regression, the hosted content-neutral/query-bearing URL and font-alias boundary gates, malformed-ID rejection before D1, private no-store recovery 404s, the live submission proof, and a zero-vulnerability production dependency audit. Production version 22 passed the full eight-boundary compiled failure matrix. Codex also localized and repaired real hosted regressions in requested-year discovery, model-decision provenance, receipt warning ownership, production font delivery, protocol reconciliation, exact replay identity, synthetic-label provenance, query-bearing identity, legacy-receipt temporal replay, persisted query-title hydration, streamed request admission, media-type validation, recovery-read boundaries, typography, mobile overflow, and witnessed display-title selection, then verified each correction through explicit phase gates.
 
 ## How GPT-5.6 is used
 
@@ -77,15 +79,21 @@ The ordinary hosted public pipeline recovered `http://www.9-11commission.gov/` i
 - 24 witnessed internal-reference edges
 - 8 known absences
 - 10 of 10 deterministic receipt validations passing
-- durable managed-D1 path: `/r/de5bb377-5b53-4ea4-b074-feb106e02113`
+- historical managed-D1 row: `de5bb377-5b53-4ea4-b074-feb106e02113` (not a current working proof)
 
-This earlier production proof remains persisted as an ordinary recovery row and directly accessible at the path above. The same public workflow can be rerun; archive-dependent captures and outcomes need not be identical. There is no fixture, seed route, or demo-only engine. The landing page now links the receipt-backed iExile recovery below.
+The historical 9/11 Commission row now fails closed under the current evidence-replay validator; its machine receipt is unavailable. The counts above are a historical operator record, not current clickable judge evidence. The same public workflow can be rerun; archive-dependent captures and outcomes need not be identical. There is no fixture, seed route, or demo-only engine. Current judging uses the healthy receipt-backed recoveries below.
 
 The same production pipeline explicitly requested iExile's 2009 edition and returned [a witnessed recovery whose receipt attributes page ordering and primary-witness selection to GPT-5.6](https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c) with 5 returned preserved pages plus 2 witnessed Missing states from 8 capture records, 347 rendered blocks, 946 content-addressed extracted evidence blocks, 36 inferred edges, 8 known absences, and all 10 deterministic receipt checks passing.
 
+The ordinary public pipeline also returned [a historic Mars Pathfinder mission site returned from surviving public witnesses](https://alexandria-here.cinemaexile.chatgpt.site/r/c6adb317-ee2f-4530-9298-e9eb5fe6efd2) across February 21-April 24, 1999: [receipt 1.3](https://alexandria-here.cinemaexile.chatgpt.site/api/recover/c6adb317-ee2f-4530-9298-e9eb5fe6efd2/receipt), planner `gpt-5.6`, model `gpt-5.6-sol`, 8 captures, 7 Preserved pages plus 1 Missing state, 249 rendered / 250 preserved blocks, 3 inferred edges, 8 known absences, 12/12 validations, and manifest hash `03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab`. This is a second presentation proof, not a claim that NASA's mission knowledge disappeared.
+
 ## Current build boundary
 
-Production version 20 at audited runtime commit `6c7d8df04db7c9b4ac56b05e61b367f1b025d529` passes 99 tests. The accepted Sites record is saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_e0e0becb32ec8191aaec526418590d31`, deployment `appgdep_6a5d33a6af448191ab4ba6a7eeaf0b63`, environment revision 7. It retains requested-year discovery, durable per-client cooldown enforcement, truthful decision provenance, exact Wayback replay identity, non-fabricated fallback labels, permanent legacy-receipt compatibility, witnessed browser-only font aliases, bounded streamed-body admission, exact JSON/HTML media-type checks, malformed-ID rejection before D1, private no-store recovery 404s, and branded fail-closed persisted-result boundaries. It accepts bare, query-bearing, and archived `.onion` HTTP(S) locators through the same content-neutral safety boundary; it never contacts the submitted origin. For a query-bearing locator, discovery inventories the exact query plus the query-cleared sibling path across HTTP and HTTPS variants, merges and deduplicates surviving witnesses, and keeps the exact 12-record inventory and 8-capture fetch budgets. Receipt `1.3` gives that query-bearing identity an opaque full-SHA-256 route; receipts `1.0`–`1.2` permanently retain pathname-only relationship and replay semantics. The hosted production and live submission gates verified those contracts, pre-admission private-address rejection, exact font bytes, MIME, cache, `nosniff`, route markers, GET/HEAD/Range/ETag/304 behavior, lack of physical-path leakage, and the pinned durable judging receipt.
+Production version 22 at audited runtime commit `8291a2ef5d92503349ba7346cc9c3f6d1de3b17a` passes 99 tests. The accepted Sites record is saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_1f55f0478180819189cd0b2b8d97186b`, deployment `appgdep_6a5d42d6ba9481918078b196f495ada1`, environment revision 7. It retains requested-year discovery, durable per-client cooldown enforcement, truthful decision provenance, exact Wayback replay identity, non-fabricated fallback labels, permanent legacy-receipt compatibility, witnessed browser-only font aliases, bounded streamed-body admission, exact JSON/HTML media-type checks, malformed-ID rejection before D1, private no-store recovery 404s, branded fail-closed persisted-result boundaries, refined invocation/Atlas typography, mobile containment, and exact witnessed display-title selection. It accepts bare, query-bearing, and archived `.onion` HTTP(S) locators through the same content-neutral safety boundary; it never contacts the submitted origin. For a query-bearing locator, discovery inventories the exact query plus the query-cleared sibling path across HTTP and HTTPS variants, merges and deduplicates surviving witnesses, and keeps the exact 12-record inventory and 8-capture fetch budgets. Receipt `1.3` gives that query-bearing identity an opaque full-SHA-256 route; receipts `1.0`–`1.2` permanently retain pathname-only relationship and replay semantics. The hosted production and live submission gates verified those contracts, pre-admission private-address rejection, exact font bytes, MIME, cache, `nosniff`, route markers, GET/HEAD/Range/ETag/304 behavior, lack of physical-path leakage, and the pinned durable judging receipt.
+
+Historical Sites release v20 used runtime commit `6c7d8df04db7c9b4ac56b05e61b367f1b025d529`, saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_e0e0becb32ec8191aaec526418590d31`, deployment `appgdep_6a5d33a6af448191ab4ba6a7eeaf0b63`, and environment revision 7; its source gate passed 99 tests and its full eight-boundary compiled failure matrix passed.
+
+Sites version 21 was rejected because its packaged `dist` was stale. It was never accepted as production.
 
 Historical Sites release v19 used runtime commit `88a4dce91b42a3fcc1d2adf9710de6bea651dfc4`, saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_d92c137f12788191bf5e69709b3809df`, deployment `appgdep_6a5ccae8dcf48191b85e5a80613dc594`, and environment revision 7; its source gate passed 96 tests.
 
@@ -97,9 +105,9 @@ Historical Sites release v16 used runtime commit `d32ab887e880d7f3d4bbf1c9d71e0a
 
 Historical Sites release v17 used runtime commit `c7112dbf9edde6531b02f1e6e3547667fa6f8003`, saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_a32fbc5b2a0481919cede26452bc7033`, deployment `appgdep_6a5ca4a4cc788191924a28d69120d106`, and environment revision 7. It shipped the invocation-first landing and Recovery Atlas treatment before the ordinary iExile submission exposed the persisted-title compatibility defect.
 
-The judging recovery above was generated by proof-producing version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`; current production Sites version 20 serves and audits that persisted receipt 1.0 row but did not generate its GPT-5.6 decisions. Supporting witnesses, navigation, citations, and decision records were derived mechanically before validation.
+The judging recovery above was generated by proof-producing version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`; current production Sites version 22 serves and audits that persisted receipt 1.0 row but did not generate its GPT-5.6 decisions. Supporting witnesses, navigation, citations, and decision records were derived mechanically before validation.
 
-Historical compatibility release v8 used runtime commit `f7f8f529285ed9e01fdbe02e868833fc86de5475`; its ordinary schema/model probe is recovery `6e467987-af60-4153-8d27-7653f56475aa`. That probe completed as an honest `insufficient_evidence` result with a native 1.1 receipt, and current v20 preserves v8's non-mutating legacy-row compatibility behavior, including pathname-only relationship and temporal-replay identity for every receipt from `1.0` through `1.2`.
+Historical compatibility release v8 used runtime commit `f7f8f529285ed9e01fdbe02e868833fc86de5475`; its ordinary schema/model probe is recovery `6e467987-af60-4153-8d27-7653f56475aa`. The historical version-8 probe now fails closed under the current evidence-replay validator; its machine receipt is unavailable. Current v22 still preserves the documented pathname-only relationship and temporal-replay semantics for compatible receipts from `1.0` through `1.2`; it does not treat every historical packet as compatible.
 
 ## Challenges
 
@@ -122,9 +130,11 @@ Reliability is easier to trust when it is visible. “AI checks itself” is not
 
 Support multiple genuinely evidenced editions from the same recovery, conflict-aware cross-fragment entity resolution, more archive providers behind the same evidence contract, and institutional export workflows for libraries, educators, and community archivists.
 
-## Audited 2:35 demo
+## Placeholder 2:35 demo provenance
 
-The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository packages the video, captions, YouTube thumbnail, description/chapters, a Devpost-preferred 1500×1000 3:2 cover, and six ordered 3:2 gallery cards. The sealed master was captured from [ordinary production row `8ea53a47-437b-4afe-ad2c-29c81637a327`](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) on version 6 runtime `f434249d673911bb5de89689313248b68a389b52` and sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the current judging proof is corrected receipt 1.0 row `18026989-33be-4011-86ee-19e1754cb22c`, generated by version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178` and now served by production Sites version 20. The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.
+The preserved placeholder master is `submission-assets/alexandria-here-build-week-demo.mp4`; its sidecar SHA-256 is `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`. It is 2:35.26 at 1920×1080 with normalized 48 kHz narration, exact English WebVTT captions, and a real production interaction sequence from 0:19–0:59. The public repository preserves the video, captions, YouTube thumbnail, description/chapters, a Devpost-preferred 1500×1000 3:2 cover, and six ordered 3:2 gallery cards as historical media provenance. The sealed master was captured from [ordinary production row `8ea53a47-437b-4afe-ad2c-29c81637a327`](https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327) on version 6 runtime `f434249d673911bb5de89689313248b68a389b52` and sealed in commit `4755a6472b0ce7f22599a259ac55ae288bd9bae2`; the current judging proof is corrected receipt 1.0 row `18026989-33be-4011-86ee-19e1754cb22c`, generated by version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178` and now served by production Sites version 22. The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.
+
+The final Build Week video must remain **less than 3:00** and explain the working product, Codex's build role, and GPT-5.6's constrained runtime role in English.
 
 **0:00–0:19 — The promise.** Introduce Alexandria as a witnessed restoration engine and iExile as the founder's real lost community.
 
@@ -152,14 +162,14 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Clean-build, package, deploy, and verify the requested-year discovery and decision-provenance fixes in production version 7.
 - [x] Accept production Sites version 18 only after its hosted content-neutral/query-bearing URL, font-alias/browser boundary, exact reference-recovery, persisted iExile rescue, and live submission gates passed.
 - [x] Accept production Sites version 20 only after its 99-test source gate, compiled matrix, hosted/live proof gates, malformed-ID/no-store read boundary, exact MIME boundary, and streamed request-body admission passed.
-- [x] Render and audit the public-video master at less than 3:00 with English audio explaining the product, Codex use, and GPT-5.6 integration.
-- [x] Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions, add the URL above, and record the account-level thumbnail state.
-- [x] Verify the unauthenticated public YouTube page exposes 1080p, audio, captions, and embedding, then paste the same URL into Devpost and verify its embedded player.
-- [x] Render and audit the Devpost-preferred 3:2 project thumbnail and six ordered 3:2 gallery cards.
+- [x] Preserve and audit the earlier 2:35 placeholder-media set and its publication provenance.
+- [ ] After application and presentation lock, regenerate and upload the final version 22 video, captions, and thumbnail as one audited set.
+- [ ] Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.
+- [x] Render and audit the historical placeholder Devpost 3:2 project thumbnail and six ordered 3:2 gallery cards.
 - [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [x] Add and run the read-only `npm run qa:submission:live` gate against the exact public judging row, receipt metrics, decision attribution, production Atlas, and selective font boundary.
-- [x] Replace the saved Devpost About and judge instructions with the version 20 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests` and the current judging recovery.
-- [x] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
-- [x] Replace every bracketed placeholder.
+- [ ] Replace the saved Devpost About and judge instructions with the version 22 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests`, the current runtime, and both presentation recoveries.
+- [ ] Upload the final version 22 Devpost thumbnail and gallery media, then verify the public preview.
+- [ ] Replace every bracketed placeholder only after final media synchronization.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
 - [ ] Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).

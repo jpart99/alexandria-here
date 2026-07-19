@@ -29,6 +29,7 @@ interface VttCue {
 const DEFAULT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VIDEO_NAME = "alexandria-here-build-week-demo.mp4";
 const VIDEO_HASH = "B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA";
+const PLACEHOLDER_VIDEO_HASH = "B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA";
 const VIDEO_BYTES = 11_459_389;
 const VIDEO_DURATION_SECONDS = 155.26;
 const CAPTIONS_NAME = "alexandria-here-build-week-demo.en.vtt";
@@ -38,6 +39,7 @@ const YOUTUBE_THUMBNAIL_HASH = "97BD15C6EC9E65445361A1DC39172AE40866DAA89D5278D6
 const YOUTUBE_THUMBNAIL_BYTES = 265_905;
 const YOUTUBE_TITLE = "Alexandria Here — A Witnessed Restoration Engine for the Lost Web | OpenAI Build Week";
 const DEVPOST_MANIFEST_HASH = "8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044";
+const PLACEHOLDER_DEVPOST_MANIFEST_HASH = "8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044";
 const DEVPOST_MAX_BYTES = 5_000_000;
 const DEVPOST_NAMES = [
   "08-devpost-cover.png",
@@ -63,15 +65,37 @@ const PRODUCTION_URL = "https://alexandria-here.cinemaexile.chatgpt.site";
 const RECOVERY_ID = "18026989-33be-4011-86ee-19e1754cb22c";
 const RECOVERY_URL = `${PRODUCTION_URL}/r/${RECOVERY_ID}`;
 const RECEIPT_URL = `${PRODUCTION_URL}/api/recover/${RECOVERY_ID}/receipt`;
+const PATHFINDER_RECOVERY_ID = "c6adb317-ee2f-4530-9298-e9eb5fe6efd2";
+const PATHFINDER_RECOVERY_URL = `${PRODUCTION_URL}/r/${PATHFINDER_RECOVERY_ID}`;
+const PATHFINDER_RECEIPT_URL = `${PRODUCTION_URL}/api/recover/${PATHFINDER_RECOVERY_ID}/receipt`;
+const PATHFINDER_MANIFEST_HASH = "03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab";
+const PATHFINDER_SAFE_CLAIM = "a historic Mars Pathfinder mission site returned from surviving public witnesses";
+const PATHFINDER_PROOF_PHRASES = [
+  PATHFINDER_RECOVERY_URL,
+  PATHFINDER_RECEIPT_URL,
+  PATHFINDER_MANIFEST_HASH,
+  PATHFINDER_SAFE_CLAIM,
+  "8 captures",
+  "7 Preserved pages plus 1 Missing state",
+  "249 rendered / 250 preserved blocks",
+  "3 inferred edges",
+  "8 known absences",
+  "planner `gpt-5.6`",
+  "model `gpt-5.6-sol`",
+  "12/12 validations",
+] as const;
 const VIDEO_CAPTURE_RECOVERY_ID = "8ea53a47-437b-4afe-ad2c-29c81637a327";
 const VIDEO_CAPTURE_RECOVERY_URL = `${PRODUCTION_URL}/r/${VIDEO_CAPTURE_RECOVERY_ID}`;
-const VIDEO_CAPTURE_FAIL_CLOSED_CLAIM = "The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.";
+const VIDEO_CAPTURE_FAIL_CLOSED_CLAIM = "The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.";
 const REPOSITORY_URL = "https://github.com/jpart99/alexandria-here";
 const SESSION_ID = "019f7304-e394-7f11-ba64-26e415135ff6";
-const CURRENT_RUNTIME_COMMIT = "6c7d8df04db7c9b4ac56b05e61b367f1b025d529";
+const CURRENT_RUNTIME_COMMIT = "8291a2ef5d92503349ba7346cc9c3f6d1de3b17a";
 const PROOF_RUNTIME_COMMIT = "042215042dd46ded14b501f961f4d9e7debb8178";
 const HISTORICAL_COMPATIBILITY_COMMIT = "f7f8f529285ed9e01fdbe02e868833fc86de5475";
 const HISTORICAL_PROBE_ID = "6e467987-af60-4153-8d27-7653f56475aa";
+const HISTORICAL_V8_FAIL_CLOSED_CLAIM = "The historical version-8 probe now fails closed under the current evidence-replay validator; its machine receipt is unavailable.";
+const HISTORICAL_911_ID = "de5bb377-5b53-4ea4-b074-feb106e02113";
+const HISTORICAL_911_FAIL_CLOSED_CLAIM = "The historical 9/11 Commission row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.";
 const HISTORICAL_V16_RUNTIME_COMMIT = "d32ab887e880d7f3d4bbf1c9d71e0aec37388a43";
 const HISTORICAL_V16_SITES_VERSION_ID = "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_76f67dace6088191b2b415d5e4b1d17b";
 const HISTORICAL_V16_DEPLOYMENT_ID = "appgdep_6a5c90b3020c81919c73b5a84e39580e";
@@ -84,36 +108,44 @@ const HISTORICAL_V18_DEPLOYMENT_ID = "appgdep_6a5caab525508191ac8eb45c0b3e7fae";
 const HISTORICAL_V19_RUNTIME_COMMIT = "88a4dce91b42a3fcc1d2adf9710de6bea651dfc4";
 const HISTORICAL_V19_SITES_VERSION_ID = "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_d92c137f12788191bf5e69709b3809df";
 const HISTORICAL_V19_DEPLOYMENT_ID = "appgdep_6a5ccae8dcf48191b85e5a80613dc594";
-const CURRENT_SITES_VERSION_ID = "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_e0e0becb32ec8191aaec526418590d31";
-const CURRENT_DEPLOYMENT_ID = "appgdep_6a5d33a6af448191ab4ba6a7eeaf0b63";
+const HISTORICAL_V20_RUNTIME_COMMIT = "6c7d8df04db7c9b4ac56b05e61b367f1b025d529";
+const HISTORICAL_V20_SITES_VERSION_ID = "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_e0e0becb32ec8191aaec526418590d31";
+const HISTORICAL_V20_DEPLOYMENT_ID = "appgdep_6a5d33a6af448191ab4ba6a7eeaf0b63";
+const CURRENT_SITES_VERSION_ID = "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_1f55f0478180819189cd0b2b8d97186b";
+const CURRENT_DEPLOYMENT_ID = "appgdep_6a5d42d6ba9481918078b196f495ada1";
 const IEXILE_RESCUE_ID = "52a87f55-914f-4f17-a2b3-40021351f442";
 const FRESH_V18_RECOVERY_ID = "ec9ab849-611a-4644-86d9-2ef82de1c61e";
 const FRESH_V18_MANIFEST_HASH = "c615fc3375be9a0d7c10e8fd3753fc9f29701d54f7901ccfd5db94a867f4ec3c";
-const CURRENT_RUNTIME_CLAIM = `Production version 20 at audited runtime commit \`${CURRENT_RUNTIME_COMMIT}\` passes 99 tests`;
+const CURRENT_RUNTIME_CLAIM = `Production version 22 at audited runtime commit \`${CURRENT_RUNTIME_COMMIT}\` passes 99 tests`;
 const CURRENT_SITES_RECORD_CLAIM = `The accepted Sites record is saved version \`${CURRENT_SITES_VERSION_ID}\`, deployment \`${CURRENT_DEPLOYMENT_ID}\`, environment revision 7.`;
-const PROOF_RUNTIME_CLAIM = `The judging recovery above was generated by proof-producing version 7 runtime \`${PROOF_RUNTIME_COMMIT}\`; current production Sites version 20 serves and audits that persisted receipt 1.0 row but did not generate its GPT-5.6 decisions.`;
+const PROOF_RUNTIME_CLAIM = `The judging recovery above was generated by proof-producing version 7 runtime \`${PROOF_RUNTIME_COMMIT}\`; current production Sites version 22 serves and audits that persisted receipt 1.0 row but did not generate its GPT-5.6 decisions.`;
 const HISTORICAL_COMPATIBILITY_CLAIM = `Historical compatibility release v8 used runtime commit \`${HISTORICAL_COMPATIBILITY_COMMIT}\`; its ordinary schema/model probe is recovery \`${HISTORICAL_PROBE_ID}\`.`;
 const HISTORICAL_V16_RELEASE_CLAIM = `Historical Sites release v16 used runtime commit \`${HISTORICAL_V16_RUNTIME_COMMIT}\`, saved version \`${HISTORICAL_V16_SITES_VERSION_ID}\`, deployment \`${HISTORICAL_V16_DEPLOYMENT_ID}\`, and environment revision 7; its source gate passed 91 tests.`;
 const HISTORICAL_V17_RELEASE_CLAIM = `Historical Sites release v17 used runtime commit \`${HISTORICAL_V17_RUNTIME_COMMIT}\`, saved version \`${HISTORICAL_V17_SITES_VERSION_ID}\`, deployment \`${HISTORICAL_V17_DEPLOYMENT_ID}\`, and environment revision 7.`;
 const HISTORICAL_V18_RELEASE_CLAIM = `Historical Sites release v18 used runtime commit \`${HISTORICAL_V18_RUNTIME_COMMIT}\`, saved version \`${HISTORICAL_V18_SITES_VERSION_ID}\`, deployment \`${HISTORICAL_V18_DEPLOYMENT_ID}\`, and environment revision 7; its source gate passed 93 tests.`;
 const HISTORICAL_V19_RELEASE_CLAIM = `Historical Sites release v19 used runtime commit \`${HISTORICAL_V19_RUNTIME_COMMIT}\`, saved version \`${HISTORICAL_V19_SITES_VERSION_ID}\`, deployment \`${HISTORICAL_V19_DEPLOYMENT_ID}\`, and environment revision 7; its source gate passed 96 tests.`;
+const HISTORICAL_V20_RELEASE_CLAIM = `Historical Sites release v20 used runtime commit \`${HISTORICAL_V20_RUNTIME_COMMIT}\`, saved version \`${HISTORICAL_V20_SITES_VERSION_ID}\`, deployment \`${HISTORICAL_V20_DEPLOYMENT_ID}\`, and environment revision 7; its source gate passed 99 tests and its full eight-boundary compiled failure matrix passed.`;
+const REJECTED_V21_CLAIM = "Sites version 21 was rejected because its packaged `dist` was stale. It was never accepted as production.";
 const IEXILE_RESCUE_CLAIM = `Production version 18 restored ordinary production recovery \`${IEXILE_RESCUE_ID}\` to HTTP 200 without rewriting its receipt 1.3 manifest or relabeling its \`insufficient_evidence\` outcome.`;
 const FRESH_V18_RECOVERY_CLAIM = `Fresh ordinary production recovery \`${FRESH_V18_RECOVERY_ID}\``;
 const FRESH_V18_MANIFEST_CLAIM = `manifest hash \`${FRESH_V18_MANIFEST_HASH}\``;
 const FRESH_V18_MODEL_CLAIM = "planner `gpt-5.6`, model `gpt-5.6-sol`";
 const HISTORICAL_V16_MATRIX_CLAIM = "The exact final version 16 failure-matrix rerun was externally blocked because public Wayback CDX returned zero bytes or timed out; no timeout was relaxed.";
-const CURRENT_MATRIX_CLAIM = "Production version 20 passed the full eight-boundary compiled failure matrix.";
+const CURRENT_MATRIX_CLAIM = "Production version 22 passed the full eight-boundary compiled failure matrix.";
 const EXAMPLE_SCOPE_CLAIM = "iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.";
-const DEVPOST_MEDIA_STATUS_CLAIM = "Status: authenticated Devpost version 20 About and judge instructions, project thumbnail, six-image gallery, and public YouTube video are synchronized and Preview-verified. Rules acceptance and final submission remain pending.";
-const YOUTUBE_RUNTIME_CLAIM = `The current recovery and receipt links point to the corrected decision-attribution proof generated by version 7 runtime \`${PROOF_RUNTIME_COMMIT}\`; accepted production Sites version 20 runtime \`${CURRENT_RUNTIME_COMMIT}\` currently serves that persisted receipt 1.0 proof without claiming to have generated it.`;
-const PUBLIC_YOUTUBE_URL = "https://youtu.be/z1FJLdJS93o";
+const PLACEHOLDER_MEDIA_CLAIM = "The current public YouTube video and Devpost media are placeholder presentation media, not the final version 22 submission set.";
+const VIDEO_LAST_CLAIM = "Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked.";
+const DEVPOST_MEDIA_STATUS_CLAIM = "Status: the current public video and Devpost media are placeholder presentation media; final version 22 media and Devpost synchronization remain pending, followed by rules acceptance and final submission.";
+const YOUTUBE_RUNTIME_CLAIM = `The current recovery and receipt links point to the corrected decision-attribution proof generated by version 7 runtime \`${PROOF_RUNTIME_COMMIT}\`; accepted production Sites version 22 runtime \`${CURRENT_RUNTIME_COMMIT}\` currently serves that persisted receipt 1.0 proof without claiming to have generated it.`;
+const PLACEHOLDER_YOUTUBE_URL = "https://youtu.be/z1FJLdJS93o";
+const PUBLIC_YOUTUBE_URL = PLACEHOLDER_YOUTUBE_URL;
 const YOUTUBE_PLACEHOLDER = "[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]";
 const YOUTUBE_URL_PATTERN = /https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
 const CHECKLIST = {
-  youtubeUpload: "Upload the exact audited master as Public on YouTube, enable embedding, attach the English captions, add the URL above, and record the account-level thumbnail state.",
-  youtubeVerify: "Verify the unauthenticated public YouTube page exposes 1080p, audio, captions, and embedding, then paste the same URL into Devpost and verify its embedded player.",
-  devpostText: "Replace the saved Devpost About and judge instructions with the version 20 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests` and the current judging recovery.",
-  devpostMedia: "Upload the audited Devpost thumbnail and gallery media, then verify the public preview.",
+  youtubeUpload: "After application and presentation lock, regenerate and upload the final version 22 video, captions, and thumbnail as one audited set.",
+  youtubeVerify: "Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.",
+  devpostText: "Replace the saved Devpost About and judge instructions with the version 22 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests`, the current runtime, and both presentation recoveries.",
+  devpostMedia: "Upload the final version 22 Devpost thumbnail and gallery media, then verify the public preview.",
   rules: "Jaia personally accepts the official-rules checkbox immediately before submission.",
   submit: "Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).",
 } as const;
@@ -396,6 +428,38 @@ export function classifyDevpostSynchronization(submission: string): "pending" | 
   return textState === "complete" && mediaState === "complete" ? "complete" : "pending";
 }
 
+export function classifyFinalPresentationMedia(submission: string): "pending" | "complete" {
+  const youtubeState = classifyYouTubeReference(submission);
+  const uploadState = classifyChecklistItem(submission, CHECKLIST.youtubeUpload);
+  const verifyState = classifyChecklistItem(submission, CHECKLIST.youtubeVerify);
+  if (youtubeState === "pending" && (uploadState === "complete" || verifyState === "complete")) {
+    fail("YouTube checklist cannot be complete while the URL is still pending");
+  }
+  if (youtubeState === "present" && uploadState === "pending" && verifyState === "complete") {
+    fail("signed-out YouTube verification cannot precede the upload checklist");
+  }
+
+  const completionRequested = youtubeState === "present" && uploadState === "complete" && verifyState === "complete";
+  const placeholderEvidence = submission.includes(PLACEHOLDER_MEDIA_CLAIM)
+    || submission.includes(DEVPOST_MEDIA_STATUS_CLAIM)
+    || submission.includes(PLACEHOLDER_YOUTUBE_URL)
+    || VIDEO_HASH === PLACEHOLDER_VIDEO_HASH
+    || DEVPOST_MANIFEST_HASH === PLACEHOLDER_DEVPOST_MANIFEST_HASH;
+  if (completionRequested && placeholderEvidence) {
+    fail("final presentation media cannot pass while known placeholder claims, URL, or artifact fingerprints remain");
+  }
+  return completionRequested && !placeholderEvidence ? "complete" : "pending";
+}
+
+export function classifyFinalDevpostSynchronization(submission: string): "pending" | "complete" {
+  const synchronizationState = classifyDevpostSynchronization(submission);
+  const finalMediaState = classifyFinalPresentationMedia(submission);
+  if (synchronizationState === "complete" && finalMediaState !== "complete") {
+    fail("Devpost v22 synchronization cannot pass while the final presentation media gate is pending");
+  }
+  return synchronizationState;
+}
+
 export function assertCanonicalTiming(text: string, label: string): void {
   const deadline = "July 21, 2026 at 5:00 PM PDT (Pacific Time)";
   const judgingDeadline = "August 5, 2026 at 5:00 PM PDT (Pacific Time)";
@@ -427,10 +491,12 @@ export function assertJudgingAvailability(handoff: string, releaseOperations: st
     "Judging availability hold",
     "public Sites deployment",
     "managed D1 judging row `18026989-33be-4011-86ee-19e1754cb22c`",
+    "managed D1 Pathfinder row `c6adb317-ee2f-4530-9298-e9eb5fe6efd2`",
     "public GitHub repository",
     "public YouTube video",
     "available free and unrestricted through **August 5, 2026 at 5:00 PM PDT (Pacific Time)**",
     "npm run qa:submission:live",
+    "pins both current presentation rows and receipts",
     "at least once per day through the judging deadline",
   ] as const;
   requirePhrases(handoff, [...required, EXAMPLE_SCOPE_CLAIM], "final handoff judging hold");
@@ -443,7 +509,7 @@ function assertExclusiveRuntimeClaims(text: string, label: string): void {
   ];
   for (const claim of servingClaims) {
     const [, version, commit, tests] = claim;
-    if (version !== "20" || commit !== CURRENT_RUNTIME_COMMIT || (tests && tests !== "99")) {
+    if (version !== "22" || commit !== CURRENT_RUNTIME_COMMIT || (tests && tests !== "99")) {
       fail(`${label} contains a competing production-runtime claim: ${claim[0]}`);
     }
   }
@@ -459,8 +525,8 @@ function assertExclusiveRuntimeClaims(text: string, label: string): void {
   if (/\b(?:judging\s+)?(?:proof|recovery)\s+(?:was\s+)?generated by\s+(?:the\s+)?(?:(?:current\s+)?production(?:\s+Sites)?\s+|proof-producing\s+)?version\s+(?!7\b)\d+\b/i.test(text)) {
     fail(`${label} claims a non-proof runtime generated the persisted judging proof`);
   }
-  if (/\b(?:current|accepted)\s+(?:(?:production\s+Sites)|(?:Sites\s+production))\s+version\s+(?:14|16|17|18|19)\b/i.test(text)) {
-    fail(`${label} contains a stale pre-v20 current-runtime claim`);
+  if (/\b(?:current|accepted)\s+(?:(?:production|Sites)\s+){0,2}version\s+(?:14|16|17|18|19|20|21)\b/i.test(text)) {
+    fail(`${label} contains a stale pre-v22 current-runtime claim`);
   }
 }
 
@@ -472,10 +538,14 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
       CURRENT_SITES_RECORD_CLAIM,
       PROOF_RUNTIME_CLAIM,
       HISTORICAL_COMPATIBILITY_CLAIM,
+      HISTORICAL_V8_FAIL_CLOSED_CLAIM,
+      HISTORICAL_911_FAIL_CLOSED_CLAIM,
       HISTORICAL_V16_RELEASE_CLAIM,
       HISTORICAL_V17_RELEASE_CLAIM,
       HISTORICAL_V18_RELEASE_CLAIM,
       HISTORICAL_V19_RELEASE_CLAIM,
+      HISTORICAL_V20_RELEASE_CLAIM,
+      REJECTED_V21_CLAIM,
       IEXILE_RESCUE_CLAIM,
       FRESH_V18_RECOVERY_CLAIM,
       FRESH_V18_MANIFEST_CLAIM,
@@ -483,7 +553,10 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
       HISTORICAL_V16_MATRIX_CLAIM,
       CURRENT_MATRIX_CLAIM,
       EXAMPLE_SCOPE_CLAIM,
+      PLACEHOLDER_MEDIA_CLAIM,
+      VIDEO_LAST_CLAIM,
       DEVPOST_MEDIA_STATUS_CLAIM,
+      ...PATHFINDER_PROOF_PHRASES,
     ],
     "submission runtime provenance",
   );
@@ -491,7 +564,7 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
 }
 
 export function assertYouTubeRuntimeProvenance(metadata: string): void {
-  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, EXAMPLE_SCOPE_CLAIM], "YouTube runtime provenance");
+  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, EXAMPLE_SCOPE_CLAIM, PLACEHOLDER_MEDIA_CLAIM, VIDEO_LAST_CLAIM], "YouTube runtime provenance");
   assertExclusiveRuntimeClaims(metadata, "YouTube runtime provenance");
 }
 
@@ -517,6 +590,8 @@ export function assertDevpostFieldCopy(fieldCopy: string): { storyLength: number
     PRODUCTION_URL,
     RECOVERY_URL,
     RECEIPT_URL,
+    ...PATHFINDER_PROOF_PHRASES.filter((phrase) => phrase !== "12/12 validations"),
+    "12 of 12 validations",
     VIDEO_CAPTURE_RECOVERY_URL,
     "video-capture provenance, not the current decision-attribution judging proof",
     VIDEO_CAPTURE_FAIL_CLOSED_CLAIM,
@@ -525,8 +600,8 @@ export function assertDevpostFieldCopy(fieldCopy: string): { storyLength: number
   ], "Devpost judge instructions");
   assertExclusiveRuntimeClaims(story, "Devpost About copy");
   if (/\b36 passing tests\b/i.test(story)) fail("Devpost About copy contains the stale 36-test claim");
-  if (story.length > 8_000) fail(`Devpost About copy is ${story.length} characters; expected no more than the internal 8,000-character budget`);
-  if (instructions.length > 2_000) fail(`Devpost judge instructions are ${instructions.length} characters; expected no more than the internal 2,000-character budget`);
+  if (story.length > 7_800) fail(`Devpost About copy is ${story.length} characters; expected no more than the internal 7,800-character budget`);
+  if (instructions.length > 1_850) fail(`Devpost judge instructions are ${instructions.length} characters; expected no more than the internal 1,850-character budget`);
   return { storyLength: story.length, instructionsLength: instructions.length };
 }
 
@@ -547,48 +622,59 @@ export function assertReleaseDocumentRuntimeProvenance(documents: ReleaseRuntime
     [
       CURRENT_RUNTIME_CLAIM,
       CURRENT_SITES_RECORD_CLAIM,
-      "Accepted production Sites version 20 serves that persisted receipt 1.0 proof without claiming that v20 generated it.",
+      "Accepted production Sites version 22 serves that persisted receipt 1.0 proof without claiming that v22 generated it.",
       HISTORICAL_V16_RELEASE_CLAIM,
       HISTORICAL_V17_RELEASE_CLAIM,
       HISTORICAL_V18_RELEASE_CLAIM,
       HISTORICAL_V19_RELEASE_CLAIM,
+      HISTORICAL_V20_RELEASE_CLAIM,
+      REJECTED_V21_CLAIM,
+      HISTORICAL_V8_FAIL_CLOSED_CLAIM,
       IEXILE_RESCUE_CLAIM,
       FRESH_V18_RECOVERY_CLAIM,
       FRESH_V18_MANIFEST_CLAIM,
       CURRENT_MATRIX_CLAIM,
       EXAMPLE_SCOPE_CLAIM,
+      ...PATHFINDER_PROOF_PHRASES,
     ],
     "README runtime provenance",
   );
   requirePhrases(
     documents.judgeEvidence,
     [
-      `Current accepted release source (operator-recorded), production Sites version 20: [\`${CURRENT_RUNTIME_COMMIT}\`]`,
+      `Current accepted release source (operator-recorded), production Sites version 22: [\`${CURRENT_RUNTIME_COMMIT}\`]`,
       `Saved version \`${CURRENT_SITES_VERSION_ID}\`; deployment \`${CURRENT_DEPLOYMENT_ID}\`; environment revision 7; 99 tests.`,
-      "Production Sites version 20 serves this persisted version 7 receipt 1.0 proof",
-      "split v20-serving/v7-proof provenance plus the v8 historical compatibility probe",
+      "Production Sites version 22 serves this persisted version 7 receipt 1.0 proof",
+      "split v22-serving/v7-proof provenance plus the v8 historical compatibility probe",
       HISTORICAL_V16_RELEASE_CLAIM,
       HISTORICAL_V17_RELEASE_CLAIM,
       HISTORICAL_V18_RELEASE_CLAIM,
       HISTORICAL_V19_RELEASE_CLAIM,
+      HISTORICAL_V20_RELEASE_CLAIM,
+      REJECTED_V21_CLAIM,
+      HISTORICAL_V8_FAIL_CLOSED_CLAIM,
       IEXILE_RESCUE_CLAIM,
       FRESH_V18_RECOVERY_CLAIM,
       FRESH_V18_MANIFEST_CLAIM,
       HISTORICAL_V16_MATRIX_CLAIM,
       CURRENT_MATRIX_CLAIM,
       EXAMPLE_SCOPE_CLAIM,
+      ...PATHFINDER_PROOF_PHRASES,
     ],
     "judge evidence runtime provenance",
   );
   requirePhrases(
     documents.releaseOperations,
     [
-      `Production Sites version 20 was accepted only after the hosted gate passed against the public origin. Its audited source commit is \`${CURRENT_RUNTIME_COMMIT}\`; saved version \`${CURRENT_SITES_VERSION_ID}\`; deployment \`${CURRENT_DEPLOYMENT_ID}\`; environment revision 7.`,
-      "Neither record should be relabeled as generated by v20.",
+      `Production Sites version 22 was accepted only after the hosted gate passed against the public origin. Its audited source commit is \`${CURRENT_RUNTIME_COMMIT}\`; saved version \`${CURRENT_SITES_VERSION_ID}\`; deployment \`${CURRENT_DEPLOYMENT_ID}\`; environment revision 7.`,
+      "Neither record should be relabeled as generated by v22.",
       HISTORICAL_V16_RELEASE_CLAIM,
       HISTORICAL_V17_RELEASE_CLAIM,
       HISTORICAL_V18_RELEASE_CLAIM,
       HISTORICAL_V19_RELEASE_CLAIM,
+      HISTORICAL_V20_RELEASE_CLAIM,
+      REJECTED_V21_CLAIM,
+      HISTORICAL_V8_FAIL_CLOSED_CLAIM,
       IEXILE_RESCUE_CLAIM,
       FRESH_V18_RECOVERY_CLAIM,
       FRESH_V18_MANIFEST_CLAIM,
@@ -611,8 +697,8 @@ export function assertReleaseDocumentRuntimeProvenance(documents: ReleaseRuntime
 
   for (const [label, text] of Object.entries(documents)) {
     assertExclusiveRuntimeClaims(text, `${label} runtime provenance`);
-    if (/\b(?:current|accepted|production Sites|Production version)[^\r\n]{0,160}\b(?:version\s+(?:14|16|17)|v(?:14|16|17))\b/iu.test(text)) {
-      fail(`${label} contains a stale pre-v20-as-current claim`);
+    if (/\b(?:current|accepted)[^\r\n]{0,160}\b(?:version\s+(?:14|16|17|18|19|20|21)|v(?:14|16|17|18|19|20|21))\b/iu.test(text)) {
+      fail(`${label} contains a stale pre-v22-as-current claim`);
     }
   }
 }
@@ -648,7 +734,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   const assetPath = (name: string) => path.join(root, "submission-assets", name);
   const document = (name: string) => readFile(path.join(root, name), "utf8");
 
-  await addCheck(checks, "Media integrity", "Audited video master", async () => {
+  await addCheck(checks, "Media integrity", "Placeholder video master", async () => {
     const [video, sidecar] = await Promise.all([
       readRegularFile(assetPath(VIDEO_NAME), { exactBytes: VIDEO_BYTES }),
       readRegularFile(assetPath("alexandria-here-build-week-demo.sha256"), { maxBytes: 1024 }),
@@ -687,14 +773,14 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     return `${cues.length} exact cues from ${firstStartMs} to ${lastEndMs} ms; transcript and script match`;
   });
 
-  await addCheck(checks, "Media integrity", "YouTube thumbnail", async () => {
+  await addCheck(checks, "Media integrity", "Placeholder YouTube thumbnail", async () => {
     const bytes = await readRegularFile(assetPath(YOUTUBE_THUMBNAIL_NAME), { exactBytes: YOUTUBE_THUMBNAIL_BYTES });
     verifyPinnedHash(bytes, YOUTUBE_THUMBNAIL_HASH, "YouTube thumbnail");
     validatePng(bytes, 1280, 720);
     return `${YOUTUBE_THUMBNAIL_NAME}; 1280x720 RGB PNG; ${bytes.length} bytes`;
   });
 
-  await addCheck(checks, "Media integrity", "Devpost media set", async () => {
+  await addCheck(checks, "Media integrity", "Placeholder Devpost media set", async () => {
     const manifestBytes = await readRegularFile(assetPath("devpost-media.sha256"), { maxBytes: 10_000 });
     verifyPinnedHash(manifestBytes, DEVPOST_MANIFEST_HASH, "Devpost manifest");
     const manifest = parseHashManifest(manifestBytes, DEVPOST_NAMES);
@@ -718,7 +804,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     return `${DEVPOST_NAMES.length} exact 1500x1000 RGB PNGs; cover plus ${GALLERY_NAMES.length} ordered gallery cards`;
   });
 
-  await addCheck(checks, "Submission contracts", "YouTube copy package", async () => {
+  await addCheck(checks, "Submission contracts", "Placeholder YouTube copy package", async () => {
     const metadata = await document("YOUTUBE_METADATA.md");
     assertYouTubeRuntimeProvenance(metadata);
     const title = extractMarkdownSection(metadata, "## Title", "## Description").trim();
@@ -737,7 +823,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${PUBLIC_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "Devpost media and video synchronization are complete", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${PUBLIC_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, PATHFINDER_RECOVERY_URL, PATHFINDER_RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM, PLACEHOLDER_MEDIA_CLAIM, VIDEO_LAST_CLAIM, "Final media and Devpost synchronization remain pending"], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
@@ -767,10 +853,10 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       document("FAILURE_RELIABILITY_MATRIX.md"),
     ]);
     assertReleaseDocumentRuntimeProvenance({ failureMatrix, readme, judgeEvidence, releaseOperations, submission, youtubeMetadata });
-    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "/r/de5bb377-5b53-4ea4-b074-feb106e02113", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
+    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, ...PATHFINDER_PROOF_PHRASES, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, HISTORICAL_V8_FAIL_CLOSED_CLAIM, HISTORICAL_911_ID, HISTORICAL_911_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
     assertCanonicalTiming(submission, "submission narrative");
     const youtubeState = classifyYouTubeReference(submission);
-    return `v20 release documents, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "YouTube URL"} claims are present`;
+    return `v22 release documents, historical v20/v21 lineage, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "placeholder YouTube URL"} claims are present`;
   });
 
   await addCheck(checks, "Submission contracts", "Portable checkout and command contract", async () => {
@@ -794,46 +880,35 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   }
 
   try {
-    const youtubeState = classifyYouTubeReference(submissionText);
-    const uploadState = classifyChecklistItem(submissionText, CHECKLIST.youtubeUpload);
-    const verifyState = classifyChecklistItem(submissionText, CHECKLIST.youtubeVerify);
-    if (youtubeState === "pending" && (uploadState === "complete" || verifyState === "complete")) {
-      fail("YouTube checklist cannot be complete while the URL is still pending");
-    }
-    if (youtubeState === "present" && uploadState === "pending" && verifyState === "complete") {
-      fail("signed-out YouTube verification cannot precede the upload checklist");
-    }
-    const pending = youtubeState === "pending" || uploadState === "pending" || verifyState === "pending";
+    const mediaState = classifyFinalPresentationMedia(submissionText);
     checks.push({
       section: "External authority",
-      name: "Public YouTube URL",
-      state: pending ? "PENDING" : "PASS",
-      detail: youtubeState === "pending"
-        ? "publish the audited master with Jaia's authorization, then replace the sole allowed placeholder"
-        : pending
-          ? "verify signed-out 1080p playback, narration, captions, and embedding, then add the same URL to Devpost"
-          : "the exact URL, public-page metadata, published captions, and Devpost embed checks are explicitly recorded",
+      name: "Final presentation media replacement",
+      state: mediaState === "pending" ? "PENDING" : "PASS",
+      detail: mediaState === "pending"
+        ? "the current URL/artifacts are placeholder provenance; regenerate, integrity-pin, publish, and verify the final video/captions/thumbnail before replacing the Devpost embed"
+        : "the final non-placeholder URL, artifact fingerprints, public metadata, captions, and embed checks are explicitly recorded",
     });
   } catch (error) {
-    checks.push({ section: "External authority", name: "Public YouTube URL", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+    checks.push({ section: "External authority", name: "Final presentation media replacement", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
   }
 
   try {
     const textState = classifyChecklistItem(submissionText, CHECKLIST.devpostText);
     const mediaState = classifyChecklistItem(submissionText, CHECKLIST.devpostMedia);
-    const synchronizationState = classifyDevpostSynchronization(submissionText);
+    const synchronizationState = classifyFinalDevpostSynchronization(submissionText);
     checks.push({
       section: "External authority",
-      name: "Devpost text and media synchronization",
+      name: "Devpost v22 synchronization",
       state: synchronizationState === "pending" ? "PENDING" : "PASS",
       detail: synchronizationState === "pending"
         ? textState === "complete" && mediaState === "pending"
-          ? "authenticated text save and Preview verification are recorded; upload the thumbnail and ordered gallery, then verify Preview"
-          : "save and Preview-verify both canonical text fields, then upload the thumbnail and ordered gallery"
-        : "submission checklist explicitly records the text replacement, media upload, and Preview checks",
+          ? "the historical text save is recorded; replace the placeholder thumbnail/gallery with the final v22 set and verify Preview"
+          : "save and Preview-verify the v22 text fields, then upload the final thumbnail/gallery and replace the video embed"
+        : "submission checklist explicitly records the final v22 text, media, video, and Preview checks",
     });
   } catch (error) {
-    checks.push({ section: "External authority", name: "Devpost text and media synchronization", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
+    checks.push({ section: "External authority", name: "Devpost v22 synchronization", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });
   }
 
   try {
@@ -869,7 +944,7 @@ export function printSubmissionReadiness(checks: SubmissionCheck[]): void {
 function printUploadSelections(root: string): void {
   const asset = (name: string) => path.resolve(root, "submission-assets", name);
   const line = (label: string, name: string) => console.log(`${label.padEnd(20)}${asset(name)}`);
-  console.log("\nCanonical upload selections");
+  console.log("\nPlaceholder artifact paths (not final upload selections)");
   line("YouTube video", VIDEO_NAME);
   line("YouTube thumbnail", YOUTUBE_THUMBNAIL_NAME);
   line("YouTube captions", CAPTIONS_NAME);

@@ -6,6 +6,7 @@ import type { Capture, RecoveryResult } from "../lib/domain";
 import { hydrateRecoveryRecord, parsePersistedRecoveryResult } from "../lib/recovery-compat";
 import { createReceiptResponse } from "../lib/receipt-response";
 import { aggregateRecoveryWarnings, buildReceiptWarnings, modelFallbackWarning } from "../lib/recovery-warnings";
+import { summarizeWarningOwners } from "../lib/recovery-display";
 import { stableStringify } from "../lib/hash";
 import { isHtmlMediaType, isJsonMediaType } from "../lib/media-type";
 import { readBoundedRequestBody } from "../lib/request-body";
@@ -435,6 +436,12 @@ test("receipt warnings group exact raw values while preserving every owner occur
     { scope: "block", captureId: "capture-b", sourceId: "source-b", blockId: "block-b" },
   ]);
   assert.equal(warnings.find((warning) => warning.raw === "model_fallback:timeout")?.occurrences.length, 1);
+  assert.deepEqual(summarizeWarningOwners([
+    { scope: "block", blockId: "block-1" },
+    { scope: "block", blockId: "block-1" },
+    { scope: "block", blockId: "block-2" },
+    { scope: "block", blockId: "block-3" },
+  ]), { examples: ["block-1", "block-2"], remaining: 1 });
 });
 
 test("legacy additive fields are normalized and corrupt durable JSON becomes unavailable", async () => {

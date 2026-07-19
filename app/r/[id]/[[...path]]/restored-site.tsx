@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
-import type { EvidenceBlock, KnownAbsence, RecoveryEvent, RecoveryResult, RestoredPage, TemporalCandidateWindow } from "../../../../lib/domain";
-import { displayRecoveredTitle } from "../../../../lib/recovery-display";
+import type { EvidenceBlock, KnownAbsence, RecoveryResult, RestoredPage } from "../../../../lib/domain";
+import { capturesForTemporalCandidate, displayRecoveredTitle, summarizeWarningOwners, witnessedTitleBlock } from "../../../../lib/recovery-display";
 import { canonicalPathForReceipt } from "../../../../lib/url-safety";
 
 type View = "site" | "timeline" | "witnesses" | "map" | "receipt";
 
 const views: View[] = ["site", "timeline", "witnesses", "map", "receipt"];
+const WITNESS_LEDGER_BATCH = 24;
 
 const viewLabels: Record<View, string> = {
   site: "Returned site",
@@ -61,18 +62,6 @@ function formatPublicWarning(warning: string) {
     return `Selected archive capture${captureId ? ` ${captureId}` : ""} could not be read safely and was excluded.`;
   }
   return "A bounded recovery warning was recorded in the machine receipt; Alexandria made no unsupported claim from it.";
-}
-
-type PersistedRecovery = {
-  status: "running" | "complete" | "failed";
-  stage: RecoveryEvent["stage"];
-  detail: string | null;
-  error: string | null;
-  result: unknown | null;
-};
-
-function waitForPoll(milliseconds: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
 /**
@@ -187,27 +176,31 @@ export function EvidenceBlockView({ block, witness }: { block: EvidenceBlock; wi
 }
 
 export function RestoredSite({ result, page }: { result: RecoveryResult; page: RestoredPage | null }) {
+  const temporalCandidates = (result.temporalCandidates || result.receipt.temporalCandidates || []).slice(0, 3);
+  const selectedTemporalCandidate = temporalCandidates.find((candidate) => candidate.selected) || temporalCandidates[0];
   const [witness, setWitness] = useState(false);
   const [view, setView] = useState<View>("site");
-  const [recoveringEra, setRecoveringEra] = useState<string | null>(null);
-  const [eraEvents, setEraEvents] = useState<RecoveryEvent[]>([]);
-  const [eraError, setEraError] = useState<string | null>(null);
-  const [busyEra, setBusyEra] = useState<TemporalCandidateWindow | null>(null);
+  const [visibleWitnessCount, setVisibleWitnessCount] = useState(WITNESS_LEDGER_BATCH);
+  const [inspectedCandidateId, setInspectedCandidateId] = useState(selectedTemporalCandidate?.id || "");
   const recoveredTitle = displayRecoveredTitle(result);
   const blockMap = useMemo(
     () => new Map(result.sources.flatMap((source) => source.blocks).map((block) => [block.id, block])),
     [result.sources],
   );
   const pageBlocks = page?.blockIds.map((id) => blockMap.get(id)).filter((block): block is EvidenceBlock => Boolean(block)) || [];
-  const chronologicalCaptures = useMemo(
-    () => [...result.captures].sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt)),
-    [result.captures],
-  );
-  const timelineBounds = useMemo(() => {
-    const start = Date.parse(result.manifest.selectedWindowStart);
-    const end = Date.parse(result.manifest.selectedWindowEnd);
-    return { start, duration: Math.max(end - start, 1) };
-  }, [result.manifest.selectedWindowEnd, result.manifest.selectedWindowStart]);
+  const inspectedCandidate = temporalCandidates.find((candidate) => candidate.id === inspectedCandidateId) || selectedTemporalCandidate;
+  const persistedTemporalInventory = result.receipt.temporalInventory?.length
+    ? result.receipt.temporalInventory
+    : result.captures;
+  const candidateCaptureMap = new Map(temporalCandidates.map((candidate) => [
+    candidate.id,
+    capturesForTemporalCandidate(persistedTemporalInventory, candidate),
+  ]));
+  const inspectedCaptures = inspectedCandidate ? candidateCaptureMap.get(inspectedCandidate.id) || null : null;
+  const chronologicalCaptures = inspectedCaptures || [];
+  const timelineStart = Date.parse(inspectedCandidate?.windowStart || result.manifest.selectedWindowStart);
+  const timelineEnd = Date.parse(inspectedCandidate?.windowEnd || result.manifest.selectedWindowEnd);
+  const timelineBounds = { start: timelineStart, duration: Math.max(timelineEnd - timelineStart, 1) };
   const witnessBlocks = useMemo(
     () => result.sources.flatMap((source) => source.blocks.map((block) => ({ block, source }))),
     [result.sources],
@@ -216,6 +209,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
     () => new Map(result.sources.map((source) => [source.sourceId, source])),
     [result.sources],
   );
+  const pageTitleWitness = witnessedTitleBlock(page, result.sources);
   const primaryDecisions = useMemo(
     () => (result.receipt.decisions || []).filter((decision) => decision.kind === "primary_witness" && decision.result === "accepted"),
     [result.receipt.decisions],
@@ -236,98 +230,14 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
       })),
     [primaryDecisions, result.manifest.pages, sourceMap],
   );
-  const temporalCandidates = (result.temporalCandidates || result.receipt.temporalCandidates || []).slice(0, 3);
   const knownAbsences = useMemo(() => knownAbsencesForResult(result), [result]);
   const undisclosedAbsenceCount = Math.max(0, result.receipt.counts.knownAbsences - knownAbsences.length);
-
-  async function pollAlternateRecovery(recoveryId: string) {
-    for (let attempt = 0; attempt < 150; attempt += 1) {
-      const response = await fetch(`/api/recover/${encodeURIComponent(recoveryId)}`, { cache: "no-store" });
-      if (!response.ok) throw new Error("Alexandria could not read the persisted recovery state.");
-      const record = await response.json() as PersistedRecovery;
-      const update: RecoveryEvent = {
-        recoveryId,
-        stage: record.stage,
-        label: record.stage === "failed" ? "Recovery stopped" : record.stage === "complete" ? "Recovery complete" : "Recovering the alternate era",
-        detail: record.detail || "The recovery is continuing from its persisted state.",
-      };
-      setEraEvents((current) => [...current.filter((item) => item.stage !== update.stage), update]);
-      if (record.status === "complete" && record.result) {
-        window.location.assign(`/r/${recoveryId}`);
-        return;
-      }
-      if (record.status === "failed") throw new Error(record.error || record.detail || "This era could not be recovered faithfully.");
-      await waitForPoll(1_000);
-    }
-    throw new Error(`Recovery ${recoveryId} is still running. Its persisted state is safe to revisit.`);
-  }
-
-  async function recoverAlternateEra(candidate: TemporalCandidateWindow) {
-    setRecoveringEra(candidate.year);
-    setEraEvents([]);
-    setEraError(null);
-    setBusyEra(null);
-    let activeRecoveryId: string | null = null;
-    let pollingStarted = false;
-
-    try {
-      const response = await fetch("/api/recover", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: result.normalizedUrl, eraYear: candidate.year }),
-      });
-      if (response.status === 409) {
-        const payload = await response.json().catch(() => ({})) as { error?: string };
-        setBusyEra(candidate);
-        setEraError(payload.error || "Another recovery is already assembling its witnesses. Try this era again when it finishes.");
-        return;
-      }
-      if (!response.ok || !response.body) {
-        const payload = await response.json().catch(() => ({})) as { error?: string };
-        throw new Error(payload.error || "This era recovery could not begin.");
-      }
-
-      activeRecoveryId = response.headers.get("x-recovery-id");
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const update = JSON.parse(line) as RecoveryEvent;
-          activeRecoveryId = update.recoveryId;
-          setEraEvents((current) => [...current.filter((item) => item.stage !== update.stage), update]);
-          if (update.stage === "failed") throw new Error(update.detail);
-          if (update.completed && update.resultPath) {
-            window.location.assign(update.resultPath);
-            return;
-          }
-        }
-      }
-
-      if (!activeRecoveryId) throw new Error("The recovery stream ended before returning a persisted identifier.");
-      pollingStarted = true;
-      await pollAlternateRecovery(activeRecoveryId);
-    } catch (caught) {
-      if (activeRecoveryId && !pollingStarted) {
-        try {
-          await pollAlternateRecovery(activeRecoveryId);
-          return;
-        } catch (pollError) {
-          setEraError(pollError instanceof Error ? pollError.message : "This era could not be recovered faithfully.");
-        }
-      } else {
-        setEraError(caught instanceof Error ? caught.message : "This era could not be recovered faithfully.");
-      }
-    } finally {
-      setRecoveringEra(null);
-    }
-  }
+  const pageAbsence = page?.status === "missing" ? knownAbsences.find((absence) => absence.path === page.path) : undefined;
+  const pageAbsenceWitnesses = (pageAbsence?.sourceBlockIds || [])
+    .map((blockId) => blockMap.get(blockId))
+    .filter((block): block is EvidenceBlock => Boolean(block));
+  const visibleWitnessBlocks = witnessBlocks.slice(0, visibleWitnessCount);
+  const hiddenWitnessCount = Math.max(0, witnessBlocks.length - visibleWitnessBlocks.length);
 
   function moveTabFocus(event: KeyboardEvent<HTMLDivElement>) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -431,6 +341,19 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                 <h2>{page.title}</h2>
                 <p>{page.missingReason}</p>
                 <p className="absence-note">The archive witnesses this path but retains no usable body capture. No replacement text was synthesized.</p>
+                {witness && pageAbsenceWitnesses.length > 0 && (
+                  <div className="absence-witnesses" aria-label="Witnesses for this known absence">
+                    <strong>Known absence · witnessed by {pageAbsenceWitnesses.length} surviving link block{pageAbsenceWitnesses.length === 1 ? "" : "s"}</strong>
+                    <ul>
+                      {pageAbsenceWitnesses.map((block) => (
+                        <li key={block.id}>
+                          <a href={block.archiveUrl} target="_blank" rel="noreferrer">Open surviving reference</a>
+                          <time dateTime={block.capturedAt}>{formatWitnessDate(block.capturedAt)}</time>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </section>
             ) : page ? (
               <>
@@ -438,6 +361,12 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                   <div>
                     <p className={`status-chip ${page.status}`}>{statusLabels[page.status]}</p>
                     <h2>{page.title}</h2>
+                    {witness && pageTitleWitness && (
+                      <a className="title-witness" href={pageTitleWitness.archiveUrl} target="_blank" rel="noreferrer">
+                        <span>Title preserved</span>
+                        <time dateTime={pageTitleWitness.capturedAt}>{formatWitnessDate(pageTitleWitness.capturedAt)}</time>
+                      </a>
+                    )}
                   </div>
                   <p className="source-count">
                     {page.sourceIds.length} source witness{page.sourceIds.length === 1 ? "" : "es"}
@@ -459,7 +388,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             <p className="eyebrow">Temporal Evidence Graph</p>
             <h2>Evidence windows found in the record</h2>
             <p>
-              Alexandria selected <strong>{result.manifest.selectedEraLabel}</strong>. Each candidate is ranked from this recovery’s persisted capture record by the same deterministic reconciliation pass.
+              Alexandria selected <strong>{result.manifest.selectedEraLabel}</strong>. Each candidate is ranked from this recovery’s persisted capture record by the same deterministic reconciliation pass. These are witnessed windows, not live rerun links; a new archive query may expose a different current inventory.
             </p>
           </div>
 
@@ -483,45 +412,33 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                     <div><dt>Page coverage</dt><dd>{candidate.pageCoverage}</dd></div>
                   </dl>
                   <p className="era-reason">{candidate.score.reason}</p>
-                  {candidate.selected ? (
-                    <span className="current-era-action">You are viewing this edition</span>
-                  ) : (
-                    <button type="button" className="recover-era-button" disabled={recoveringEra !== null} onClick={() => void recoverAlternateEra(candidate)}>
-                      {recoveringEra === candidate.year
-                        ? `Reading ${candidate.year}…`
-                        : candidate.pageCoverage >= 5
-                          ? `Recover ${candidate.year} edition`
-                          : `Inspect ${candidate.year} evidence`}
+                  {candidateCaptureMap.get(candidate.id) ? (
+                    <button
+                      type="button"
+                      className="candidate-era-action"
+                      aria-pressed={inspectedCandidate?.id === candidate.id}
+                      onClick={() => setInspectedCandidateId(candidate.id)}
+                    >
+                      {inspectedCandidate?.id === candidate.id ? "Inspecting persisted evidence" : `Inspect ${candidate.year} persisted evidence`}
                     </button>
+                  ) : (
+                    <span className="candidate-era-unavailable">Candidate metadata only · capture inventory unavailable</span>
                   )}
                 </article>
               ))}
             </div>
           ) : <p className="atlas-empty">No alternate coherent window survived the deterministic evidence threshold.</p>}
 
-          {(recoveringEra || eraError) && (
-            <section className={`era-recovery-status ${busyEra ? "busy" : ""}`} aria-live="polite" aria-atomic="true">
-              <p className="eyebrow">{busyEra ? "Recovery room occupied" : recoveringEra ? "Returning another edition" : "Recovery stopped honestly"}</p>
-              {eraError ? <p>{eraError}</p> : (
-                <>
-                  <strong>{eraEvents.at(-1)?.label || `Preparing ${recoveringEra}`}</strong>
-                  <p>{eraEvents.at(-1)?.detail || "Alexandria is locating the witnesses for this exact window."}</p>
-                </>
-              )}
-              {busyEra && (
-                <div className="era-status-actions">
-                  <button type="button" onClick={() => void recoverAlternateEra(busyEra)}>Try {busyEra.year} again</button>
-                  <button type="button" onClick={() => { setBusyEra(null); setEraError(null); }}>Keep this edition</button>
-                </div>
-              )}
-            </section>
-          )}
-
           <div className="capture-distribution" aria-labelledby="distribution-heading">
             <div className="distribution-heading">
-              <h3 id="distribution-heading">Selected edition · capture distribution</h3>
+              <h3 id="distribution-heading">
+                {inspectedCandidate?.selected ? "Selected edition" : `${inspectedCandidate?.year || "Candidate"} candidate`} · persisted capture distribution
+              </h3>
               <span>Earlier</span><span>Later</span>
             </div>
+            {inspectedCandidate && !inspectedCaptures ? (
+              <p className="atlas-empty">Candidate inventory cannot be reconciled with the persisted receipt. Inspect the receipt JSON; Alexandria will not re-query and call it the same window.</p>
+            ) : null}
             <div className="timeline-track" aria-hidden="true">
               {chronologicalCaptures.map((capture) => {
                 const position = Math.min(100, Math.max(0, ((Date.parse(capture.capturedAt) - timelineBounds.start) / timelineBounds.duration) * 100));
@@ -639,8 +556,9 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
           </div>
 
           {witnessBlocks.length > 0 ? (
-            <ol className="witness-ledger">
-              {witnessBlocks.map(({ block, source }, index) => {
+            <>
+              <ol className="witness-ledger">
+              {visibleWitnessBlocks.map(({ block, source }, index) => {
               const warnings = [...new Set([...source.warnings, ...block.warnings])];
               return (
                 <li key={block.id}>
@@ -669,7 +587,33 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                 </li>
               );
               })}
-            </ol>
+              </ol>
+              <div className="witness-ledger-controls" aria-label="Witness ledger pagination">
+                <p aria-live="polite">Showing {visibleWitnessBlocks.length} of {witnessBlocks.length} evidence blocks.</p>
+                {witnessBlocks.length > WITNESS_LEDGER_BATCH && (
+                  <>
+                    <button
+                      type="button"
+                      aria-disabled={hiddenWitnessCount === 0}
+                      onClick={() => {
+                        if (hiddenWitnessCount > 0) setVisibleWitnessCount((current) => Math.min(witnessBlocks.length, current + WITNESS_LEDGER_BATCH));
+                      }}
+                    >
+                      {hiddenWitnessCount > 0 ? `Show ${Math.min(WITNESS_LEDGER_BATCH, hiddenWitnessCount)} more` : "All evidence shown"}
+                    </button>
+                    <button
+                      type="button"
+                      aria-disabled={visibleWitnessBlocks.length <= WITNESS_LEDGER_BATCH}
+                      onClick={() => {
+                        if (visibleWitnessBlocks.length > WITNESS_LEDGER_BATCH) setVisibleWitnessCount(WITNESS_LEDGER_BATCH);
+                      }}
+                    >
+                      Collapse to first {WITNESS_LEDGER_BATCH}
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
           ) : <p className="atlas-empty">No evidence blocks were rendered. Alexandria has not substituted generated content.</p>}
         </section>
       )}
@@ -739,14 +683,14 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
           {(result.receipt.warnings || []).length > 0 ? (
             <ul className="validation-list receipt-warning-list">
               {result.receipt.warnings.map((warning) => {
-                const owners = warning.occurrences.map((occurrence) =>
-                  occurrence.blockId || occurrence.sourceId || occurrence.captureId || occurrence.scope);
+                const ownerSummary = summarizeWarningOwners(warning.occurrences);
                 return (
                   <li key={warning.raw}>
                     <strong>{formatPublicWarning(warning.raw)}</strong>
                     <span>
                       {warning.occurrences.length} recorded occurrence{warning.occurrences.length === 1 ? "" : "s"}
-                      {owners.length ? ` · ${owners.join(", ")}` : ""}
+                      {ownerSummary.examples.length ? ` · ${ownerSummary.examples.join(", ")}` : ""}
+                      {ownerSummary.remaining > 0 ? ` · +${ownerSummary.remaining} more owner IDs in the receipt JSON` : ""}
                     </span>
                   </li>
                 );

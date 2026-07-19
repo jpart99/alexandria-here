@@ -1,4 +1,6 @@
-# Submission assets
+# Placeholder submission assets
+
+These files are the integrity-pinned historical presentation set. They are not the final version 22 media package. Regenerate the final video, captions, thumbnails, gallery, hashes, metadata, and Devpost synchronization together only after the application and presentation sequence are locked.
 
 - `00-landing.png` — public production landing page at 1440×900.
 - `01-returned-site.png` — persisted iExile 2009 Returned Site at 1440×900.
@@ -7,8 +9,8 @@
 - `04-witnesses-focused.png` — live block-level witness ledger.
 - `05-what-survived-focused.png` — live Ghost Map.
 - `06-receipt-focused.png` — live GPT-5.6 mechanical receipt.
-- `07-youtube-thumbnail.png` — 1280×720 public-video thumbnail using only verified product frames.
-- `08-devpost-cover.png` — 1500×1000 Devpost-preferred 3:2 cover using only verified product frames.
+- `07-youtube-thumbnail.png` — 1280×720 placeholder public-video thumbnail using only verified product frames.
+- `08-devpost-cover.png` — 1500×1000 placeholder Devpost-preferred 3:2 cover using only verified product frames.
 - `09-devpost-gallery-returned-site.png` — 3:2 gallery card for the emotional Returned Site reveal.
 - `10-devpost-gallery-show-the-seams.png` — 3:2 gallery card for block-level provenance.
 - `11-devpost-gallery-timeline.png` — 3:2 gallery card for the Timeline's supported evidence windows.
@@ -16,13 +18,13 @@
 - `13-devpost-gallery-witnesses.png` — 3:2 gallery card for the Witness ledger.
 - `14-devpost-gallery-receipt.png` — 3:2 gallery card for the GPT-5.6 Recovery Receipt.
 - `devpost-media.sha256` — deterministic checksums for the cover and six ordered gallery cards.
-- `alexandria-here-build-week-demo.mp4` — narrated 2:35 Build Week master at 1080p, including a real 40-second production interaction capture; audio is normalized near −16 LUFS at 48 kHz.
-- `alexandria-here-build-week-demo.sha256` — checksum for the full-decode-clean public master.
+- `alexandria-here-build-week-demo.mp4` — narrated 2:35 placeholder master at 1080p, including a real 40-second production interaction capture; audio is normalized near −16 LUFS at 48 kHz.
+- `alexandria-here-build-week-demo.sha256` — checksum for the full-decode-clean placeholder master.
 - `alexandria-here-build-week-demo.en.vtt` — timed English captions aligned to the narration master.
 - `narration.txt` — narration transcript for accessibility and re-recording.
 
 The product frames were captured from the public Sites deployment after the
-production version 6 browser gate. Use them for the Devpost gallery and video;
-do not substitute a mock or fixture screenshot.
+production version 6 browser gate. Preserve them as historical publication
+provenance; do not use them as the final version 22 upload set.
 
-Run `npm run qa:submission` from the app root immediately before uploading. The command is non-mutating and validates the exact media roles, pinned hashes, image geometry, video duration, captions, narration alignment, gallery order, required claims, and operator contract while leaving external publication actions explicitly pending.
+Run `npm run qa:submission` from the app root to verify placeholder byte integrity and the fail-closed final-media gates. The command is non-mutating and validates the exact media roles, pinned hashes, image geometry, video duration, captions, narration alignment, gallery order, required claims, and operator contract while leaving final replacement/publication actions explicitly pending.

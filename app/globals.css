@@ -149,6 +149,8 @@ a { color: inherit; }
 .paper-surface { min-height: 560px; padding: clamp(28px, 5vw, 68px); background: var(--paper-bright); color: #25282b; box-shadow: 0 28px 80px rgba(0,0,0,.28); }
 .page-title-row { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 26px; border-bottom: 1px solid #c7c1b3; }
 .page-title-row h2, .missing-state h2, .insufficient-state h2 { margin: 12px 0 0; font: 600 clamp(30px, 4vw, 50px)/1 var(--font-cormorant), Georgia, serif; }
+.title-witness { width: fit-content; margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px 12px; color: #4d6f83; text-decoration: none; font: 700 10px/1.35 var(--font-geist-sans), Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.title-witness:hover, .title-witness:focus-visible { text-decoration: underline; }
 .status-chip { width: fit-content; margin: 0; padding: 5px 8px; border: 1px solid #87969f; color: #526977; font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .status-chip.missing { border-color: #aa9270; color: #765e3d; }
 .source-count { max-width: 260px; color: #706e68; font-size: 11px; overflow-wrap: anywhere; text-align: right; }
@@ -166,6 +168,11 @@ a { color: inherit; }
 .block-witness { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #4d6f83; text-decoration: none; font: 700 10px/1.35 var(--font-geist-sans), Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .missing-state, .insufficient-state { max-width: 620px; padding: 54px 0; }
 .missing-state > p:not(.status-chip), .insufficient-state > p:not(.status-chip) { color: #67655f; font: 400 20px/1.55 var(--font-cormorant), Georgia, serif; }
+.absence-witnesses { margin-top: 24px; padding: 18px; border-left: 2px solid #aa9270; background: rgba(170,146,112,.09); color: #66563f; font: 700 11px/1.5 var(--font-geist-sans), Arial, sans-serif; }
+.absence-witnesses ul { margin: 12px 0 0; padding: 0; list-style: none; }
+.absence-witnesses li { padding: 8px 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; border-top: 1px solid rgba(118,94,61,.22); }
+.absence-witnesses a { color: #526977; }
+.absence-witnesses time { color: #756d61; }
 .insufficient-state.atlas-overview { max-width: none; padding: 8px 0; }
 .atlas-overview > .eyebrow { color: var(--blue); font: 700 10px/1.2 var(--font-geist-sans), Arial, sans-serif; }
 .atlas-overview > .status-chip { margin-top: 20px; }
@@ -212,18 +219,11 @@ a { color: inherit; }
 .era-metrics dt { color: #69757c; font-size: 10px; line-height: 1.35; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .era-metrics dd { margin: 7px 0 0; color: #d0cbc0; font: 600 20px/1 var(--font-cormorant), Georgia, serif; }
 .era-reason { flex: 1; margin: 18px 0 22px; color: #89949a; font-size: 12px; line-height: 1.55; }
-.recover-era-button, .current-era-action { min-height: 42px; padding: 11px 13px; display: grid; place-items: center; border: 1px solid var(--blue); background: transparent; color: #b9c8d2; font-size: 11px; font-weight: 700; text-align: center; }
-.recover-era-button { cursor: pointer; }
-.recover-era-button:hover:not(:disabled) { background: rgba(65,107,141,.18); }
-.recover-era-button:disabled { cursor: wait; opacity: .55; }
-.current-era-action { border-color: rgba(180,154,97,.55); color: #c9b987; }
-.era-recovery-status { max-width: 860px; margin: 0 0 48px; padding: 24px; border: 1px solid #48545c; background: rgba(65,107,141,.08); }
-.era-recovery-status.busy { border-color: #826f4e; background: rgba(180,154,97,.08); }
-.era-recovery-status > strong { display: block; margin-bottom: 8px; font: 600 23px/1.2 var(--font-cormorant), Georgia, serif; }
-.era-recovery-status > p:not(.eyebrow) { margin: 8px 0 0; color: #9ba5aa; line-height: 1.55; }
-.era-status-actions { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
-.era-status-actions button { padding: 10px 13px; border: 1px solid #5e6a71; background: transparent; color: var(--paper); cursor: pointer; font-size: 11px; font-weight: 700; }
-.era-status-actions button:first-child { border-color: var(--ochre); }
+.candidate-era-action, .candidate-era-unavailable { min-height: 42px; padding: 11px 13px; display: grid; place-items: center; border: 1px solid var(--blue); background: transparent; color: #b9c8d2; font-size: 11px; font-weight: 700; text-align: center; }
+.candidate-era-action { cursor: pointer; }
+.candidate-era-action:hover { background: rgba(65,107,141,.18); }
+.candidate-era-action[aria-pressed="true"] { border-color: rgba(180,154,97,.7); color: #c9b987; background: rgba(180,154,97,.08); }
+.candidate-era-unavailable { border-color: #424a4f; color: #737e84; }
 .capture-distribution { max-width: 1060px; }
 .distribution-heading { display: grid; grid-template-columns: 1fr auto auto; align-items: end; gap: 24px; }
 .distribution-heading h3 { margin: 0; font: 600 28px/1 var(--font-cormorant), Georgia, serif; }
@@ -273,6 +273,11 @@ a { color: inherit; }
 .witness-summary span { color: #78838a; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .witness-ledger { width: 100%; max-width: 1120px; margin: 0; padding: 0; list-style: none; }
 .witness-ledger > li { padding: 30px 0; display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 22px; border-top: 1px solid var(--rule); }
+.witness-ledger-controls { max-width: 1120px; padding: 22px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; border-top: 1px solid var(--rule); }
+.witness-ledger-controls p { margin: 0 auto 0 0; color: #7f8a90; font-size: 11px; }
+.witness-ledger-controls button { padding: 10px 13px; border: 1px solid #5e6a71; background: transparent; color: var(--paper); cursor: pointer; font-size: 11px; font-weight: 700; }
+.witness-ledger-controls button:hover { background: rgba(65,107,141,.18); }
+.witness-ledger-controls button[aria-disabled="true"] { opacity: .45; cursor: default; background: transparent; }
 .witness-order, .witness-record { min-width: 0; }
 .witness-order { padding-top: 4px; color: #626e75; font: 600 12px/1 var(--font-cormorant), Georgia, serif; }
 .witness-record-heading { display: flex; align-items: center; gap: 14px; color: #79858d; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }

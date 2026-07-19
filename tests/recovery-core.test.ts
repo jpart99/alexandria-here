@@ -35,7 +35,7 @@ import {
 } from "../lib/url-safety";
 import { MAX_PERSISTED_RECOVERY_BYTES, serializePersistedRecovery } from "../lib/persistence-budget";
 import { parsePersistedRecoveryResult } from "../lib/recovery-compat";
-import { displayRecoveredTitle, selectWitnessedRecoveredTitle } from "../lib/recovery-display";
+import { capturesForTemporalCandidate, displayRecoveredTitle, selectWitnessedRecoveredTitle, witnessedTitleBlock } from "../lib/recovery-display";
 import { aggregateRecoveryWarnings } from "../lib/recovery-warnings";
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "../lib/hash";
 import { sha256HexSync } from "../lib/sha256-sync";
@@ -803,6 +803,12 @@ test("query-bearing sites never promote a Missing root to the recovered title", 
     const specificWitness = { ...firstVisible, id: `${firstVisible.id}-specific`, path: "/mission", title: "Mars Pathfinder" };
     assert.equal(selectWitnessedRecoveredTitle([placeholderRoot, specificWitness], "example.org"), "Mars Pathfinder");
     assert.equal(selectWitnessedRecoveredTitle([placeholderRoot], "example.org"), "Untitled Document");
+    const exactTitleWitness = witnessedTitleBlock(firstVisible, records);
+    assert.ok(exactTitleWitness);
+    assert.equal(exactTitleWitness.kind, "title");
+    assert.equal(exactTitleWitness.exactText, firstVisible.title);
+    assert.equal(witnessedTitleBlock({ ...firstVisible, title: "Unwitnessed title" }, records), undefined);
+    assert.equal(witnessedTitleBlock({ ...firstVisible, primarySourceId: "source-outside-page" }, records), undefined);
 
     const result: RecoveryResult = {
       id: "query-title-regression",
@@ -1031,6 +1037,30 @@ test("temporal candidates expose at most three deterministically ranked editions
   assert.deepEqual(candidates.map((candidate) => candidate.year), ["2003", "2002", "2001"]);
   assert.ok(candidates.every((candidate) => candidate.selected.length === 4));
   assert.ok(candidates.every((candidate) => candidate.score.inventoryRecordsConsidered === 12));
+  const oldest = candidates.find((candidate) => candidate.year === "2001");
+  assert.ok(oldest);
+  const persistedInspection = capturesForTemporalCandidate(captures, {
+    id: "year-2001",
+    year: "2001",
+    windowStart: oldest.selected[0].capturedAt,
+    windowEnd: oldest.selected.at(-1)!.capturedAt,
+    captureCount: oldest.selected.length,
+    pageCoverage: oldest.score.coverage,
+    score: oldest.score,
+    selected: false,
+  });
+  assert.equal(persistedInspection?.length, 4);
+  assert.ok(persistedInspection?.every((capture) => capture.capturedAt.startsWith("2001-")));
+  assert.equal(capturesForTemporalCandidate(captures, {
+    id: "year-2001-tampered",
+    year: "2001",
+    windowStart: oldest.selected[0].capturedAt,
+    windowEnd: oldest.selected.at(-1)!.capturedAt,
+    captureCount: 5,
+    pageCoverage: oldest.score.coverage,
+    score: oldest.score,
+    selected: false,
+  }), null);
 });
 
 test("a requested era can select only a ranked deterministic candidate", () => {

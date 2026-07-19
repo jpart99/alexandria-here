@@ -19,7 +19,12 @@ import {
   writeExclusivePreviewConfig,
 } from "../scripts/compiled-preview-files.mjs";
 import { forbiddenArtifactReason, isForbiddenArtifactPath } from "../scripts/release-artifact-contract.mjs";
-import { assertExactReferenceProof, EXACT_REFERENCE_PROOF } from "../scripts/submission-proof-contract.mjs";
+import {
+  assertExactPathfinderProof,
+  assertExactReferenceProof,
+  EXACT_PATHFINDER_PROOF,
+  EXACT_REFERENCE_PROOF,
+} from "../scripts/submission-proof-contract.mjs";
 import {
   FONT_ASSET_PATHS,
   FONT_CACHE_CONTROL,
@@ -36,6 +41,8 @@ import {
   assertYouTubeRuntimeProvenance,
   classifyChecklistItem,
   classifyDevpostSynchronization,
+  classifyFinalDevpostSynchronization,
+  classifyFinalPresentationMedia,
   classifyYouTubeReference,
   inspectPng,
   mp4DurationSeconds,
@@ -92,16 +99,16 @@ function contrastRatio(foreground: string, background: string): number {
     / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
 }
 
-test("the sealed submission package passes locally and exposes only authority-gated work", async () => {
+test("the placeholder submission package passes locally and keeps final media fail-closed", async () => {
   const checks = await runSubmissionReadiness(root);
   assert.deepEqual(checks.filter((check) => check.state === "FAIL"), []);
   assert.deepEqual(
     checks.filter((check) => check.state === "PENDING").map((check) => check.name),
-    ["Rules acceptance and final submit"],
+    ["Final presentation media replacement", "Devpost v22 synchronization", "Rules acceptance and final submit"],
   );
   assert.equal(
-    checks.find((check) => check.name === "Public YouTube URL")?.detail,
-    "the exact URL, public-page metadata, published captions, and Devpost embed checks are explicitly recorded",
+    checks.find((check) => check.name === "Final presentation media replacement")?.detail,
+    "the current URL/artifacts are placeholder provenance; regenerate, integrity-pin, publish, and verify the final video/captions/thumbnail before replacing the Devpost embed",
   );
   assert.equal(submissionExitCode(checks), 0);
   assert.equal(submissionExitCode(checks, true), 1);
@@ -109,17 +116,17 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.doesNotThrow(() => assertSubmissionRuntimeProvenance(submission));
   assert.throws(
     () => assertSubmissionRuntimeProvenance(submission.replace(
-      "Status: authenticated Devpost version 20 About and judge instructions, project thumbnail, six-image gallery, and public YouTube video are synchronized and Preview-verified. Rules acceptance and final submission remain pending.",
-      "Status: authenticated Devpost About and judge instructions synchronized and Preview-verified. The project thumbnail, six-image gallery, public YouTube video, rules acceptance, and final submission remain pending.",
+      "Status: the current public video and Devpost media are placeholder presentation media; final version 22 media and Devpost synchronization remain pending, followed by rules acceptance and final submission.",
+      "Status: final submission remains pending.",
     )),
     /submission runtime provenance/,
   );
   assert.throws(
-    () => assertSubmissionRuntimeProvenance(submission.replace("Production version 20 at audited runtime commit", "Production version 18 at audited runtime commit")),
+    () => assertSubmissionRuntimeProvenance(submission.replace("Production version 22 at audited runtime commit", "Production version 18 at audited runtime commit")),
     /submission runtime provenance/,
   );
   assert.throws(
-    () => assertSubmissionRuntimeProvenance(submission.replace("proof-producing version 7 runtime", "proof-producing version 20 runtime")),
+    () => assertSubmissionRuntimeProvenance(submission.replace("proof-producing version 7 runtime", "proof-producing version 22 runtime")),
     /submission runtime provenance/,
   );
   assert.throws(
@@ -127,7 +134,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
     /competing production-runtime claim/,
   );
   assert.throws(
-    () => assertSubmissionRuntimeProvenance(submission.replace("appgdep_6a5d33a6af448191ab4ba6a7eeaf0b63", "appgdep_00000000000000000000000000000000")),
+    () => assertSubmissionRuntimeProvenance(submission.replace("appgdep_6a5d42d6ba9481918078b196f495ada1", "appgdep_00000000000000000000000000000000")),
     /submission runtime provenance/,
   );
   assert.throws(
@@ -156,8 +163,8 @@ test("the sealed submission package passes locally and exposes only authority-ga
   );
   assert.throws(
     () => assertSubmissionRuntimeProvenance(submission.replace(
-      "Production version 20 passed the full eight-boundary compiled failure matrix.",
-      "Production version 20 did not pass the full eight-boundary compiled failure matrix.",
+      "Production version 22 passed the full eight-boundary compiled failure matrix.",
+      "Production version 22 did not pass the full eight-boundary compiled failure matrix.",
     )),
     /submission runtime provenance/,
   );
@@ -175,22 +182,36 @@ test("the sealed submission package passes locally and exposes only authority-ga
     )),
     /submission runtime provenance/,
   );
+  assert.throws(
+    () => assertSubmissionRuntimeProvenance(submission.replace(
+      "The historical version-8 probe now fails closed under the current evidence-replay validator; its machine receipt is unavailable.",
+      "The historical version-8 probe remains current clickable proof.",
+    )),
+    /submission runtime provenance/,
+  );
+  assert.throws(
+    () => assertSubmissionRuntimeProvenance(submission.replace(
+      "The historical 9/11 Commission row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.",
+      "The historical 9/11 Commission row remains current clickable proof.",
+    )),
+    /submission runtime provenance/,
+  );
   const youtubeMetadata = await readFile(path.join(root, "YOUTUBE_METADATA.md"), "utf8");
   assert.doesNotThrow(() => assertYouTubeRuntimeProvenance(youtubeMetadata));
   assert.throws(
-    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("generated by version 7 runtime", "generated by version 20 runtime")),
+    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("generated by version 7 runtime", "generated by version 22 runtime")),
     /YouTube runtime provenance/,
   );
   assert.throws(
-    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("6c7d8df04db7c9b4ac56b05e61b367f1b025d529", "042215042dd46ded14b501f961f4d9e7debb8178")),
+    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("8291a2ef5d92503349ba7346cc9c3f6d1de3b17a", "042215042dd46ded14b501f961f4d9e7debb8178")),
     /YouTube runtime provenance/,
   );
   assert.throws(
-    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.", "The historical video-capture row remains a current proof.")),
+    () => assertYouTubeRuntimeProvenance(youtubeMetadata.replace("The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.", "The historical video-capture row remains a current proof.")),
     /YouTube runtime provenance/,
   );
   assert.throws(
-    () => assertYouTubeRuntimeProvenance(`${youtubeMetadata}\nThe proof was generated by version 20 runtime \`6c7d8df04db7c9b4ac56b05e61b367f1b025d529\`.`),
+    () => assertYouTubeRuntimeProvenance(`${youtubeMetadata}\nThe proof was generated by version 22 runtime \`8291a2ef5d92503349ba7346cc9c3f6d1de3b17a\`.`),
     /competing proof-runtime claim|non-proof runtime/,
   );
   assert.throws(
@@ -211,7 +232,35 @@ test("the sealed submission package passes locally and exposes only authority-ga
       ...releaseDocuments,
       readme: `${readme}\nCurrent production Sites version 18 serves the judging surface.`,
     }),
-    /stale pre-v20 current-runtime claim/,
+    /stale pre-v22 current-runtime claim/,
+  );
+  assert.throws(
+    () => assertReleaseDocumentRuntimeProvenance({
+      ...releaseDocuments,
+      readme: `${readme}\nCurrent production version 20 serves the judging surface.`,
+    }),
+    /stale pre-v22 current-runtime claim/,
+  );
+  for (const key of ["readme", "judgeEvidence", "submission"] as const) {
+    const pathfinderDriftDocuments = {
+      ...releaseDocuments,
+      [key]: releaseDocuments[key].replace("03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab", "03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215aa"),
+    };
+    assert.throws(
+      () => assertReleaseDocumentRuntimeProvenance(pathfinderDriftDocuments),
+      /runtime provenance|submission narrative/,
+      `${key} must pin the Pathfinder manifest hash`,
+    );
+  }
+  assert.throws(
+    () => assertReleaseDocumentRuntimeProvenance({
+      ...releaseDocuments,
+      judgeEvidence: judgeEvidence.replace(
+        "The historical version-8 probe now fails closed under the current evidence-replay validator; its machine receipt is unavailable.",
+        "The historical version-8 probe remains current clickable proof.",
+      ),
+    }),
+    /judge evidence runtime provenance/,
   );
   for (const key of ["readme", "judgeEvidence", "youtubeMetadata"] as const) {
     const scopeDriftDocuments = {
@@ -231,7 +280,7 @@ test("the sealed submission package passes locally and exposes only authority-ga
     const staleDocuments = {
       ...releaseDocuments,
       [key]: releaseDocuments[key].replace(
-        "6c7d8df04db7c9b4ac56b05e61b367f1b025d529",
+        "8291a2ef5d92503349ba7346cc9c3f6d1de3b17a",
         "0000000000000000000000000000000000000000",
       ),
     };
@@ -270,21 +319,21 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.throws(
     () => assertDevpostFieldCopy(devpostFieldCopy.replace(
       "042215042dd46ded14b501f961f4d9e7debb8178",
-      "6c7d8df04db7c9b4ac56b05e61b367f1b025d529",
+      "8291a2ef5d92503349ba7346cc9c3f6d1de3b17a",
     )),
     /Devpost About copy/,
   );
   assert.throws(
     () => assertDevpostFieldCopy(devpostFieldCopy.replace(
       "## Test instructions for judges",
-      "The judging proof was generated by production version 20.\n\n## Test instructions for judges",
+      "The judging proof was generated by production version 22.\n\n## Test instructions for judges",
     )),
     /non-proof runtime generated the persisted judging proof/,
   );
   assert.throws(
     () => assertDevpostFieldCopy(devpostFieldCopy.replace(
       "## Test instructions for judges",
-      "The judging recovery was generated by production Sites version 20.\n\n## Test instructions for judges",
+      "The judging recovery was generated by production Sites version 22.\n\n## Test instructions for judges",
     )),
     /non-proof runtime generated the persisted judging proof/,
   );
@@ -296,15 +345,21 @@ test("the sealed submission package passes locally and exposes only authority-ga
     /Devpost About copy|Devpost judge instructions/,
   );
   assert.throws(
-    () => assertDevpostFieldCopy(devpostFieldCopy.replace("The historical video-capture row now fails closed under version 20's stricter witness validation; its machine receipt is unavailable.", "The historical video-capture row remains a current proof.")),
+    () => assertDevpostFieldCopy(devpostFieldCopy.replace("The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.", "The historical video-capture row remains a current proof.")),
+    /Devpost judge instructions/,
+  );
+  assert.throws(
+    () => assertDevpostFieldCopy(devpostFieldCopy.replace("03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab", "0".repeat(64))),
     /Devpost judge instructions/,
   );
   for (const phrase of [
     "public Sites deployment",
     "managed D1 judging row `18026989-33be-4011-86ee-19e1754cb22c`",
+    "managed D1 Pathfinder row `c6adb317-ee2f-4530-9298-e9eb5fe6efd2`",
     "public GitHub repository",
     "public YouTube video",
     "npm run qa:submission:live",
+    "pins both current presentation rows and receipts",
   ]) {
     assert.throws(
       () => assertJudgingAvailability(finalHandoff.replaceAll(phrase, "removed hold surface"), releaseOperations),
@@ -404,14 +459,17 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.equal(packageContract.scripts.start, "node scripts/start-compiled-preview.mjs");
   assert.equal(packageContract.scripts["qa:production"], "node scripts/production-smoke.mjs");
   assert.equal(packageContract.scripts["qa:submission:live"], "node scripts/submission-live-proof.mjs");
-  assert.equal(submissionLiveProofWrapper.replace(/\r\n/g, "\n").trim(), [
-    'process.env.ALEXANDRIA_BASE_URL = "https://alexandria-here.cinemaexile.chatgpt.site";',
-    'process.env.ALEXANDRIA_REFERENCE_RECOVERY_PATH = "/r/18026989-33be-4011-86ee-19e1754cb22c";',
-    'process.env.ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1";',
-    "",
-    'await import("./production-smoke.mjs");',
-  ].join("\n"));
+  assert.match(submissionLiveProofWrapper, /ALEXANDRIA_REFERENCE_RECOVERY_PATH = "\/r\/18026989-33be-4011-86ee-19e1754cb22c"/u);
+  assert.match(submissionLiveProofWrapper, /ALEXANDRIA_REQUIRE_EXACT_REFERENCE_PROOF = "1"/u);
+  assert.match(submissionLiveProofWrapper, /assertExactPathfinderProof,\s*EXACT_PATHFINDER_PROOF/u);
+  assert.match(submissionLiveProofWrapper, /readReturnedSite/u);
+  assert.match(submissionLiveProofWrapper, /AbortSignal\.timeout\(20_000\)/u);
+  assert.match(submissionLiveProofWrapper, /readBounded\(response, 2_000_000\)/u);
+  assert.match(submissionLiveProofWrapper, /\/api\/recover\/\$\{recoveryId\}\/receipt/u);
+  assert.match(submissionLiveProofWrapper, /assertExactPathfinderProof\(\{ record, receipt, recoveryId \}\)/u);
   assert.match(releaseReadiness, /Live submission proof pin/u);
+  assert.match(releaseReadiness, /59a9fbf90d4617db21870b7574fcb772d6d574f934209a126bac30cc5d7a1516/u);
+  assert.match(releaseReadiness, /createHash\("sha256"\)[\s\S]*?submissionLiveProofSha256/u);
   assert.deepEqual(EXACT_REFERENCE_PROOF, {
     recoveryId: "18026989-33be-4011-86ee-19e1754cb22c",
     receiptVersion: "1.0",
@@ -494,6 +552,81 @@ test("the sealed submission package passes locally and exposes only authority-ga
       pattern,
     );
   }
+  assert.deepEqual(EXACT_PATHFINDER_PROOF, {
+    recoveryId: "c6adb317-ee2f-4530-9298-e9eb5fe6efd2",
+    receiptVersion: "1.3",
+    planner: "gpt-5.6",
+    model: "gpt-5.6-sol",
+    manifestHash: "03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab",
+    captures: 8,
+    preservedPages: 7,
+    missingPages: 1,
+    renderedBlocks: 249,
+    preservedBlocks: 250,
+    sourceHashes: 396,
+    inferredEdges: 3,
+    knownAbsences: 8,
+    validations: 12,
+    decisions: 17,
+  });
+  const pathfinderReceipt = {
+    recoveryId: EXACT_PATHFINDER_PROOF.recoveryId,
+    receiptVersion: EXACT_PATHFINDER_PROOF.receiptVersion,
+    planner: EXACT_PATHFINDER_PROOF.planner,
+    model: EXACT_PATHFINDER_PROOF.model,
+    manifestHash: EXACT_PATHFINDER_PROOF.manifestHash,
+    captures: Array.from({ length: EXACT_PATHFINDER_PROOF.captures }, () => ({})),
+    sourceHashes: Array.from({ length: EXACT_PATHFINDER_PROOF.sourceHashes }, () => ({})),
+    counts: {
+      renderedBlocks: EXACT_PATHFINDER_PROOF.renderedBlocks,
+      preservedBlocks: EXACT_PATHFINDER_PROOF.preservedBlocks,
+      inferredEdges: EXACT_PATHFINDER_PROOF.inferredEdges,
+      knownAbsences: EXACT_PATHFINDER_PROOF.knownAbsences,
+    },
+    validationResults: Array.from({ length: EXACT_PATHFINDER_PROOF.validations }, () => ({ passed: true })),
+    decisions: [
+      { kind: "era_selection", proposedBy: "deterministic", result: "accepted" },
+      { kind: "page_order", proposedBy: "gpt-5.6", result: "accepted" },
+      ...Array.from({ length: 7 }, () => ({ kind: "primary_witness", proposedBy: "gpt-5.6", result: "accepted" })),
+      ...Array.from({ length: 8 }, () => ({ kind: "known_absence", proposedBy: "deterministic", result: "accepted" })),
+    ],
+    warnings: [],
+  };
+  const pathfinderRecord = {
+    id: EXACT_PATHFINDER_PROOF.recoveryId,
+    status: "complete",
+    result: {
+      id: EXACT_PATHFINDER_PROOF.recoveryId,
+      outcome: "restored",
+      captures: Array.from({ length: EXACT_PATHFINDER_PROOF.captures }, () => ({})),
+      manifest: {
+        pages: [
+          ...Array.from({ length: EXACT_PATHFINDER_PROOF.preservedPages }, () => ({ status: "preserved" })),
+          ...Array.from({ length: EXACT_PATHFINDER_PROOF.missingPages }, () => ({ status: "missing" })),
+        ],
+      },
+      receipt: structuredClone(pathfinderReceipt),
+      warnings: [],
+    },
+  };
+  assert.deepEqual(
+    assertExactPathfinderProof({ record: pathfinderRecord, receipt: pathfinderReceipt, recoveryId: EXACT_PATHFINDER_PROOF.recoveryId }),
+    EXACT_PATHFINDER_PROOF,
+  );
+  const driftedPathfinderReceipt = structuredClone(pathfinderReceipt);
+  driftedPathfinderReceipt.sourceHashes.pop();
+  assert.throws(
+    () => assertExactPathfinderProof({ record: pathfinderRecord, receipt: driftedPathfinderReceipt, recoveryId: EXACT_PATHFINDER_PROOF.recoveryId }),
+    /Pathfinder source-hash count drifted/u,
+  );
+  const crossRowPathfinderRecord = {
+    ...structuredClone(pathfinderRecord),
+    id: "00000000-0000-4000-8000-000000000000",
+  };
+  assert.throws(
+    () => assertExactPathfinderProof({ record: crossRowPathfinderRecord, receipt: pathfinderReceipt, recoveryId: EXACT_PATHFINDER_PROOF.recoveryId }),
+    /Pathfinder recovery envelope identity drifted/u,
+  );
   const normalizedPreviewArguments = normalizePreviewArguments([
     "--port", "3100",
     "--ip=127.0.0.1",
@@ -755,8 +888,8 @@ test("authority checklist items are exact, unique, and tri-state", () => {
 });
 
 test("final mode cannot bypass either Devpost text or media synchronization", () => {
-  const text = "Replace the saved Devpost About and judge instructions with the version 20 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests` and the current judging recovery.";
-  const media = "Upload the audited Devpost thumbnail and gallery media, then verify the public preview.";
+  const text = "Replace the saved Devpost About and judge instructions with the version 22 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests`, the current runtime, and both presentation recoveries.";
+  const media = "Upload the final version 22 Devpost thumbnail and gallery media, then verify the public preview.";
   const state = (textComplete: boolean, mediaComplete: boolean) => classifyDevpostSynchronization([
     `- [${textComplete ? "x" : " "}] ${text}`,
     `- [${mediaComplete ? "x" : " "}] ${media}`,
@@ -768,10 +901,22 @@ test("final mode cannot bypass either Devpost text or media synchronization", ()
   assert.equal(state(true, true), "complete");
   assert.equal(submissionExitCode([{
     section: "External authority",
-    name: "Devpost text and media synchronization",
+    name: "Devpost v22 synchronization",
     state: state(false, true) === "pending" ? "PENDING" : "PASS",
     detail: "fixture",
   }], true), 1);
+});
+
+test("known placeholder media cannot become final through checklist flips", async () => {
+  const submission = await readFile(path.join(root, "SUBMISSION.md"), "utf8");
+  const completed = submission
+    .replace("- [ ] After application and presentation lock, regenerate and upload the final version 22 video, captions, and thumbnail as one audited set.", "- [x] After application and presentation lock, regenerate and upload the final version 22 video, captions, and thumbnail as one audited set.")
+    .replace("- [ ] Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.", "- [x] Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.")
+    .replace("- [ ] Replace the saved Devpost About and judge instructions with the version 22 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests`, the current runtime, and both presentation recoveries.", "- [x] Replace the saved Devpost About and judge instructions with the version 22 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `99 passing tests`, the current runtime, and both presentation recoveries.")
+    .replace("- [ ] Upload the final version 22 Devpost thumbnail and gallery media, then verify the public preview.", "- [x] Upload the final version 22 Devpost thumbnail and gallery media, then verify the public preview.");
+
+  assert.throws(() => classifyFinalPresentationMedia(completed), /known placeholder claims, URL, or artifact fingerprints/);
+  assert.throws(() => classifyFinalDevpostSynchronization(completed), /known placeholder claims, URL, or artifact fingerprints|final presentation media gate/);
 });
 
 test("canonical timing rejects alternate runtime and deadline claims", () => {
