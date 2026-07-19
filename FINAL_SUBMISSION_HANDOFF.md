@@ -47,6 +47,8 @@ After processing finishes, verify 1080p playback, audible narration, visible cap
 - Devpost media checksums: `submission-assets/devpost-media.sha256`
 - Copy-ready narrative and checklist: `SUBMISSION.md`
 
+Keep this scope sentence verbatim in both the public YouTube description and the Devpost narrative: **iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.**
+
 The authenticated live form currently accepts a JPG, PNG, or GIF project thumbnail up to 5 MB and recommends 3:2. Its image gallery accepts up to 15 images with the same displayed format, size, and ratio guidance. The six prepared gallery cards are optional and intentionally stay below those limits.
 
 Final user-controlled actions:

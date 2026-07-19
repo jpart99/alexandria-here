@@ -415,7 +415,7 @@ export function assertJudgingAvailability(handoff: string, releaseOperations: st
     "npm run qa:submission:live",
     "at least once per day through the judging deadline",
   ] as const;
-  requirePhrases(handoff, required, "final handoff judging hold");
+  requirePhrases(handoff, [...required, EXAMPLE_SCOPE_CLAIM], "final handoff judging hold");
   requirePhrases(releaseOperations, required, "release operations judging hold");
 }
 
@@ -464,7 +464,7 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
 }
 
 export function assertYouTubeRuntimeProvenance(metadata: string): void {
-  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM], "YouTube runtime provenance");
+  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, EXAMPLE_SCOPE_CLAIM], "YouTube runtime provenance");
   assertExclusiveRuntimeClaims(metadata, "YouTube runtime provenance");
 }
 
@@ -657,7 +657,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     const description = extractMarkdownSection(metadata, "## Description", "## Recommended upload settings");
     if (title !== YOUTUBE_TITLE) fail(`YouTube title differs from the sealed ${YOUTUBE_TITLE.length}-character title`);
     if (!description || description.length > 5000) fail(`YouTube description length is ${description.length}; expected 1-5000 characters`);
-    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "YouTube description");
+    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing", EXAMPLE_SCOPE_CLAIM], "YouTube description");
     const chapters = [...description.matchAll(/^(\d{2}):(\d{2}) (.+)$/gm)].map((match) => Number(match[1]) * 60 + Number(match[2]));
     if (JSON.stringify(chapters) !== JSON.stringify(YOUTUBE_CHAPTERS)) {
       fail(`YouTube chapter boundaries are ${chapters.join(", ")}; expected ${YOUTUBE_CHAPTERS.join(", ")}`);
@@ -669,7 +669,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission"], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "transmitting the prepared Devpost media", "public YouTube publication", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));

@@ -30,6 +30,8 @@ Narration disclosure: this demo uses synthetic narration generated from the publ
 
 The featured recovery returns iExile, a literary community founded by Jaia Papitz in 2007, from public archive evidence. Alexandria claims neither ownership nor historical completeness. Public archival material remains subject to its source rights and archive access terms.
 
+iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.
+
 Every returned block keeps its witness.
 
 00:00 A witnessed restoration engine
