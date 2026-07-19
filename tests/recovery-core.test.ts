@@ -3,6 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { EvidenceBlockView, knownAbsencesForResult } from "../app/r/[id]/[[...path]]/restored-site";
+import { RecoveryUnavailable, recoveryUnavailableMetadata } from "../app/r/[id]/[[...path]]/recovery-unavailable";
 import {
   deriveCaptureId,
   discoverCaptures,
@@ -57,6 +58,25 @@ test("persisted recovery JSON fails honestly before D1's row limit", () => {
     () => serializePersistedRecovery({ evidence: "x".repeat(MAX_PERSISTED_RECOVERY_BYTES) }),
     /durable storage budget/,
   );
+});
+
+test("persisted non-renderable states remain branded, generic, and noindex", () => {
+  const cases = [
+    ["running", "still reconciling its witnesses"],
+    ["failed", "This place could not be returned"],
+    ["complete", "will not render an unverified recovery"],
+  ] as const;
+  for (const [status, expected] of cases) {
+    const markup = renderToStaticMarkup(createElement(RecoveryUnavailable, {
+      id: "00000000-0000-4000-8000-000000000001",
+      normalizedUrl: "http://example.org/",
+      status,
+    }));
+    assert.match(markup, new RegExp(expected));
+    assert.match(markup, /Alexandria Here/);
+    assert.doesNotMatch(markup, /provider-secret|stack trace|Unexpected end of JSON/);
+    assert.deepEqual(recoveryUnavailableMetadata(status).robots, { index: false, follow: false });
+  }
 });
 
 function inventoryCapture(path: string, capturedAt: string, digest?: string): Capture {
