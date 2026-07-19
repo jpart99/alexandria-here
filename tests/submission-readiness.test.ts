@@ -349,10 +349,22 @@ test("the sealed submission package passes locally and exposes only authority-ga
   assert.doesNotMatch(homeSource, /When the page is gone, its neighbors become witnesses\./u);
   assert.doesNotMatch(homeSource, /className="landing-aside"/u);
   assert.match(homeSource, /returns only what surviving public evidence can support/u);
+  assert.match(homeSource, /knowledge thought lost when the Library of Alexandria burned could be placed back at your fingertips/u);
+  assert.match(homeSource, /reconciling surviving witnesses without inventing what the fire took/u);
   assert.ok(
     homeSource.indexOf("<RecoveryForm />") < homeSource.indexOf('id="evidence-contract-title"'),
     "the recovery invocation must precede the evidence contract",
   );
+  assert.match(css, /\.landing-hero h1\s*\{[^{}]*font-size:\s*clamp\(58px,\s*6\.8vw,\s*98px\)[^{}]*line-height:\s*\.93/u);
+  assert.match(css, /\.returned-masthead h1\s*\{[^{}]*font-size:\s*clamp\(42px,\s*5\.5vw,\s*78px\)[^{}]*overflow-wrap:\s*anywhere/u);
+  assert.match(css, /\.evidence-intro h2\s*\{[^{}]*clamp\(38px,\s*4\.2vw,\s*62px\)/u);
+  assert.match(css, /\.section-intro h2\s*\{[^{}]*clamp\(36px,\s*4vw,\s*60px\)/u);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.landing-hero h1\s*\{[^{}]*clamp\(48px,\s*14\.5vw,\s*58px\)[^{}]*\}[\s\S]*?\.returned-masthead h1\s*\{[^{}]*clamp\(36px,\s*11vw,\s*44px\)/u);
+  assert.match(css, /\.timeline-list span\s*\{[^{}]*font-size:\s*10px[^{}]*overflow-wrap:\s*anywhere/u);
+  assert.match(css, /\.witness-order, \.witness-record\s*\{[^{}]*min-width:\s*0/u);
+  assert.match(css, /\.witness-record blockquote\s*\{[^{}]*overflow-wrap:\s*anywhere/u);
+  assert.match(css, /\.view-tabs\s*\{[^{}]*overflow-x:\s*auto[^{}]*overscroll-behavior-inline:\s*contain/u);
+  assert.doesNotMatch(css, /font(?:-size|):[^;{}]*(?:^|\s)(?:8|9)px/u);
   assert.equal(
     [...restoredSiteSource.matchAll(/When the page is gone, its neighbors become witnesses\./gu)].length,
     1,

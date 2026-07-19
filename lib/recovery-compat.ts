@@ -12,6 +12,7 @@ import {
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "./hash";
 import { canonicalPathForReceipt, isSameSiteUrl } from "./url-safety";
 import { deriveCaptureId, rankTemporalWindows, validateCaptureReplayIdentity } from "./archive";
+import { selectWitnessedRecoveredTitle } from "./recovery-display";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -736,10 +737,14 @@ async function evidenceRelationshipsAreCompatible(args: {
     || (args.manifest.outcome === "restored" && args.manifest.insufficientReason !== undefined)
   ) return false;
 
-  const expectedRecoveredTitle = String(visiblePages.find((page) => page.path === "/")?.title
+  const expectedRecoveredTitle = selectWitnessedRecoveredTitle(
+    pages.map((page) => ({ status: String(page.status), path: String(page.path), title: String(page.title) })),
+    new URL(args.normalizedUrl).hostname,
+  );
+  const legacyVisibleTitle = String(visiblePages.find((page) => page.path === "/")?.title
     || visiblePages[0]?.title
     || new URL(args.normalizedUrl).hostname);
-  if (args.recoveredTitle === expectedRecoveredTitle) return true;
+  if (args.recoveredTitle === expectedRecoveredTitle || args.recoveredTitle === legacyVisibleTitle) return true;
 
   // The first receipt-1.3 producer could select a structurally witnessed
   // Missing `/` page as the recovered title when every surviving capture had

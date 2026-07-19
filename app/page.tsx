@@ -54,6 +54,14 @@ export default function Home() {
           <h2 id="evidence-contract-title">Not a screenshot.<br />A returned place.</h2>
         </div>
         <div className="evidence-contract">
+          <blockquote className="alexandria-imagination">
+            <p>
+              Imagine if the knowledge thought lost when the Library of Alexandria burned could be placed back at your fingertips.
+            </p>
+            <footer>
+              Alexandria Here applies that ambition to the lost web—reconciling surviving witnesses without inventing what the fire took.
+            </footer>
+          </blockquote>
           <p className="content-neutral-label">Content-neutral · No subject-matter gatekeeping</p>
           <p className="evidence-doctrine">
             Alexandria does not decide which history deserves recovery. It preserves expression without rating it and returns only what surviving evidence can support.

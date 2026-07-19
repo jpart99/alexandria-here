@@ -17,6 +17,7 @@ import type { EvidenceGraph } from "./evidence-graph";
 import { validateEvidencePacket } from "./evidence-packet";
 import { evidenceBlockHashInput, sha256, stableStringify } from "./hash";
 import { buildReceiptWarnings, modelFallbackWarning, type ReceiptWarningInput } from "./recovery-warnings";
+import { selectWitnessedRecoveredTitle } from "./recovery-display";
 import { canonicalPath } from "./url-safety";
 
 function chronologistResponseSchema(visiblePageIds?: readonly string[]) {
@@ -725,7 +726,7 @@ export async function createManifestAndReceipt(args: {
     schemaVersion: "2.0",
     outcome: "restored",
     originalUrl: args.originalUrl,
-    recoveredTitle: visiblePages.find((page) => page.path === "/")?.title || visiblePages[0]?.title || new URL(args.originalUrl).hostname,
+    recoveredTitle: selectWitnessedRecoveredTitle(visiblePages, new URL(args.originalUrl).hostname),
     selectedWindowStart: args.windowStart,
     selectedWindowEnd: args.windowEnd,
     selectedEraLabel: exactWindowLabel(args.windowStart, args.windowEnd),

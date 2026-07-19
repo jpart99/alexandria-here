@@ -35,7 +35,7 @@ import {
 } from "../lib/url-safety";
 import { MAX_PERSISTED_RECOVERY_BYTES, serializePersistedRecovery } from "../lib/persistence-budget";
 import { parsePersistedRecoveryResult } from "../lib/recovery-compat";
-import { displayRecoveredTitle } from "../lib/recovery-display";
+import { displayRecoveredTitle, selectWitnessedRecoveredTitle } from "../lib/recovery-display";
 import { aggregateRecoveryWarnings } from "../lib/recovery-warnings";
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "../lib/hash";
 import { sha256HexSync } from "../lib/sha256-sync";
@@ -799,6 +799,10 @@ test("query-bearing sites never promote a Missing root to the recovered title", 
     assert.equal(planned.receipt.receiptVersion, "1.3");
     assert.equal(planned.manifest.recoveredTitle, firstVisible.title);
     assert.notEqual(planned.manifest.recoveredTitle, missingRoot.title);
+    const placeholderRoot = { ...firstVisible, path: "/", title: "Untitled Document" };
+    const specificWitness = { ...firstVisible, id: `${firstVisible.id}-specific`, path: "/mission", title: "Mars Pathfinder" };
+    assert.equal(selectWitnessedRecoveredTitle([placeholderRoot, specificWitness], "example.org"), "Mars Pathfinder");
+    assert.equal(selectWitnessedRecoveredTitle([placeholderRoot], "example.org"), "Untitled Document");
 
     const result: RecoveryResult = {
       id: "query-title-regression",
