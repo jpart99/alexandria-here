@@ -10,7 +10,7 @@ import {
   type ReceiptWarningInput,
 } from "./recovery-warnings";
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "./hash";
-import { canonicalPath, isSameSiteUrl } from "./url-safety";
+import { canonicalPathForReceipt, isSameSiteUrl } from "./url-safety";
 import { deriveCaptureId, rankTemporalWindows, validateCaptureReplayIdentity } from "./archive";
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -336,6 +336,9 @@ async function evidenceRelationshipsAreCompatible(args: {
   decisions: unknown[];
   validationResults: unknown[];
 }): Promise<boolean> {
+  const receiptVersion = String(args.receipt.receiptVersion);
+  const hasDurableInventory = receiptVersion === "1.2" || receiptVersion === "1.3";
+  const receiptCanonicalPath = (originalUrl: string) => canonicalPathForReceipt(originalUrl, receiptVersion);
   const captures = args.captures as Array<Record<string, unknown>>;
   const sources = args.sources as Array<Record<string, unknown>>;
   const pages = args.pages as Array<Record<string, unknown>>;
@@ -371,7 +374,7 @@ async function evidenceRelationshipsAreCompatible(args: {
   ) return false;
 
   const allProvenanceCaptures = [...captures, ...(args.temporalInventory as Array<Record<string, unknown>>)];
-  if (args.receipt.receiptVersion === "1.2") {
+  if (hasDurableInventory) {
     const inventoryIds = args.temporalInventory.map((capture) => String((capture as Record<string, unknown>).id));
     if (new Set(inventoryIds).size !== inventoryIds.length) return false;
   }
@@ -382,7 +385,7 @@ async function evidenceRelationshipsAreCompatible(args: {
     } catch {
       return false;
     }
-    if (args.receipt.receiptVersion === "1.2") {
+    if (hasDurableInventory) {
       const normalizedOriginal = new URL(String(capture.originalUrl)).toString();
       const expectedId = await deriveCaptureId(
         normalizedOriginal,
@@ -401,7 +404,7 @@ async function evidenceRelationshipsAreCompatible(args: {
     const sourceCapture = source.capture as Record<string, unknown>;
     const persistedCapture = captureById.get(String(sourceCapture.id));
     if (!persistedCapture) return false;
-    if (source.canonicalPath !== canonicalPath(String(sourceCapture.originalUrl))) return false;
+    if (source.canonicalPath !== receiptCanonicalPath(String(sourceCapture.originalUrl))) return false;
     for (const key of ["sourceId", "originalUrl", "archiveUrl", "timestamp", "capturedAt", "statusCode", "mimeType", "digest"] as const) {
       if ((persistedCapture[key] ?? undefined) !== (sourceCapture[key] ?? undefined)) return false;
     }
@@ -427,19 +430,19 @@ async function evidenceRelationshipsAreCompatible(args: {
         || block.kind !== "link"
         || block.targetUrl !== link.targetUrl
         || !isSameSiteUrl(String(link.targetUrl), args.normalizedUrl)
-        || link.label !== (String(block.exactText) || canonicalPath(String(link.targetUrl)))
+        || link.label !== (String(block.exactText) || receiptCanonicalPath(String(link.targetUrl)))
       ) return false;
     }
     if (titleBlockId) {
       const titleBlock = blockById.get(titleBlockId);
       if (!titleBlock || titleBlock.kind !== "title" || titleBlock.sourceId !== source.sourceId || titleBlock.exactText !== source.title) return false;
-    } else if (source.title !== (canonicalPath(String(sourceCapture.originalUrl)) || "Recovered page")) {
+    } else if (source.title !== (receiptCanonicalPath(String(sourceCapture.originalUrl)) || "Recovered page")) {
       return false;
     }
   }
 
   const recomputedHashes = await Promise.all(blocks.map((block) => sha256(
-    args.receipt.receiptVersion === "1.2"
+    hasDurableInventory
       ? evidenceBlockHashInput(block as unknown as Parameters<typeof evidenceBlockHashInput>[0])
       : legacyEvidenceBlockHashInput(block as unknown as Parameters<typeof legacyEvidenceBlockHashInput>[0]),
   )));
@@ -453,7 +456,7 @@ async function evidenceRelationshipsAreCompatible(args: {
   const absenceByPath = new Map<string, { label: string; sourceBlockIds: string[] }>();
   for (const source of sources) {
     for (const link of source.internalLinks as Array<Record<string, unknown>>) {
-      const path = canonicalPath(String(link.targetUrl));
+      const path = receiptCanonicalPath(String(link.targetUrl));
       if (sourcePaths.has(path)) continue;
       const current = absenceByPath.get(path) || { label: String(link.label), sourceBlockIds: [] };
       current.sourceBlockIds.push(String(link.sourceBlockId));
@@ -473,7 +476,7 @@ async function evidenceRelationshipsAreCompatible(args: {
       if (blockIds.length !== 0 || typeof page.primarySourceId === "string") return false;
       const cited = (page.sourceIds as string[]).map((id) => blockById.get(id));
       if (cited.length === 0 || cited.some((block) => block?.kind !== "link" || !block.targetUrl
-        || canonicalPath(String(block.targetUrl)) !== page.path)) return false;
+        || receiptCanonicalPath(String(block.targetUrl)) !== page.path)) return false;
       const exactLabels = cited.map((block) => String(block?.exactText || "")).filter(Boolean);
       if (page.title !== page.path && !exactLabels.includes(String(page.title))) return false;
       if (sourcePaths.has(String(page.path))) return false;
@@ -514,7 +517,7 @@ async function evidenceRelationshipsAreCompatible(args: {
     for (const absence of args.knownAbsences as Array<Record<string, unknown>>) {
       const cited = (absence.sourceBlockIds as string[]).map((id) => blockById.get(id));
       if (cited.some((block) => block?.kind !== "link" || !block.targetUrl
-        || canonicalPath(String(block.targetUrl)) !== absence.path)) return false;
+        || receiptCanonicalPath(String(block.targetUrl)) !== absence.path)) return false;
       const exactLabels = cited.map((block) => String(block?.exactText || "")).filter(Boolean);
       if (absence.label !== absence.path && !exactLabels.includes(String(absence.label))) return false;
       if (sourcePaths.has(String(absence.path))) return false;
@@ -573,11 +576,11 @@ async function evidenceRelationshipsAreCompatible(args: {
   const selectedCandidate = (authoritativeCandidates as Array<Record<string, unknown>>)
     .find((candidate) => candidate.selected === true);
   if (selectedCandidate) {
-    if (args.receipt.receiptVersion === "1.2") {
+    if (hasDurableInventory) {
       const inventory = args.temporalInventory as Capture[];
       if (inventory.length < 1 || inventory.length > 12) return false;
       const selectedYear = String(selectedCandidate.year);
-      const recomputedCandidates = rankTemporalWindows(inventory).map((candidate) => ({
+      const recomputedCandidates = rankTemporalWindows(inventory, receiptCanonicalPath).map((candidate) => ({
         id: `year-${candidate.year}`,
         year: candidate.year,
         windowStart: candidate.selected[0].capturedAt,
@@ -587,7 +590,8 @@ async function evidenceRelationshipsAreCompatible(args: {
         score: candidate.score,
         selected: candidate.year === selectedYear,
       }));
-      const recomputedSelected = rankTemporalWindows(inventory).find((candidate) => candidate.year === selectedYear);
+      const recomputedSelected = rankTemporalWindows(inventory, receiptCanonicalPath)
+        .find((candidate) => candidate.year === selectedYear);
       const renderedCaptureById = new Map((captures as unknown as Capture[]).map((capture) => [capture.id, capture]));
       if (
         !recomputedSelected
@@ -603,7 +607,7 @@ async function evidenceRelationshipsAreCompatible(args: {
 
   const referenceCount = sources.reduce((count, source) => count
     + (source.internalLinks as Array<Record<string, unknown>>)
-      .filter((link) => sourcePaths.has(canonicalPath(String(link.targetUrl)))).length, 0);
+      .filter((link) => sourcePaths.has(receiptCanonicalPath(String(link.targetUrl)))).length, 0);
   const expectedCounts = {
     preservedBlocks: blocks.filter((block) => block.kind !== "link" && block.kind !== "title").length,
     renderedBlocks: pages.reduce((count, page) => count + (page.blockIds as string[]).length, 0),
@@ -903,7 +907,8 @@ export async function parsePersistedRecoveryResult(serialized: string): Promise<
     || !compatibleCounts(value.receipt.counts)
     || (value.receipt.receiptVersion !== "1.0"
       && value.receipt.receiptVersion !== "1.1"
-      && value.receipt.receiptVersion !== "1.2")
+      && value.receipt.receiptVersion !== "1.2"
+      && value.receipt.receiptVersion !== "1.3")
     || value.receipt.recoveryId !== value.id
     || typeof value.receipt.manifestHash !== "string"
     || !/^[0-9a-f]{64}$/iu.test(value.receipt.manifestHash)
@@ -940,7 +945,8 @@ export async function parsePersistedRecoveryResult(serialized: string): Promise<
     || !temporalCandidates.every(compatibleTemporalCandidate)
     || !temporalInventory.every(compatibleCapture)
     || temporalInventory.length > 12
-    || (value.receipt.receiptVersion === "1.2" && temporalInventory.length === 0)
+    || ((value.receipt.receiptVersion === "1.2" || value.receipt.receiptVersion === "1.3")
+      && temporalInventory.length === 0)
   ) return null;
   const pages = value.manifest.pages.map((page) => {
     if (!isObject(page)) return page;

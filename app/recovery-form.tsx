@@ -144,7 +144,7 @@ export function RecoveryForm() {
             type="text"
             inputMode="url"
             autoComplete="url"
-            placeholder="example.org or https://example.org"
+            placeholder="forum.example/thread.php?id=42"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             disabled={running}
@@ -154,7 +154,7 @@ export function RecoveryForm() {
           />
           <button type="submit" disabled={running}>{running ? "Returning…" : "Return it"}</button>
         </div>
-        <p className="recovery-input-hint" id="recovery-input-hint">Public HTTP(S) only; you may omit the protocol. Alexandria reads surviving archive witnesses—not the live origin.</p>
+        <p className="recovery-input-hint" id="recovery-input-hint">HTTP(S) addresses; query strings are preserved and you may omit the protocol. Alexandria contacts only the public archive—not the submitted origin.</p>
       </form>
 
       {running && (

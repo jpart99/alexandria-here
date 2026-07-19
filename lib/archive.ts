@@ -185,11 +185,31 @@ function protocolVariants(originalUrl: string): string[] {
   });
 }
 
-function chooseEditionCaptures(yearCaptures: Capture[]): Capture[] {
+function inventoryTargets(originalUrl: string): Array<{ originalUrl: string; matchType: "exact" | "prefix" }> {
+  const variants = protocolVariants(originalUrl);
+  const hasQuery = new URL(originalUrl).search.length > 0;
+  if (!hasQuery) return variants.map((variant) => ({ originalUrl: variant, matchType: "prefix" }));
+
+  return variants.flatMap((variant) => {
+    const pathPrefix = new URL(variant);
+    pathPrefix.search = "";
+    return [
+      { originalUrl: variant, matchType: "exact" as const },
+      { originalUrl: pathPrefix.toString(), matchType: "prefix" as const },
+    ];
+  });
+}
+
+type PathCanonicalizer = (originalUrl: string) => string;
+
+function chooseEditionCaptures(
+  yearCaptures: Capture[],
+  canonicalize: PathCanonicalizer = canonicalPath,
+): Capture[] {
   const medianTime = [...yearCaptures].map(captureTime).sort((a, b) => a - b)[Math.floor(yearCaptures.length / 2)];
   const byPath = new Map<string, Capture[]>();
   for (const capture of yearCaptures) {
-    const path = canonicalPath(capture.originalUrl);
+    const path = canonicalize(capture.originalUrl);
     byPath.set(path, [...(byPath.get(path) || []), capture]);
   }
   const representatives = Array.from(byPath.values())
@@ -198,8 +218,8 @@ function chooseEditionCaptures(yearCaptures: Capture[]): Capture[] {
       || b.capturedAt.localeCompare(a.capturedAt),
     )[0])
     .sort((a, b) => {
-      const pathA = canonicalPath(a.originalUrl);
-      const pathB = canonicalPath(b.originalUrl);
+      const pathA = canonicalize(a.originalUrl);
+      const pathB = canonicalize(b.originalUrl);
       return pathA.split("/").filter(Boolean).length - pathB.split("/").filter(Boolean).length
         || pathA.localeCompare(pathB);
     });
@@ -207,21 +227,21 @@ function chooseEditionCaptures(yearCaptures: Capture[]): Capture[] {
   const primaryPageCount = Math.min(5, representatives.length);
   const chosenRepresentatives = representatives.slice(0, primaryPageCount);
   const representativeIds = new Set(chosenRepresentatives.map((capture) => capture.id));
-  const chosenPaths = new Set(chosenRepresentatives.map((capture) => canonicalPath(capture.originalUrl)));
+  const chosenPaths = new Set(chosenRepresentatives.map((capture) => canonicalize(capture.originalUrl)));
   const primaryDigestByPath = new Map(
-    chosenRepresentatives.map((capture) => [canonicalPath(capture.originalUrl), capture.digest]),
+    chosenRepresentatives.map((capture) => [canonicalize(capture.originalUrl), capture.digest]),
   );
   const variants = yearCaptures
     .filter((capture) => {
-      const path = canonicalPath(capture.originalUrl);
+      const path = canonicalize(capture.originalUrl);
       const primaryDigest = primaryDigestByPath.get(path);
       return chosenPaths.has(path)
         && !representativeIds.has(capture.id)
         && (!capture.digest || !primaryDigest || capture.digest !== primaryDigest);
     })
     .sort((a, b) => {
-      const pathA = canonicalPath(a.originalUrl);
-      const pathB = canonicalPath(b.originalUrl);
+      const pathA = canonicalize(a.originalUrl);
+      const pathB = canonicalize(b.originalUrl);
       const differsA = Boolean(a.digest && primaryDigestByPath.get(pathA) && a.digest !== primaryDigestByPath.get(pathA));
       const differsB = Boolean(b.digest && primaryDigestByPath.get(pathB) && b.digest !== primaryDigestByPath.get(pathB));
       return Number(differsB) - Number(differsA)
@@ -381,7 +401,10 @@ function round(value: number, digits = 2) {
  * It never inspects or invents page content. Because links are unavailable until
  * captures are fetched, directory-neighbour density is the explicit closure proxy.
  */
-export function rankTemporalWindows(captures: Capture[]): ScoredYear[] {
+export function rankTemporalWindows(
+  captures: Capture[],
+  canonicalize: PathCanonicalizer = canonicalPath,
+): ScoredYear[] {
   if (captures.length === 0) throw new Error("No capture candidates were available for temporal selection.");
 
   if (captures.length > RECOVERY_BUDGETS.maxInventoryRecords) {
@@ -396,13 +419,13 @@ export function rankTemporalWindows(captures: Capture[]): ScoredYear[] {
   const scored = Array.from(byYear.entries()).map<ScoredYear>(([year, yearCaptures]) => {
     const capturesByPath = new Map<string, Capture[]>();
     for (const capture of yearCaptures) {
-      const path = canonicalPath(capture.originalUrl);
+      const path = canonicalize(capture.originalUrl);
       capturesByPath.set(path, [...(capturesByPath.get(path) || []), capture]);
     }
 
-    const selected = chooseEditionCaptures(yearCaptures);
+    const selected = chooseEditionCaptures(yearCaptures, canonicalize);
 
-    const selectedPaths = Array.from(new Set(selected.map((capture) => canonicalPath(capture.originalUrl))));
+    const selectedPaths = Array.from(new Set(selected.map((capture) => canonicalize(capture.originalUrl))));
     const parentCounts = new Map<string, number>();
     for (const path of selectedPaths) parentCounts.set(parentPath(path), (parentCounts.get(parentPath(path)) || 0) + 1);
     const neighbourCount = selectedPaths.filter((path) => parentPath(path) === "/" || (parentCounts.get(parentPath(path)) || 0) > 1).length;
@@ -475,13 +498,13 @@ export function selectTemporalWindow(captures: Capture[], requestedYear?: string
 
 export async function discoverCaptures(originalUrl: string, requestedYear?: string, signal?: AbortSignal): Promise<CaptureInventory> {
   const scopedYear = requestedYear && /^\d{4}$/.test(requestedYear) ? requestedYear : undefined;
-  const variants = protocolVariants(originalUrl);
+  const targets = inventoryTargets(originalUrl);
   const [prefixInventory, requestedYearInventory] = await Promise.all([
-    fetchInventoryVariants(variants.map((variant) =>
-      cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS)), signal),
+    fetchInventoryVariants(targets.map((target) =>
+      cdxUrl(target.originalUrl, target.matchType, MAX_PREFIX_METADATA_ROWS)), signal),
     scopedYear
-      ? fetchInventoryVariants(variants.map((variant) =>
-        cdxUrl(variant, "prefix", MAX_PREFIX_METADATA_ROWS, scopedYear)), signal)
+      ? fetchInventoryVariants(targets.map((target) =>
+        cdxUrl(target.originalUrl, target.matchType, MAX_PREFIX_METADATA_ROWS, scopedYear)), signal)
       : Promise.resolve({ payloads: [] as unknown[], partial: false }),
   ]);
   const prefixPayloads = prefixInventory.payloads;

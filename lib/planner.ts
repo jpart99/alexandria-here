@@ -904,7 +904,7 @@ export async function createManifestAndReceipt(args: {
   const receiptWarnings = buildReceiptWarnings(receiptWarningInputs);
   const manifestHash = await sha256(stableStringify(manifest));
   const receipt: RecoveryReceipt = {
-    receiptVersion: "1.2",
+    receiptVersion: "1.3",
     recoveryId: args.recoveryId,
     manifestHash,
     sourceHashes: allBlocks.map((block) => ({ blockId: block.id, hash: block.contentHash })),

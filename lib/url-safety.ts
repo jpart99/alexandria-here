@@ -1,10 +1,12 @@
+import { sha256HexSync } from "./sha256-sync";
+
 const PRIVATE_HOST_PATTERNS = [
   /^localhost$/i,
   /\.localhost$/i,
   /\.local$/i,
   /\.internal$/i,
   /\.home\.arpa$/i,
-  /\.(?:example|invalid|test|onion)$/i,
+  /\.(?:example|invalid|test)$/i,
 ];
 
 function isNonPublicIpv4(hostname: string) {
@@ -78,9 +80,6 @@ export function validateSubmittedUrl(input: unknown): string {
   if (url.username || url.password) {
     throw new Error("Addresses containing credentials are not allowed.");
   }
-  if (url.search) {
-    throw new Error("Addresses containing query parameters are not allowed because they may contain sensitive information.");
-  }
   const hostname = normalizedHostname(url.hostname);
   const looksLikeIpv6 = hostname.startsWith("[") && hostname.endsWith("]");
   const looksLikeIpv4 = /^\d+(?:\.\d+){3}$/.test(hostname);
@@ -120,7 +119,7 @@ export function validateArchiveUrl(input: string): URL {
   return url;
 }
 
-export function canonicalPath(originalUrl: string): string {
+function canonicalBasePath(originalUrl: string): { basePath: string; url: URL } {
   const url = new URL(originalUrl);
   const segments = (url.pathname || "/")
     .split("/")
@@ -138,7 +137,39 @@ export function canonicalPath(originalUrl: string): string {
     .map((part) => part.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, ""))
     .filter(Boolean)
     .join("/");
-  return safe ? `/${safe}` : "/";
+  const basePath = safe ? `/${safe}` : "/";
+  return { basePath, url };
+}
+
+/**
+ * Receipt 1.0â€“1.2 grouped pages by normalized pathname and intentionally
+ * ignored the query string. Keep that identity rule available forever so a
+ * later runtime never reinterprets an already persisted receipt.
+ */
+export function canonicalPathLegacy(originalUrl: string): string {
+  return canonicalBasePath(originalUrl).basePath;
+}
+
+/**
+ * Receipt 1.3+ preserves query-bearing page identity. The canonical query is
+ * JSON-framed before a full SHA-256 digest, so distinct tuples are not merged
+ * by delimiter ambiguity or a shortened hash and decoded values stay out of
+ * application routes and routine route logs.
+ */
+export function canonicalPath(originalUrl: string): string {
+  const { basePath, url } = canonicalBasePath(originalUrl);
+  const queryEntries = Array.from(url.searchParams.entries()).sort(([keyA, valueA], [keyB, valueB]) =>
+    keyA.localeCompare(keyB) || valueA.localeCompare(valueB));
+  if (queryEntries.length === 0) return basePath;
+
+  const querySegment = `query-${sha256HexSync(JSON.stringify(queryEntries))}`;
+  return basePath === "/" ? `/${querySegment}` : `${basePath}/${querySegment}`;
+}
+
+export function canonicalPathForReceipt(originalUrl: string, receiptVersion: string): string {
+  return receiptVersion === "1.0" || receiptVersion === "1.1" || receiptVersion === "1.2"
+    ? canonicalPathLegacy(originalUrl)
+    : canonicalPath(originalUrl);
 }
 
 export function isSameSiteUrl(candidate: string, root: string): boolean {

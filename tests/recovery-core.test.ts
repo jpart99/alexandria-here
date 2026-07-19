@@ -24,11 +24,19 @@ import {
   type TemporalPlan,
   validateChronologistPlan,
 } from "../lib/planner";
-import { canonicalPath, isSameSiteUrl, validateArchiveUrl, validateSubmittedUrl } from "../lib/url-safety";
+import {
+  canonicalPath,
+  canonicalPathForReceipt,
+  canonicalPathLegacy,
+  isSameSiteUrl,
+  validateArchiveUrl,
+  validateSubmittedUrl,
+} from "../lib/url-safety";
 import { MAX_PERSISTED_RECOVERY_BYTES, serializePersistedRecovery } from "../lib/persistence-budget";
 import { parsePersistedRecoveryResult } from "../lib/recovery-compat";
 import { aggregateRecoveryWarnings } from "../lib/recovery-warnings";
 import { evidenceBlockHashInput, legacyEvidenceBlockHashInput, sha256, stableStringify } from "../lib/hash";
+import { sha256HexSync } from "../lib/sha256-sync";
 
 const capture: Capture = {
   id: "capture-home-20030401000000",
@@ -88,6 +96,14 @@ test("submitted URLs are normalized and unsafe targets fail closed", () => {
   assert.equal(validateSubmittedUrl("iexile.com"), "http://iexile.com/");
   assert.equal(validateSubmittedUrl("www.example.org/archive#old"), "http://www.example.org/archive");
   assert.equal(validateSubmittedUrl("example.org:80/archive"), "http://example.org/archive");
+  assert.equal(
+    validateSubmittedUrl("forum.example.org/viewtopic.php?t=42&forum=anthropology#latest"),
+    "http://forum.example.org/viewtopic.php?t=42&forum=anthropology",
+  );
+  assert.equal(
+    validateSubmittedUrl("http://alexandriaarchive.onion/thread.php?id=7"),
+    "http://alexandriaarchive.onion/thread.php?id=7",
+  );
   for (const unsafe of [
     "http://localhost/",
     "http://localhost./",
@@ -106,22 +122,15 @@ test("submitted URLs are normalized and unsafe targets fail closed", () => {
     "ftp://example.org/",
     "http://user:secret@example.org/",
     "https://example.org:8443/",
-    "https://example.org/archive?token=secret",
-    "https://example.org/?email=reader%40example.org&session=private",
     "javascript:alert(1)",
     "localhost",
     "127.0.0.1",
     "[::1]",
     "user:secret@example.org",
     "example.org:8443",
-    "example.org/archive?token=secret",
   ]) {
     assert.throws(() => validateSubmittedUrl(unsafe));
   }
-  assert.throws(
-    () => validateSubmittedUrl("https://example.org/archive?token=secret"),
-    /query parameters.*sensitive information/i,
-  );
 });
 
 test("rendered navigation ignores invented planner labels and cites exact title evidence", () => {
@@ -715,6 +724,120 @@ test("canonical paths reconcile common URL variants", () => {
   assert.equal(canonicalPath("http://example.org/About_Us.HTML"), "/about-us");
   assert.equal(canonicalPath("http://example.org/one%2Ftwo.html"), "/one-two");
   assert.doesNotThrow(() => canonicalPath("http://example.org/%E0%A4%A.html"));
+  const threadA = canonicalPath("http://example.org/viewtopic.php?t=42&forum=anthropology");
+  const threadB = canonicalPath("http://example.org/viewtopic.php?forum=anthropology&t=42");
+  const threadC = canonicalPath("http://example.org/viewtopic.php?t=43&forum=anthropology");
+  assert.match(threadA, /^\/viewtopic\/query-/);
+  assert.equal(threadA, threadB);
+  assert.notEqual(threadA, threadC);
+  assert.notEqual(canonicalPath("http://example.org/?thread=1"), canonicalPath("http://example.org/?thread=2"));
+  assert.equal(canonicalPathForReceipt("http://example.org/?thread=1", "1.0"), "/");
+  assert.equal(canonicalPathForReceipt("http://example.org/?thread=1", "1.2"), "/");
+  assert.equal(canonicalPathForReceipt("http://example.org/?thread=1", "1.3"), canonicalPath("http://example.org/?thread=1"));
+  assert.equal(threadA.includes("anthropology"), false);
+  assert.equal(canonicalPath("http://example.org/?token=secret").includes("secret"), false);
+});
+
+test("query identities use the full SHA-256 digest and resist the previous chosen collision", async () => {
+  const first = `${"a".repeat(60)}1feilvtmytgd01a1ap2b`;
+  const second = `${"a".repeat(60)}4t091vjglt061yyej5p`;
+  assert.notEqual(canonicalPath(`http://example.org/view.php?q=${first}`), canonicalPath(`http://example.org/view.php?q=${second}`));
+  for (const value of ["", "abc", "Alexandria ðŸ—ºï¸", JSON.stringify([["a", "1"], ["b", "two"]])]) {
+    assert.equal(sha256HexSync(value), await sha256(value));
+  }
+});
+
+test("receipt 1.2 replays query-bearing temporal inventory with its legacy path identity", async () => {
+  const paths = ["/", "/about", "/work", "/links", "/contact"];
+  const records = await Promise.all(paths.map(async (path, index) => {
+    const sourceCapture = await durableInventoryCapture(
+      path,
+      `2003-04-0${index + 1}T00:00:00Z`,
+      `digest-${index}`,
+    );
+    return extractSourceRecord(
+      sourceCapture,
+      `<html><head><title>${path === "/" ? "Home" : path.slice(1)}</title></head><body><main><p>Exact body ${index}.</p><a href="${paths[(index + 1) % paths.length]}">Next</a></main></body></html>`,
+      "http://example.org/",
+    );
+  }));
+  const selectedCaptures = records.map((record) => record.capture);
+  const ranked = rankTemporalWindows(selectedCaptures);
+  const selected = ranked[0];
+  const candidates: TemporalCandidateWindow[] = ranked.map((candidate) => ({
+    id: `year-${candidate.year}`,
+    year: candidate.year,
+    windowStart: candidate.selected[0].capturedAt,
+    windowEnd: candidate.selected.at(-1)!.capturedAt,
+    captureCount: candidate.selected.length,
+    pageCoverage: candidate.score.coverage,
+    score: candidate.score,
+    selected: candidate.year === selected.year,
+  }));
+  const previousKey = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+  try {
+    const graph = buildEvidenceGraph(records);
+    const planned = await createManifestAndReceipt({
+      recoveryId: "receipt-12-query-compatibility",
+      originalUrl: "http://example.org/",
+      selectedYear: selected.year,
+      windowStart: selected.selected[0].capturedAt,
+      windowEnd: selected.selected.at(-1)!.capturedAt,
+      temporalSelection: selected.score,
+      temporalCandidates: candidates,
+      records,
+      captures: selectedCaptures,
+      inventoryCaptures: selectedCaptures,
+      graph,
+      createdAt: "2003-04-06T00:00:00Z",
+    });
+    const duplicateQueryCaptures = await Promise.all([
+      durableInventoryCapture("/?page=16&qq=index.php", selectedCaptures[0].capturedAt, selectedCaptures[0].digest),
+      durableInventoryCapture("/?page=8&qq=index.php", selectedCaptures[0].capturedAt, selectedCaptures[0].digest),
+    ]);
+    const legacyInventory = [...selectedCaptures, ...duplicateQueryCaptures];
+    const legacyRanked = rankTemporalWindows(legacyInventory, canonicalPathLegacy);
+    const queryAwareRanked = rankTemporalWindows(legacyInventory);
+    assert.notDeepEqual(queryAwareRanked[0].score, legacyRanked[0].score);
+    assert.deepEqual(
+      legacyRanked[0].selected.map((capture) => capture.id).sort(),
+      selectedCaptures.map((capture) => capture.id).sort(),
+    );
+    const legacyCandidates: TemporalCandidateWindow[] = legacyRanked.map((candidate) => ({
+      id: `year-${candidate.year}`,
+      year: candidate.year,
+      windowStart: candidate.selected[0].capturedAt,
+      windowEnd: candidate.selected.at(-1)!.capturedAt,
+      captureCount: candidate.selected.length,
+      pageCoverage: candidate.score.coverage,
+      score: candidate.score,
+      selected: candidate.year === selected.year,
+    }));
+    planned.receipt.receiptVersion = "1.2";
+    planned.receipt.temporalInventory = legacyInventory;
+    planned.receipt.temporalSelection = legacyRanked[0].score;
+    planned.receipt.temporalCandidates = legacyCandidates;
+    const result: RecoveryResult = {
+      id: "receipt-12-query-compatibility",
+      submittedUrl: "example.org",
+      normalizedUrl: "http://example.org/",
+      createdAt: "2003-04-06T00:00:00Z",
+      outcome: planned.manifest.outcome,
+      captures: selectedCaptures,
+      sources: records,
+      nodes: graph.nodes,
+      edges: graph.edges,
+      manifest: planned.manifest,
+      receipt: planned.receipt,
+      temporalCandidates: legacyCandidates,
+      warnings: planned.receipt.warnings.map((warning) => warning.raw),
+    };
+    assert.ok(await parsePersistedRecoveryResult(JSON.stringify(result)));
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
+  }
 });
 
 test("archive canonicalization may remove a leading www without leaving the submitted site", () => {
@@ -803,6 +926,42 @@ test("a requested era can select only a ranked deterministic candidate", () => {
     (error) => error instanceof RequestedEraUnavailableError && error.availableYears.length === 2,
   );
   assert.throws(() => selectTemporalWindow(captures, "03"), /exactly four digits/);
+});
+
+test("query-bearing onion identities inventory exact and sibling paths only through the allowlisted archive", async () => {
+  const previousFetch = globalThis.fetch;
+  const calls: URL[] = [];
+  const target = "http://alexandriaarchive.onion/thread.php?id=7&board=memory";
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    calls.push(url);
+    const requested = new URL(url.searchParams.get("url")!);
+    const rows = [
+      ["timestamp", "original", "statuscode", "mimetype", "digest"],
+      ["20090101000000", target, "200", "text/html", "QUERY-ONION"],
+      ...(url.searchParams.get("matchType") === "prefix"
+        ? [["20090102000000", `${requested.origin}/thread.php?id=8&board=memory`, "200", "text/html", "QUERY-SIBLING"]]
+        : []),
+    ];
+    return Response.json(rows);
+  };
+  try {
+    const inventory = await discoverCaptures(target);
+    assert.equal(inventory.all.length, 2);
+    assert.ok(inventory.all.some((capture) => capture.originalUrl === target));
+    assert.ok(inventory.all.some((capture) => canonicalPath(capture.originalUrl)
+      === canonicalPath("http://alexandriaarchive.onion/thread.php?id=8&board=memory")));
+    assert.equal(calls.length, 4);
+    assert.ok(calls.every((url) => url.protocol === "https:" && url.hostname === "web.archive.org"));
+    assert.equal(calls.filter((url) => url.searchParams.get("matchType") === "exact").length, 2);
+    assert.equal(calls.filter((url) => url.searchParams.get("matchType") === "prefix").length, 2);
+    assert.ok(calls.filter((url) => url.searchParams.get("matchType") === "exact")
+      .every((url) => new URL(url.searchParams.get("url")!).search === "?id=7&board=memory"));
+    assert.ok(calls.filter((url) => url.searchParams.get("matchType") === "prefix")
+      .every((url) => new URL(url.searchParams.get("url")!).search === ""));
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
 });
 
 test("year-scoped inventory recovers a requested era outside the general 400 rows", async () => {
@@ -995,7 +1154,7 @@ test("duplicate-path fragments choose one mechanical primary and never concatena
     assert.deepEqual(decision?.supportingSourceIds, [weakHomeCapture.sourceId]);
     assert.equal(planned.receipt.planner, "deterministic");
     assert.ok(planned.warnings.some((warning) => warning.includes("OPENAI_API_KEY_not_configured")));
-    assert.equal(planned.receipt.receiptVersion, "1.2");
+    assert.equal(planned.receipt.receiptVersion, "1.3");
     assert.deepEqual(
       planned.receipt.captures.map((item) => item.id),
       records.map((record) => record.capture.id),

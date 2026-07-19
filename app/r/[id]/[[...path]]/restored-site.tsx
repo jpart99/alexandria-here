@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { EvidenceBlock, KnownAbsence, RecoveryEvent, RecoveryResult, RestoredPage, TemporalCandidateWindow } from "../../../../lib/domain";
-import { canonicalPath } from "../../../../lib/url-safety";
+import { canonicalPathForReceipt } from "../../../../lib/url-safety";
 
 type View = "site" | "timeline" | "witnesses" | "map" | "receipt";
 
@@ -80,6 +80,10 @@ function waitForPoll(milliseconds: number) {
  * absence decisions and their cited link blocks.
  */
 export function knownAbsencesForResult(result: RecoveryResult): KnownAbsence[] {
+  const canonicalPath = (originalUrl: string) => canonicalPathForReceipt(
+    originalUrl,
+    result.receipt.receiptVersion,
+  );
   const blocks = new Map(result.sources.flatMap((source) => source.blocks).map((block) => [block.id, block]));
   const absences = new Map<string, KnownAbsence>();
 
@@ -404,7 +408,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
               <section className="insufficient-state atlas-overview">
                 <p className="eyebrow">Atlas overview</p>
                 <p className="status-chip missing">Insufficient evidence</p>
-                <h2>This place could not be returned faithfully.</h2>
+                <h2>No connected edition survives this evidence window.</h2>
                 <p>{result.manifest.insufficientReason}</p>
                 <div className="overview-evidence-summary" aria-label="Surviving evidence summary">
                   <div><strong>{result.captures.length}</strong><span>capture witnesses</span></div>
@@ -412,7 +416,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                   <div><strong>{result.receipt.counts.knownAbsences}</strong><span>known absences</span></div>
                   <div><strong>{temporalCandidates.length}</strong><span>coherent windows</span></div>
                 </div>
-                <p className="overview-boundary">The connected evidence did not cross Alexandria’s mechanical restoration threshold. Nothing has been generated to fill the distance.</p>
+                <p className="overview-boundary">The surviving records remain fully inspectable, but they do not form a connected edition. No replacement text was synthesized.</p>
                 <div className="overview-actions" aria-label="Inspect surviving evidence">
                   <button type="button" onClick={() => openAtlasView("witnesses")}>Inspect witnesses</button>
                   <button type="button" onClick={() => openAtlasView("map")}>Open Ghost Map</button>
@@ -424,7 +428,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                 <p className="status-chip missing">Missing</p>
                 <h2>{page.title}</h2>
                 <p>{page.missingReason}</p>
-                <p className="absence-note">This absence is part of the record. Alexandria has not generated a replacement.</p>
+                <p className="absence-note">The archive witnesses this path but retains no usable body capture. No replacement text was synthesized.</p>
               </section>
             ) : page ? (
               <>
@@ -692,7 +696,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             ))}
           </div>
           <div className="refused-panel">
-            <h3>What Alexandria refused to claim</h3>
+            <h3>Where the record breaks</h3>
+            <p>Paths and assets witnessed by surviving references but absent from the selected captures.</p>
             <ul>
               {knownAbsences.map((absence) => <li key={absence.id}>Referenced path <code>{absence.path}</code> has no usable selected capture; cited by {absence.sourceBlockIds.length} surviving link block{absence.sourceBlockIds.length === 1 ? "" : "s"}.</li>)}
               {undisclosedAbsenceCount > 0 && <li>{undisclosedAbsenceCount} additional known absence{undisclosedAbsenceCount === 1 ? " is" : "s are"} counted in this legacy receipt, but its persisted evidence does not expose enough cited path detail to display safely.</li>}
@@ -794,8 +799,8 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
 
       <footer className="returned-footer">
         <span>Alexandria Here</span>
-        <span>Nothing here is claimed without a witness.</span>
-        <span>Public archival evidence · no ownership claim</span>
+        <span>Every returned block keeps its witness.</span>
+        <span>Preservation is not endorsement.</span>
       </footer>
     </main>
   );

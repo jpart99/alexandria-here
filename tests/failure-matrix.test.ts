@@ -434,6 +434,22 @@ test("legacy additive fields are normalized and corrupt durable JSON becomes una
   assert.equal(hydrated.result?.id, "legacy-id");
 });
 
+test("pre-1.3 query-bearing receipts keep their persisted pathname-only identity", async () => {
+  const queryCapture: Capture = {
+    ...capture,
+    originalUrl: "http://lostsite.org/?page=16&qq=index.php",
+    archiveUrl: "https://web.archive.org/web/20030401000000id_/http://lostsite.org/?page=16&qq=index.php",
+  };
+  const parsed = await parsePersistedRecoveryResult(JSON.stringify(legacyResult(
+    [],
+    [queryCapture],
+    [legacySource(queryCapture)],
+  )));
+  assert.ok(parsed);
+  assert.equal(parsed.sources[0].canonicalPath, "/");
+  assert.equal(parsed.manifest.pages[0].path, "/");
+});
+
 test("durable compatibility rejects nested corruption and cross-row identity drift", async () => {
   const valid = legacyResult();
   assert.ok(await parsePersistedRecoveryResult(JSON.stringify(valid)));

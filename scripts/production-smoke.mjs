@@ -139,7 +139,9 @@ assert(/\binputmode=["']url["']/iu.test(recoveryInput), "Landing recovery input 
 assert(/\brequired(?:\s|=|>)/iu.test(recoveryInput), "Landing recovery input is no longer required.");
 assert(!/\bpattern=/iu.test(recoveryInput), "Landing recovery input added a pattern that can reject bare public addresses.");
 assert(landingHtml.includes("you may omit the protocol"), "Landing does not explain that the HTTP(S) protocol is optional.");
-checks.push(["bare public address form contract", { type: "text", inputMode: "url", protocolOptional: true }]);
+assert(landingHtml.includes("query strings are preserved"), "Landing does not explain that query-bearing archive identities are preserved.");
+assert(landingHtml.includes("does not decide which history deserves recovery"), "Landing lost Alexandria's content-neutral doctrine.");
+checks.push(["content-neutral address form contract", { type: "text", inputMode: "url", protocolOptional: true, queryIdentity: true }]);
 
 const stylesheetUrls = [];
 const stylesheetBodies = [];

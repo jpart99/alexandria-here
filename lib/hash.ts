@@ -34,7 +34,7 @@ export function legacyEvidenceBlockHashInput(block: Pick<EvidenceBlockHashFields
   return `${block.kind}\n${block.exactText}\n${block.targetUrl || ""}\n${block.assetUrl || ""}`;
 }
 
-/** Receipt v1.2 binds exact content to its persisted order, owner, capture, URLs, and extraction warnings. */
+/** Receipt v1.2+ binds exact content to its persisted order, owner, capture, URLs, and extraction warnings. */
 export function evidenceBlockHashInput(block: EvidenceBlockHashFields) {
   return stableStringify({
     version: "evidence-block-v2",

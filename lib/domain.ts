@@ -186,7 +186,7 @@ export type RecoveryReceiptWarning = {
 };
 
 export type RecoveryReceipt = {
-  receiptVersion: "1.0" | "1.1" | "1.2";
+  receiptVersion: "1.0" | "1.1" | "1.2" | "1.3";
   recoveryId: string;
   manifestHash: string;
   sourceHashes: Array<{ blockId: string; hash: string }>;
@@ -200,7 +200,7 @@ export type RecoveryReceipt = {
   selectedWindowEnd: string;
   temporalSelection: TemporalSelectionScore;
   temporalCandidates: TemporalCandidateWindow[];
-  /** Receipt v1.2 persists the bounded inventory needed to recompute temporal ranking. */
+  /** Receipt v1.2+ persists the bounded inventory needed to recompute temporal ranking. */
   temporalInventory?: Capture[];
   decisions: RestorationDecision[];
   validationResults: ValidationResult[];

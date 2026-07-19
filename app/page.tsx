@@ -40,7 +40,7 @@ export default function Home() {
         ) : null}
         <div className="trust-line">
           <span className="witness-dot" />
-          Nothing here is claimed without a witness.
+          Every returned block keeps its witness.
         </div>
       </section>
 
@@ -48,9 +48,10 @@ export default function Home() {
         <p className="aside-number">01</p>
         <h2>Not a screenshot.<br />A returned place.</h2>
         <p>
-          Alexandria reads public archive captures, reconciles their timelines, and rebuilds only what can still be demonstrated.
+          Alexandria does not decide which history deserves recovery. It preserves expression without rating it, reconciles surviving captures, and keeps their lineage visible.
         </p>
         <dl className="principles">
+          <div><dt>Content-neutral</dt><dd>No subject-matter gatekeeping</dd></div>
           <div><dt>Preserved</dt><dd>Exact archived evidence</dd></div>
           <div><dt>Reconstructed</dt><dd>Only witnessed structure</dd></div>
           <div><dt>Missing</dt><dd>Absence shown honestly</dd></div>

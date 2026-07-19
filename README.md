@@ -4,11 +4,17 @@ Alexandria Here is a witnessed restoration engine for the lost web. Give it one 
 
 > Alexandria does not generate the past. It reconciles its surviving witnesses.
 
+> Alexandria is content-neutral memory infrastructure. It does not decide which ideas deserve preservation. It returns whatever public archive evidence can support, exposes where that evidence ends, and leaves interpretation to the reader. Preservation is not endorsement.
+
+Network controls protect systems, not sensibilities. Evidence validation protects provenance, not people from ideas. Alexandria has no topic or viewpoint moderation layer; politically, culturally, or personally contentious material receives the same evidence contract as every other archived page.
+
 ## Live product
 
 The public production deployment is available at [alexandria-here.cinemaexile.chatgpt.site](https://alexandria-here.cinemaexile.chatgpt.site). An unauthenticated request returned `200 OK` on July 17, 2026 Pacific / July 18 UTC. Its reference Atlas was produced through the same public recovery endpoint used by every visitor; it is not a fixture or privileged demo path. The judge-facing [`JUDGE_EVIDENCE.md`](JUDGE_EVIDENCE.md) maps the headline claims to the corrected production receipt, pinned source, executable checks, and explicit non-claims.
 
 The deployed engine remains operational when the model provider is unavailable: it records the provider failure in the receipt, uses the deterministic reconciliation path, and never substitutes generated historical content. A submission claim that GPT-5.6 performed a recovery is valid only when that recovery's receipt names the GPT-5.6 planner and model.
+
+The checked-in Phase 38 release candidate adds content-neutral query and archived `.onion` locator support, receipt `1.3` query identity, and permanent receipt `1.0`â€“`1.2` path compatibility. The accepted public runtime remains Sites version 15 until this candidate receives a successful saved-version deployment and hosted regression; source readiness is not presented as deployment evidence.
 
 ## Build Week submission media
 
@@ -22,8 +28,9 @@ The sealed master shows ordinary production recovery `8ea53a47-437b-4afe-ad2c-29
 
 ## Product boundary
 
-- One public HTTP(S) URL per recovery.
-- A public bare hostname or hostname/path is accepted; Alexandria applies the same safety checks, normalizes it to HTTP for identity, and inventories both surviving HTTP and HTTPS archive variants.
+- One HTTP(S) archive locator per recovery, including query-bearing pages and archived `.onion` identifiers.
+- A bare hostname or hostname/path is accepted; Alexandria applies the same network checks, normalizes it to HTTP for identity, and inventories both surviving HTTP and HTTPS archive variants.
+- Query parameters remain part of the exact archive identity and receive distinct opaque full-SHA-256 evidence-graph paths in receipt `1.3`; Alexandria inventories the exact locator plus its query-cleared sibling path and never contacts the submitted origin.
 - One allowlisted archive provider: `web.archive.org`.
 - The submitted origin is never fetched.
 - At most 12 inventory records are considered, 8 archived HTML documents are fetched, and 5–8 pages are returned.
@@ -47,7 +54,7 @@ Accepted production Sites version 15 exposes two exact browser-facing aliases un
 - D1 locally and hosted, accessed through Drizzle
 - Cheerio extraction with SHA-256 block hashes
 - OpenAI Responses API with strict structured output when `OPENAI_API_KEY` is present
-- Deterministic planner and validator as the safe fallback
+- Deterministic planner and validator as the fail-closed fallback
 
 ## How we used Codex
 
