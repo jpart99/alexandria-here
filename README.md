@@ -2,6 +2,8 @@
 
 Alexandria Here is a witnessed restoration engine for the lost web. Give it one vanished public URL and it reconstructs a coherent edition supported by public archive evidence—the highest-ranked bounded edition by default, or a mechanically supported requested year—then exposes every source, inference, validation, and known absence.
 
+**iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.** One submitted address is the bounded unit that keeps a recovery challengeable; it is not a limit on site type, subject, culture, institution, community, or era.
+
 > Alexandria does not generate the past. It reconciles its surviving witnesses.
 
 > Alexandria is content-neutral memory infrastructure. It does not decide which ideas deserve preservation. It returns whatever public archive evidence can support, exposes where that evidence ends, and leaves interpretation to the reader. Preservation is not endorsement.

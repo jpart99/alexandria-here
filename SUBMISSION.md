@@ -30,6 +30,8 @@ Every returned block can reveal its witness in **Show the Seams**. The **Ghost M
 
 When the evidence is insufficient, Alexandria does not fabricate a site. It returns a complete Atlas explaining what survived and where the surviving record ends.
 
+**iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.** The same ordinary engine is designed for vanished sites, pages, forums, journals, institutions, communities, and other public web places. One address bounds the evidence for a run; it does not bound the concept.
+
 Alexandria is content-neutral memory infrastructure. It has no topic or viewpoint moderation layer and does not decide which ideas deserve preservation. Politically, culturally, or personally contentious material receives the same evidence contract as any other archive record. Network controls protect systems, not sensibilities; evidence validation protects provenance, not people from ideas. Preservation is not endorsement.
 
 ## How we built it

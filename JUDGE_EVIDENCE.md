@@ -2,6 +2,8 @@
 
 This page pairs each headline claim with a production record, pinned source revision, executable check, or hashed artifact—and states the limit of that evidence.
 
+**iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.** The named rows below are ordinary-pipeline evidence for a general restoration engine, not privileged exhibits or limits on recoverable subject matter.
+
 Current accepted release source (operator-recorded), production Sites version 18: [`174e05a38d5a49a17d5d116cb79f8a3c53963286`](https://github.com/jpart99/alexandria-here/tree/174e05a38d5a49a17d5d116cb79f8a3c53963286). Saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_29be18fd06788191b4499c75b4bdabad`; deployment `appgdep_6a5caab525508191ac8eb45c0b3e7fae`; environment revision 7; 93 tests.
 
 Historical Sites release v16 used runtime commit `d32ab887e880d7f3d4bbf1c9d71e0aec37388a43`, saved version `appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_76f67dace6088191b2b415d5e4b1d17b`, deployment `appgdep_6a5c90b3020c81919c73b5a84e39580e`, and environment revision 7; its source gate passed 91 tests.

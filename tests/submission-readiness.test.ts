@@ -151,6 +151,13 @@ test("the sealed submission package passes locally and exposes only authority-ga
     )),
     /submission runtime provenance/,
   );
+  assert.throws(
+    () => assertSubmissionRuntimeProvenance(submission.replace(
+      "iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.",
+      "iExile defines Alexandria's product boundary.",
+    )),
+    /submission runtime provenance/,
+  );
   const youtubeMetadata = await readFile(path.join(root, "YOUTUBE_METADATA.md"), "utf8");
   assert.doesNotThrow(() => assertYouTubeRuntimeProvenance(youtubeMetadata));
   assert.throws(
@@ -171,6 +178,20 @@ test("the sealed submission package passes locally and exposes only authority-ga
   const failureMatrix = await readFile(path.join(root, "FAILURE_RELIABILITY_MATRIX.md"), "utf8");
   const releaseDocuments = { failureMatrix, readme, judgeEvidence, releaseOperations, submission, youtubeMetadata };
   assert.doesNotThrow(() => assertReleaseDocumentRuntimeProvenance(releaseDocuments));
+  for (const key of ["readme", "judgeEvidence"] as const) {
+    const scopeDriftDocuments = {
+      ...releaseDocuments,
+      [key]: releaseDocuments[key].replace(
+        "iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.",
+        "iExile defines Alexandria's product boundary.",
+      ),
+    };
+    assert.throws(
+      () => assertReleaseDocumentRuntimeProvenance(scopeDriftDocuments),
+      /runtime provenance/,
+      `${key} must reject a single-example product boundary`,
+    );
+  }
   for (const key of Object.keys(releaseDocuments) as Array<keyof typeof releaseDocuments>) {
     const staleDocuments = {
       ...releaseDocuments,
