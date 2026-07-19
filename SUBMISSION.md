@@ -1,6 +1,6 @@
 # OpenAI Build Week submission draft
 
-Status: authenticated Devpost About and judge instructions synchronized and Preview-verified. The project thumbnail, six-image gallery, public YouTube video, rules acceptance, and final submission remain pending.
+Status: authenticated Devpost About, judge instructions, project thumbnail, and six-image gallery synchronized and Preview-verified. The public YouTube video, rules acceptance, and final submission remain pending.
 
 ## Project
 
@@ -157,7 +157,7 @@ The upload-ready master is `submission-assets/alexandria-here-build-week-demo.mp
 - [x] Add the read-only `npm run qa:submission` preflight for sealed hashes, media roles, captions, required claims, and external-pending boundaries.
 - [x] Add and run the read-only `npm run qa:submission:live` gate against the exact public judging row, receipt metrics, decision attribution, production Atlas, and selective font boundary.
 - [x] Replace the saved Devpost About and judge instructions with `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `96 passing tests` and the current judging recovery.
-- [ ] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
+- [x] Upload the audited Devpost thumbnail and gallery media, then verify the public preview.
 - [x] Replace every bracketed placeholder except the pending public YouTube URL.
 - [x] Confirm the production URL, iExile reference recovery, receipt download, 320×800 layout, and zero console errors in the production browser audit.
 - [ ] Submit before July 21, 2026 at 5:00 PM PDT (Pacific Time).
