@@ -1,6 +1,6 @@
 # Alexandria Here — final submission handoff
 
-Everything below is prepared and audited. The Devpost text, project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified. The only remaining actions that require Jaia's authority are Devpost's official-rules acceptance and final submission.
+Everything below is prepared and audited. The Devpost text, project thumbnail, six-card gallery, and public YouTube video are saved and Preview-verified. The only remaining required submission actions that require Jaia's authority are Devpost's official-rules acceptance and final submission.
 
 Immediately before final submission, run `npm run qa:submission`. It is read-only, uses no network or secrets, prints the canonical absolute media paths, verifies the sealed video/captions/thumbnails/gallery plus required submission claims and operator contracts, and exits nonzero on local drift. Its one remaining aggregate external action stays `PENDING` until Jaia completes it. After that action is recorded, `npm run qa:submission -- --final` also refuses any remaining `PENDING` gate.
 

@@ -802,7 +802,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
         ? "publish the audited master with Jaia's authorization, then replace the sole allowed placeholder"
         : pending
           ? "verify signed-out 1080p playback, narration, captions, and embedding, then add the same URL to Devpost"
-          : "the URL, upload, and signed-out playback checks are explicitly recorded",
+          : "the exact URL, public-page metadata, published captions, and Devpost embed checks are explicitly recorded",
     });
   } catch (error) {
     checks.push({ section: "External authority", name: "Public YouTube URL", state: "FAIL", detail: error instanceof Error ? error.message : String(error) });

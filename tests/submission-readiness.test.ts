@@ -99,6 +99,10 @@ test("the sealed submission package passes locally and exposes only authority-ga
     checks.filter((check) => check.state === "PENDING").map((check) => check.name),
     ["Rules acceptance and final submit"],
   );
+  assert.equal(
+    checks.find((check) => check.name === "Public YouTube URL")?.detail,
+    "the exact URL, public-page metadata, published captions, and Devpost embed checks are explicitly recorded",
+  );
   assert.equal(submissionExitCode(checks), 0);
   assert.equal(submissionExitCode(checks, true), 1);
   const submission = await readFile(path.join(root, "SUBMISSION.md"), "utf8");
