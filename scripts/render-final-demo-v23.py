@@ -105,6 +105,12 @@ def portable_report_path(path: Path, stage: Path) -> str:
         return path.name
 
 
+def write_json_lf(path: Path, payload: object) -> None:
+    """Write canonical UTF-8 JSON without platform newline translation."""
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(payload, indent=2) + "\n")
+
+
 def find_audio(stage: Path) -> Path:
     candidates = (
         "final-narration-v23.wav",
@@ -500,7 +506,7 @@ def main() -> None:
         )
         scene_clock += frame_seconds
     report_path = stage / "final-composition-plan-v23.json"
-    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    write_json_lf(report_path, report)
 
     if args.plan_only:
         print(json.dumps({"status": "planned", "report": str(report_path), "duration": target_seconds}, indent=2))
@@ -547,7 +553,7 @@ def main() -> None:
             "transcript_parity": "pass",
         },
     }
-    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    write_json_lf(report_path, report)
     print(json.dumps({"status": report["status"], "output": str(output), "report": str(report_path)}, indent=2))
 
 
