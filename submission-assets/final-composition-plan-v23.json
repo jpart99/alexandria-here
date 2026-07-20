@@ -1,0 +1,358 @@
+{
+    "schema":  "alexandria-final-composition/v1",
+    "generated_at":  "2026-07-20T00:09:10.427256+00:00",
+    "status":  "complete",
+    "stage":  "final-media-v23",
+    "output":  "alexandria-here-final-demo-v23.mp4",
+    "format":  {
+                   "width":  1920,
+                   "height":  1080,
+                   "fps":  30,
+                   "video_codec":  "H.264 High",
+                   "audio_codec":  "AAC-LC",
+                   "audio_sample_rate_hz":  48000,
+                   "audio_channels":  1,
+                   "caption_codec":  "mov_text"
+               },
+    "clock":  {
+                  "narration_seconds":  149.54,
+                  "tail_seconds":  1.5,
+                  "film_seconds":  151.04,
+                  "video_frames":  4531,
+                  "video_seconds":  151.033,
+                  "transition":  "hard-cut"
+              },
+    "captions":  {
+                     "cue_count":  56,
+                     "last_cue_seconds":  149.238
+                 },
+    "live_recordings":  {
+                            "iexile-story-v23.webm":  {
+                                                          "source_seconds":  15.12,
+                                                          "source_start_seconds":  1.5,
+                                                          "source_end_seconds":  12.322,
+                                                          "edit_seconds":  10.822,
+                                                          "edit":  "head-trim+tail-trim"
+                                                      },
+                            "pathfinder-proof-v23.webm":  {
+                                                              "source_seconds":  51.88,
+                                                              "source_start_seconds":  1.5,
+                                                              "source_end_seconds":  48.429,
+                                                              "edit_seconds":  46.929,
+                                                              "edit":  "head-trim+tail-trim"
+                                                          }
+                        },
+    "scenes":  [
+                   {
+                       "index":  1,
+                       "name":  "Invocation",
+                       "source":  "00-landing-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  0,
+                       "target_end_seconds":  10.774,
+                       "start_seconds":  0.0,
+                       "end_seconds":  10.767,
+                       "duration_seconds":  10.767,
+                       "frames":  323
+                   },
+                   {
+                       "index":  2,
+                       "name":  "iExile returned",
+                       "source":  "01-iexile-returned-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  10.774,
+                       "target_end_seconds":  30.417,
+                       "start_seconds":  10.767,
+                       "end_seconds":  30.4,
+                       "duration_seconds":  19.633,
+                       "frames":  589
+                   },
+                   {
+                       "index":  3,
+                       "name":  "iExile live journey",
+                       "source":  "iexile-story-v23.webm",
+                       "kind":  "video",
+                       "target_start_seconds":  30.417,
+                       "target_end_seconds":  41.239,
+                       "start_seconds":  30.4,
+                       "end_seconds":  41.233,
+                       "duration_seconds":  10.833,
+                       "frames":  325
+                   },
+                   {
+                       "index":  4,
+                       "name":  "iExile seams",
+                       "source":  "02-iexile-seams-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  41.239,
+                       "target_end_seconds":  47.643,
+                       "start_seconds":  41.233,
+                       "end_seconds":  47.633,
+                       "duration_seconds":  6.4,
+                       "frames":  192
+                   },
+                   {
+                       "index":  5,
+                       "name":  "iExile Timeline",
+                       "source":  "11-iexile-timeline-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  47.643,
+                       "target_end_seconds":  52.726,
+                       "start_seconds":  47.633,
+                       "end_seconds":  52.7,
+                       "duration_seconds":  5.067,
+                       "frames":  152
+                   },
+                   {
+                       "index":  6,
+                       "name":  "iExile Witnesses",
+                       "source":  "12-iexile-witnesses-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  52.726,
+                       "target_end_seconds":  57.321,
+                       "start_seconds":  52.7,
+                       "end_seconds":  57.3,
+                       "duration_seconds":  4.6,
+                       "frames":  138
+                   },
+                   {
+                       "index":  7,
+                       "name":  "iExile Ghost Map",
+                       "source":  "13-iexile-ghost-map-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  57.321,
+                       "target_end_seconds":  62.345,
+                       "start_seconds":  57.3,
+                       "end_seconds":  62.333,
+                       "duration_seconds":  5.033,
+                       "frames":  151
+                   },
+                   {
+                       "index":  8,
+                       "name":  "iExile Recovery Receipt",
+                       "source":  "14-iexile-receipt-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  62.345,
+                       "target_end_seconds":  70.286,
+                       "start_seconds":  62.333,
+                       "end_seconds":  70.267,
+                       "duration_seconds":  7.933,
+                       "frames":  238
+                   },
+                   {
+                       "index":  9,
+                       "name":  "Pathfinder reveal",
+                       "source":  "03-pathfinder-returned-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  70.286,
+                       "target_end_seconds":  75.0,
+                       "start_seconds":  70.267,
+                       "end_seconds":  74.967,
+                       "duration_seconds":  4.7,
+                       "frames":  141
+                   },
+                   {
+                       "index":  10,
+                       "name":  "Pathfinder live proof",
+                       "source":  "pathfinder-proof-v23.webm",
+                       "kind":  "video",
+                       "target_start_seconds":  75.0,
+                       "target_end_seconds":  121.929,
+                       "start_seconds":  74.967,
+                       "end_seconds":  121.9,
+                       "duration_seconds":  46.933,
+                       "frames":  1408
+                   },
+                   {
+                       "index":  11,
+                       "name":  "Title witness",
+                       "source":  "04-pathfinder-title-seam-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  121.929,
+                       "target_end_seconds":  124.329,
+                       "start_seconds":  121.9,
+                       "end_seconds":  124.3,
+                       "duration_seconds":  2.4,
+                       "frames":  72
+                   },
+                   {
+                       "index":  12,
+                       "name":  "Known absence",
+                       "source":  "05-pathfinder-missing-seams-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  124.329,
+                       "target_end_seconds":  127.129,
+                       "start_seconds":  124.3,
+                       "end_seconds":  127.1,
+                       "duration_seconds":  2.8,
+                       "frames":  84
+                   },
+                   {
+                       "index":  13,
+                       "name":  "Ghost Map",
+                       "source":  "06-pathfinder-ghost-map-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  127.129,
+                       "target_end_seconds":  130.029,
+                       "start_seconds":  127.1,
+                       "end_seconds":  130.0,
+                       "duration_seconds":  2.9,
+                       "frames":  87
+                   },
+                   {
+                       "index":  14,
+                       "name":  "Supported 2001 edition",
+                       "source":  "07-pathfinder-timeline-2001-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  130.029,
+                       "target_end_seconds":  132.729,
+                       "start_seconds":  130.0,
+                       "end_seconds":  132.7,
+                       "duration_seconds":  2.7,
+                       "frames":  81
+                   },
+                   {
+                       "index":  15,
+                       "name":  "Witnesses",
+                       "source":  "08-pathfinder-witnesses-24-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  132.729,
+                       "target_end_seconds":  135.729,
+                       "start_seconds":  132.7,
+                       "end_seconds":  135.7,
+                       "duration_seconds":  3.0,
+                       "frames":  90
+                   },
+                   {
+                       "index":  16,
+                       "name":  "Mechanical receipt",
+                       "source":  "10-pathfinder-receipt-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  135.729,
+                       "target_end_seconds":  139.786,
+                       "start_seconds":  135.7,
+                       "end_seconds":  139.767,
+                       "duration_seconds":  4.067,
+                       "frames":  122
+                   },
+                   {
+                       "index":  17,
+                       "name":  "Closing invocation",
+                       "source":  "00-landing-v23.png",
+                       "kind":  "still",
+                       "target_start_seconds":  139.786,
+                       "target_end_seconds":  151.04,
+                       "start_seconds":  139.767,
+                       "end_seconds":  151.033,
+                       "duration_seconds":  11.267,
+                       "frames":  338
+                   }
+               ],
+    "inputs":  [
+                   {
+                       "path":  "00-landing-v23.png",
+                       "bytes":  425438,
+                       "sha256":  "57eb4247783aa6c8f60390a9948ea1b1dc5ad5d789db817fabafde6082eb14ba"
+                   },
+                   {
+                       "path":  "01-iexile-returned-v23.png",
+                       "bytes":  171293,
+                       "sha256":  "441c03c0d6cbbfdf3be69419041a383820ad98acecd7e440960d9ee2cf5bba94"
+                   },
+                   {
+                       "path":  "02-iexile-seams-v23.png",
+                       "bytes":  173718,
+                       "sha256":  "563a84937a65e6aa396c306153a010a425066e8ca02e1005671531924d1e00dc"
+                   },
+                   {
+                       "path":  "03-pathfinder-returned-v23.png",
+                       "bytes":  188900,
+                       "sha256":  "b708a5723d1207f797c71473aba61350f5d44cbe21cc3cd590ab28bcd8d77f93"
+                   },
+                   {
+                       "path":  "04-pathfinder-title-seam-v23.png",
+                       "bytes":  152227,
+                       "sha256":  "231980df69a79946e049bb3cde01dc789e3222bcf7b270c7b6072bf46a70ee84"
+                   },
+                   {
+                       "path":  "05-pathfinder-missing-seams-v23.png",
+                       "bytes":  115752,
+                       "sha256":  "e662a065a44f3d15bf17a8e186c470d8f9eb5f33b0d23ec8cebe080f8379b8c6"
+                   },
+                   {
+                       "path":  "06-pathfinder-ghost-map-v23.png",
+                       "bytes":  209691,
+                       "sha256":  "d034b046a8d82c7d68de1d772ced7f16746ba638302f1a421467be4c205467ad"
+                   },
+                   {
+                       "path":  "07-pathfinder-timeline-2001-v23.png",
+                       "bytes":  199297,
+                       "sha256":  "605730a793e6b2caf517b6ca7c7e590dcefe5e3a33153bfbae4ffa23f03bd119"
+                   },
+                   {
+                       "path":  "08-pathfinder-witnesses-24-v23.png",
+                       "bytes":  130088,
+                       "sha256":  "de82225d0beac989f1cd01b28ff706db3696a814703b1a69f9edcb5d7cc9ee47"
+                   },
+                   {
+                       "path":  "10-pathfinder-receipt-v23.png",
+                       "bytes":  140417,
+                       "sha256":  "53dc84252ed1e41c61b87ba20addd29360ae42a58c86693dcc942b2741ee730e"
+                   },
+                   {
+                       "path":  "11-iexile-timeline-v23.png",
+                       "bytes":  198943,
+                       "sha256":  "ecc7f31a67cb3b0b9b2794a48cfe7a97f88ceb400ed77fedaea1ebd7c7584d9e"
+                   },
+                   {
+                       "path":  "12-iexile-witnesses-v23.png",
+                       "bytes":  174861,
+                       "sha256":  "8525d0824ce3f9c755d53682373953350e43a867bb72217f555d4a5ea12ac44c"
+                   },
+                   {
+                       "path":  "13-iexile-ghost-map-v23.png",
+                       "bytes":  170835,
+                       "sha256":  "d1574138e122c60dea5a45c6e3d622db50435bbcffc0ffe54df9d848c0217654"
+                   },
+                   {
+                       "path":  "14-iexile-receipt-v23.png",
+                       "bytes":  118872,
+                       "sha256":  "ba51ff855b71d7253d5a66d55e25c7d20a3050dcc63a5eae2a4a3ed60674b2e0"
+                   },
+                   {
+                       "path":  "iexile-story-v23.webm",
+                       "bytes":  1717510,
+                       "sha256":  "40ea314e27c3e0306acb6cdf89a887d997217ea890e2f9cfd08aba29c3c7e931"
+                   },
+                   {
+                       "path":  "pathfinder-proof-v23.webm",
+                       "bytes":  6142009,
+                       "sha256":  "150bb59b4b24743c40959fe04a7697f5ede8dede8c55943525b1c6cb08401e6b"
+                   },
+                   {
+                       "path":  "final-narration-v23-normalized.wav",
+                       "bytes":  21534438,
+                       "sha256":  "f9f8627ab4a48b1d86009cf1c373c8cab881c2e34e9fb870522417824155706b"
+                   },
+                   {
+                       "path":  "final-narration-v23.vtt",
+                       "bytes":  4211,
+                       "sha256":  "4e2089164cf12c0ceb68de79d5a053214ca865d4b1ce3dbb616e0b5651c9fac8"
+                   }
+               ],
+    "ffmpeg":  "ffmpeg-win-x86_64-v7.1.exe",
+    "filter_graph":  "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=323,setpts=N/(30*TB),format=yuv420p[s0];[1:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=589,setpts=N/(30*TB),format=yuv420p[s1];[2:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,trim=start=1.500,setpts=PTS-STARTPTS,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=325,setpts=N/(30*TB),format=yuv420p[s2];[3:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=192,setpts=N/(30*TB),format=yuv420p[s3];[4:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=152,setpts=N/(30*TB),format=yuv420p[s4];[5:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=138,setpts=N/(30*TB),format=yuv420p[s5];[6:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=151,setpts=N/(30*TB),format=yuv420p[s6];[7:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=238,setpts=N/(30*TB),format=yuv420p[s7];[8:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=141,setpts=N/(30*TB),format=yuv420p[s8];[9:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,trim=start=1.500,setpts=PTS-STARTPTS,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=1408,setpts=N/(30*TB),format=yuv420p[s9];[10:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=72,setpts=N/(30*TB),format=yuv420p[s10];[11:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=84,setpts=N/(30*TB),format=yuv420p[s11];[12:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=87,setpts=N/(30*TB),format=yuv420p[s12];[13:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=81,setpts=N/(30*TB),format=yuv420p[s13];[14:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=90,setpts=N/(30*TB),format=yuv420p[s14];[15:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=122,setpts=N/(30*TB),format=yuv420p[s15];[16:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,fps=30,settb=expr=1/30,setsar=1,trim=end_frame=338,setpts=N/(30*TB),format=yuv420p[s16];[s0][s1][s2][s3][s4][s5][s6][s7][s8][s9][s10][s11][s12][s13][s14][s15][s16]concat=n=17:v=1:a=0[vbase];[vbase]trim=end_frame=4531,setpts=N/(30*TB)[vout];[17:a]aresample=48000:async=1:first_pts=0,apad=pad_dur=1.500,atrim=duration=151.040,asetpts=PTS-STARTPTS[aout]",
+    "rendered":  {
+                     "path":  "alexandria-here-final-demo-v23.mp4",
+                     "bytes":  15456707,
+                     "sha256":  "ed270f6902cfa3ab96c0081e204a62670161e2e392dd470388306c9d57b3ca37",
+                     "duration_seconds":  151.04,
+                     "render_state":  "rendered-and-decoded",
+                     "full_decode":  "pass",
+                     "embedded_captions":  {
+                                               "path":  "final-captions-embedded-v23.vtt",
+                                               "sha256":  "23c2a568aebb051e6d9b56ae3b4b110e53533d87e0c9d355f809a363ffbf2f23",
+                                               "transcript_parity":  "pass"
+                                           }
+                 }
+}

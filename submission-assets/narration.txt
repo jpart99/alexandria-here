@@ -1,13 +1,15 @@
-The web forgets by accident. Alexandria Here is a witnessed restoration engine for the lost web. It does not generate the past; it reconciles surviving witnesses. This is iExile, the literary community I founded in 2007, returned from public archive evidence.
+Imagine if knowledge believed lost with the Library of Alexandria could be recovered—fragment by fragment, witness by witness. The web loses places more quietly, every day.
 
-Give Alexandria one public URL. When connected evidence is sufficient, it opens directly into a coherent returned site—not a screenshot gallery. This edition passed through the same bounded live-recovery pipeline available to every visitor. It returns five visible pages from eight capture records spanning August through November 2009.
+Alexandria Here is a witnessed restoration engine for the lost web. Give it one public address. It inventories bounded Wayback evidence, finds a coherent surviving era, and returns a browsable place—without pretending the gaps were never there.
 
-Its centerpiece is challengeability. Show the Seams exposes block-level provenance. Every rendered historical block resolves to archived evidence and a content hash. Alexandria may reconstruct placement, but it cannot display unsupported historical content. If a page is known only through surviving links, the absence remains visible.
+This is iExile, founded by Jaia Papitz in 2007: a literary community returned from eight public captures spanning August through November 2009. Browse it normally. Then Show the Seams reveals the source, date, and content hash behind every returned block. Missing pages stay missing, with the surviving links that witness their absence.
 
-The Temporal Evidence Graph reconciles capture dates, URL variants, conflicts, and source relationships into one supported edition. The Ghost Map reveals the shape of survival: returned pages, inferred connections, and eight known absences—paths witnessed by the archive, but not faithfully recoverable.
+The Atlas makes the restoration challengeable. Timeline shows evidence windows. Witnesses exposes primary and alternate sources in groups of twenty-four. What Survived maps preserved rooms, inferred connections, and known absences. The receipt records 347 rendered blocks, 946 source hashes, and ten of ten passing validations.
 
-Every recovery ends with a mechanical receipt. This one discloses planner GPT-5.6, model GPT-5.6-sol, 946 source hashes, 347 rendered blocks, and ten of ten passing validations. The model proposes consequential evidence choices; deterministic code derives the cited structure and decides what may be rendered. Failure stays visible. Silence is never filled with fiction.
+Alexandria is not an iExile demo. The same public pipeline returned this historic Mars Pathfinder mission site from eight captures across February through April 1999: seven preserved pages, one missing state, and twelve of twelve validations. Its 2001 window is inspected inside the same persisted recovery—no new archive query, no switched result. A missing path remains visible through cited surviving witnesses.
 
-Codex served as the build integrator across architecture, archive retrieval, hostile HTML handling, temporal reasoning, security, tests, deployment, and browser audits. Inside the shipped product, GPT-5.6 is the Chronologist. It receives a bounded evidence packet and returns only a strict schema: visible-page order and primary witness IDs. It is consequential, but never allowed to write history.
+GPT-5.6 is the Chronologist, not the historian. Deterministic code selects the evidence window. GPT-5.6 orders the preserved pages and chooses one supplied primary witness for each. Deterministic validation then rejects every unknown identifier, unsupported citation, or altered hash. The model interprets evidence structure. It never writes historical content.
 
-Alexandria Here returns a place—with witnesses. The lost web, present again, without pretending the gaps were never there.
+Codex integrated the architecture, archive retrieval, hostile-HTML handling, temporal reasoning, security, tests, deployment, and browser audits. The result is a shipped public product, not a staged fixture. A recovery can also fail honestly when connected evidence is insufficient.
+
+Alexandria does not generate the past. It reconciles surviving witnesses. The lost web, present again—without pretending the gaps were never there.

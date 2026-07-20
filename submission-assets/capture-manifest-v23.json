@@ -1,0 +1,185 @@
+{
+  "manifestVersion": "alexandria-final-capture-v1",
+  "generatedAt": "2026-07-20T00:04:03.007Z",
+  "publicOrigin": "https://alexandria-here.cinemaexile.chatgpt.site",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "deviceScaleFactor": 1
+  },
+  "runtime": {
+    "version": 23,
+    "commit": "65b39285520cf871df1081d6899b083af3edbd83",
+    "savedSitesVersion": "appgprj_6a5b165146ec8191a6507491526ca6eb~appgver_bf2e23910c90819193de0e5adf1b785d",
+    "deployment": "appgdep_6a5d57fbccb08191b868daeaf3d8e0d8",
+    "environmentRevision": 7,
+    "workerMarker": "app-worker-v1"
+  },
+  "recorders": [
+    {
+      "path": "work/video-recorder/final-record.mjs",
+      "sha256": "7ee74e1a167072cdb742c8521ebea30536ea93782de095e7a5ef8eefe645bea5"
+    },
+    {
+      "path": "work/video-recorder/final-atlas-stills.mjs",
+      "sha256": "e3435297a4fbe74c961569981d0d5e8e8a684cffdaca676dc2de1b50f6b9ccf8"
+    }
+  ],
+  "captureAssertions": [
+    "Production landing and both persisted recoveries returned through the public origin.",
+    "The browser recorded no application console errors.",
+    "The capture made no POST request to /api/recover and created no recovery.",
+    "Every recovery frame retained its expected recovery ID.",
+    "All five Atlas tabs and the Show the Seams control were exercised from persisted evidence.",
+    "Pathfinder 2001 Timeline inspection reconciled exactly four persisted captures from Jan 12 through Aug 22, 2001.",
+    "Witnesses rendered 24 blocks, expanded to 48, and the receipt retained its exact persisted counts.",
+    "The iExile Timeline, Witnesses, Ghost Map, and Receipt stills retained the same recovery ID, made no recovery POST, and rendered their exact persisted claims.",
+    "No desktop capture had document-level horizontal overflow."
+  ],
+  "liveProofs": [
+    {
+      "label": "iExile",
+      "id": "18026989-33be-4011-86ee-19e1754cb22c",
+      "receiptVersion": "1.0",
+      "manifestHash": "e4eeddc5cc3a0e1c43c7f0f63e869399d3c566824cd0c44dc1a9af706142e773",
+      "model": "gpt-5.6-sol",
+      "counts": {
+        "preservedBlocks": 622,
+        "renderedBlocks": 347,
+        "inferredEdges": 36,
+        "knownAbsences": 8
+      },
+      "pageUrl": "https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c",
+      "receiptUrl": "https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt",
+      "pageStatus": 200,
+      "receiptStatus": 200,
+      "workerMarker": "app-worker-v1",
+      "receiptSha256": "ed88133a61a636ac1a1c2a3a54fe3ffeb7444363a787a2d2a71509e4fb501ed8",
+      "validationCount": 10
+    },
+    {
+      "label": "Mars Pathfinder",
+      "id": "c6adb317-ee2f-4530-9298-e9eb5fe6efd2",
+      "receiptVersion": "1.3",
+      "manifestHash": "03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab",
+      "model": "gpt-5.6-sol",
+      "counts": {
+        "preservedBlocks": 250,
+        "renderedBlocks": 249,
+        "inferredEdges": 3,
+        "knownAbsences": 8
+      },
+      "pageUrl": "https://alexandria-here.cinemaexile.chatgpt.site/r/c6adb317-ee2f-4530-9298-e9eb5fe6efd2",
+      "receiptUrl": "https://alexandria-here.cinemaexile.chatgpt.site/api/recover/c6adb317-ee2f-4530-9298-e9eb5fe6efd2/receipt",
+      "pageStatus": 200,
+      "receiptStatus": 200,
+      "workerMarker": "app-worker-v1",
+      "receiptSha256": "45beedd49da9f8e6dbed8de88acda4038117353a0e7c86963daea3a6293deb94",
+      "validationCount": 12
+    }
+  ],
+  "files": [
+    {
+      "name": "00-landing-v23.png",
+      "bytes": 425438,
+      "modifiedAt": "2026-07-19T23:31:08.005Z",
+      "sha256": "57eb4247783aa6c8f60390a9948ea1b1dc5ad5d789db817fabafde6082eb14ba"
+    },
+    {
+      "name": "01-iexile-returned-v23.png",
+      "bytes": 171293,
+      "modifiedAt": "2026-07-19T23:31:10.535Z",
+      "sha256": "441c03c0d6cbbfdf3be69419041a383820ad98acecd7e440960d9ee2cf5bba94"
+    },
+    {
+      "name": "02-iexile-seams-v23.png",
+      "bytes": 173718,
+      "modifiedAt": "2026-07-19T23:31:21.125Z",
+      "sha256": "563a84937a65e6aa396c306153a010a425066e8ca02e1005671531924d1e00dc"
+    },
+    {
+      "name": "03-pathfinder-returned-v23.png",
+      "bytes": 188900,
+      "modifiedAt": "2026-07-19T23:31:27.165Z",
+      "sha256": "b708a5723d1207f797c71473aba61350f5d44cbe21cc3cd590ab28bcd8d77f93"
+    },
+    {
+      "name": "04-pathfinder-title-seam-v23.png",
+      "bytes": 152227,
+      "modifiedAt": "2026-07-19T23:31:32.559Z",
+      "sha256": "231980df69a79946e049bb3cde01dc789e3222bcf7b270c7b6072bf46a70ee84"
+    },
+    {
+      "name": "05-pathfinder-missing-seams-v23.png",
+      "bytes": 115752,
+      "modifiedAt": "2026-07-19T23:31:39.519Z",
+      "sha256": "e662a065a44f3d15bf17a8e186c470d8f9eb5f33b0d23ec8cebe080f8379b8c6"
+    },
+    {
+      "name": "06-pathfinder-ghost-map-v23.png",
+      "bytes": 209691,
+      "modifiedAt": "2026-07-19T23:31:46.898Z",
+      "sha256": "d034b046a8d82c7d68de1d772ced7f16746ba638302f1a421467be4c205467ad"
+    },
+    {
+      "name": "07-pathfinder-timeline-2001-v23.png",
+      "bytes": 199297,
+      "modifiedAt": "2026-07-19T23:31:56.478Z",
+      "sha256": "605730a793e6b2caf517b6ca7c7e590dcefe5e3a33153bfbae4ffa23f03bd119"
+    },
+    {
+      "name": "08-pathfinder-witnesses-24-v23.png",
+      "bytes": 130088,
+      "modifiedAt": "2026-07-19T23:33:19.760Z",
+      "sha256": "de82225d0beac989f1cd01b28ff706db3696a814703b1a69f9edcb5d7cc9ee47"
+    },
+    {
+      "name": "09-pathfinder-witnesses-48-v23.png",
+      "bytes": 75623,
+      "modifiedAt": "2026-07-19T23:32:06.458Z",
+      "sha256": "f46fd4bb8c336a49b7c670e2d8e078b6acc40a8a6299b4010e636113e7622f82"
+    },
+    {
+      "name": "10-pathfinder-receipt-v23.png",
+      "bytes": 140417,
+      "modifiedAt": "2026-07-19T23:32:13.453Z",
+      "sha256": "53dc84252ed1e41c61b87ba20addd29360ae42a58c86693dcc942b2741ee730e"
+    },
+    {
+      "name": "11-iexile-timeline-v23.png",
+      "bytes": 198943,
+      "modifiedAt": "2026-07-19T23:57:48.034Z",
+      "sha256": "ecc7f31a67cb3b0b9b2794a48cfe7a97f88ceb400ed77fedaea1ebd7c7584d9e"
+    },
+    {
+      "name": "12-iexile-witnesses-v23.png",
+      "bytes": 174861,
+      "modifiedAt": "2026-07-19T23:57:49.295Z",
+      "sha256": "8525d0824ce3f9c755d53682373953350e43a867bb72217f555d4a5ea12ac44c"
+    },
+    {
+      "name": "13-iexile-ghost-map-v23.png",
+      "bytes": 170835,
+      "modifiedAt": "2026-07-19T23:57:50.578Z",
+      "sha256": "d1574138e122c60dea5a45c6e3d622db50435bbcffc0ffe54df9d848c0217654"
+    },
+    {
+      "name": "14-iexile-receipt-v23.png",
+      "bytes": 118872,
+      "modifiedAt": "2026-07-19T23:57:51.745Z",
+      "sha256": "ba51ff855b71d7253d5a66d55e25c7d20a3050dcc63a5eae2a4a3ed60674b2e0"
+    },
+    {
+      "name": "iexile-story-v23.webm",
+      "bytes": 1717510,
+      "modifiedAt": "2026-07-19T23:31:24.478Z",
+      "sha256": "40ea314e27c3e0306acb6cdf89a887d997217ea890e2f9cfd08aba29c3c7e931"
+    },
+    {
+      "name": "pathfinder-proof-v23.webm",
+      "bytes": 6142009,
+      "modifiedAt": "2026-07-19T23:32:18.151Z",
+      "sha256": "150bb59b4b24743c40959fe04a7697f5ede8dede8c55943525b1c6cb08401e6b"
+    }
+  ]
+}
