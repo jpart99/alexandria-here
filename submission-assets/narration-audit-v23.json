@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "disclosure": "Synthetic narration generated with Microsoft Edge TTS.",
+  "voice": "en-US-EmmaMultilingualNeural",
+  "rate": "+5%",
+  "source_whitespace_word_count": 328,
+  "timed_boundary_count": 333,
+  "audio": {
+    "duration_seconds": 149.544,
+    "sample_rate_hz": 48000,
+    "channels": 1,
+    "sample_width_bits": 24,
+    "frame_count": 7178112
+  },
+  "loudness": {
+    "integrated_lufs": -16.01,
+    "true_peak_dbtp": -1.5,
+    "loudness_range_lu": 2.0,
+    "threshold_lufs": -26.35
+  },
+  "srt": {
+    "cue_count": 56,
+    "first_start_seconds": 0.083,
+    "last_end_seconds": 149.238,
+    "max_cue_characters": 63,
+    "no_overlaps": true,
+    "transcript_exact_after_whitespace_normalization": true
+  },
+  "vtt": {
+    "cue_count": 56,
+    "first_start_seconds": 0.083,
+    "last_end_seconds": 149.238,
+    "max_cue_characters": 63,
+    "no_overlaps": true,
+    "transcript_exact_after_whitespace_normalization": true
+  },
+  "full_decode": {
+    "raw_mp3": true,
+    "normalized_wav": true
+  },
+  "files": {
+    "final-narration-v23.txt": {
+      "bytes": 2306,
+      "sha256": "69d4d7ba4e8e88ff15d0393c3b78b413766b3813ca2fc52556809dff8f2f74aa"
+    },
+    "final-narration-v23-raw.mp3": {
+      "bytes": 897264,
+      "sha256": "8fb581569395f51f5269d72f8f8b67349d810abf2f4a54c44e431bffd0b257d3"
+    },
+    "final-narration-v23-normalized.wav": {
+      "bytes": 21534438,
+      "sha256": "f9f8627ab4a48b1d86009cf1c373c8cab881c2e34e9fb870522417824155706b"
+    },
+    "final-narration-v23-words.json": {
+      "bytes": 59787,
+      "sha256": "5293cffadbacd6062fc66a28c15900009c064a1e5663aa791c159f475275c9f3"
+    },
+    "final-narration-v23.srt": {
+      "bytes": 4416,
+      "sha256": "132a76878648df5563078d0bf586e32e810570b98d7a0ab7f3cddb5c0ba1de0b"
+    },
+    "final-narration-v23.vtt": {
+      "bytes": 4211,
+      "sha256": "4e2089164cf12c0ceb68de79d5a053214ca865d4b1ce3dbb616e0b5651c9fac8"
+    }
+  }
+}

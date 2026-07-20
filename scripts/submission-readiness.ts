@@ -28,39 +28,45 @@ interface VttCue {
 
 const DEFAULT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const VIDEO_NAME = "alexandria-here-build-week-demo.mp4";
-const VIDEO_HASH = "B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA";
+const VIDEO_HASH: string = "ED270F6902CFA3AB96C0081E204A62670161E2E392DD470388306C9D57B3CA37";
 const PLACEHOLDER_VIDEO_HASH = "B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA";
-const VIDEO_BYTES = 11_459_389;
-const VIDEO_DURATION_SECONDS = 155.26;
+const VIDEO_BYTES = 15_456_707;
+const VIDEO_DURATION_SECONDS = 151.04;
+const VIDEO_FRAMES = 4_531;
 const CAPTIONS_NAME = "alexandria-here-build-week-demo.en.vtt";
-const CAPTIONS_HASH = "FAD236187D399A8A3B7F2A19F09F0826EF35B68154E34659BB1F94C07F01EA22";
+const CAPTIONS_HASH = "4E2089164CF12C0CEB68DE79D5A053214CA865D4B1CE3DBB616E0B5651C9FAC8";
 const YOUTUBE_THUMBNAIL_NAME = "07-youtube-thumbnail.png";
-const YOUTUBE_THUMBNAIL_HASH = "97BD15C6EC9E65445361A1DC39172AE40866DAA89D5278D64BCBD5DC034145A3";
-const YOUTUBE_THUMBNAIL_BYTES = 265_905;
+const YOUTUBE_THUMBNAIL_HASH = "9D3BA06F82E7C7187BCCCD52D68AFD25D79F0EBF3060DED3DE306F0BF4AAF725";
+const YOUTUBE_THUMBNAIL_BYTES = 177_061;
 const YOUTUBE_TITLE = "Alexandria Here — A Witnessed Restoration Engine for the Lost Web | OpenAI Build Week";
-const DEVPOST_MANIFEST_HASH = "8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044";
+const DEVPOST_MANIFEST_HASH: string = "4528B18BB67F10288E63C91ADD25E1DBFF4F483199D2304C29B92E483914F008";
+const FINAL_MEDIA_PROVENANCE_HASHES = {
+  "capture-manifest-v23.json": "92EAE9620EF3E40A0BB92229E6B73064485AE7AD8F9A20FE7B58AD5DE590545D",
+  "narration-audit-v23.json": "D0FB7563F7F00C78E78A1C7AE9F2B954966838B18EAD9F043839FD32EB1E136A",
+  "final-composition-plan-v23.json": "3748F584849C40F98779D0DD431C9274E0A3CA08396EF04820932281771DA7BC",
+} as const;
 const PLACEHOLDER_DEVPOST_MANIFEST_HASH = "8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044";
 const DEVPOST_MAX_BYTES = 5_000_000;
 const DEVPOST_NAMES = [
   "08-devpost-cover.png",
-  "09-devpost-gallery-returned-site.png",
-  "10-devpost-gallery-show-the-seams.png",
-  "11-devpost-gallery-timeline.png",
-  "12-devpost-gallery-what-survived.png",
-  "13-devpost-gallery-witnesses.png",
-  "14-devpost-gallery-receipt.png",
+  "09-devpost-gallery-iexile-returned.png",
+  "10-devpost-gallery-iexile-seams.png",
+  "11-devpost-gallery-pathfinder-returned.png",
+  "12-devpost-gallery-pathfinder-timeline.png",
+  "13-devpost-gallery-pathfinder-absence.png",
+  "14-devpost-gallery-witness-receipt.png",
 ] as const;
 const DEVPOST_HASHES: Readonly<Record<(typeof DEVPOST_NAMES)[number], string>> = {
-  "08-devpost-cover.png": "45CFA6E35743FEDB2CF617F416807409DBD35580EF31041828CFF11BD48F4A6A",
-  "09-devpost-gallery-returned-site.png": "3801712A049C4C2C866D5AB320A1A26BC210B86B3A52803AC3E2394F0A2C1E0C",
-  "10-devpost-gallery-show-the-seams.png": "374CD2466A17475A879F74915CC09D46BA827E091307A326BD7851D07A2E1F2D",
-  "11-devpost-gallery-timeline.png": "7C60525259CD2322DBB9C745CCACC033B5C401E6C8B1F7155EECE3C4381814AD",
-  "12-devpost-gallery-what-survived.png": "B281C13E8D62B2595F6094CDE060C7593386FAE1ECA17D724DDD6E0490709AC9",
-  "13-devpost-gallery-witnesses.png": "26C07D81F76979F9CEA980AF3D452EB498865EE6EC9B1670AEC113B5040BA299",
-  "14-devpost-gallery-receipt.png": "C3C9A7F68D6E2AE50DFB5904AD249F15FE9070B099C4EA1F03A1A560D6212DA8",
+  "08-devpost-cover.png": "CDEBA1AC93656D178B53A3D416283C75201D0E6B39667A4D18E943364B3E25D3",
+  "09-devpost-gallery-iexile-returned.png": "4A5298D5C34714E33AF9C2127357CF488A1EB95B2E6430379A84B5D14BDD451F",
+  "10-devpost-gallery-iexile-seams.png": "8FCB09512022734A21ED3C19FA53BD7E04007A372C025000728A7141516D4A68",
+  "11-devpost-gallery-pathfinder-returned.png": "D84996DC402F9F80119972B7E2754E3BE7C0761A51D36923EE40A01F5415ED02",
+  "12-devpost-gallery-pathfinder-timeline.png": "A87C1388FFA9CE1685C4C1268342FE224021EF09EFA0D0BD0549CBEA022E00C9",
+  "13-devpost-gallery-pathfinder-absence.png": "3A25ACD400C4E7201EEB466F799A1AB9EA6886B90E0882FB1851252F6F3FB760",
+  "14-devpost-gallery-witness-receipt.png": "4748BEF2294C2167E12E4983345B0E6C448BCCA0FB86AEE8A21B7E3299D42800",
 };
 const GALLERY_NAMES = DEVPOST_NAMES.slice(1);
-const YOUTUBE_CHAPTERS = [0, 19, 42, 65, 86, 117, 147] as const;
+const YOUTUBE_CHAPTERS = [0, 11, 30, 48, 70, 96, 122, 140] as const;
 const PRODUCTION_URL = "https://alexandria-here.cinemaexile.chatgpt.site";
 const RECOVERY_ID = "18026989-33be-4011-86ee-19e1754cb22c";
 const RECOVERY_URL = `${PRODUCTION_URL}/r/${RECOVERY_ID}`;
@@ -137,16 +143,19 @@ const FRESH_V18_MODEL_CLAIM = "planner `gpt-5.6`, model `gpt-5.6-sol`";
 const HISTORICAL_V16_MATRIX_CLAIM = "The exact final version 16 failure-matrix rerun was externally blocked because public Wayback CDX returned zero bytes or timed out; no timeout was relaxed.";
 const CURRENT_MATRIX_CLAIM = "Production version 23 passed the full eight-boundary compiled failure matrix.";
 const EXAMPLE_SCOPE_CLAIM = "iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.";
-const PLACEHOLDER_MEDIA_CLAIM = "The current public YouTube video and Devpost media are placeholder presentation media, not the final version 23 submission set.";
-const VIDEO_LAST_CLAIM = "Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked.";
-const DEVPOST_MEDIA_STATUS_CLAIM = "Status: the current public video and Devpost media are placeholder presentation media; final version 23 media and Devpost synchronization remain pending, followed by rules acceptance and final submission.";
+const FINAL_MEDIA_CLAIM = "The final dual-example version 23 media package is locally audited and integrity-pinned; public YouTube publication and Devpost synchronization remain pending.";
+const FINAL_MEDIA_SEAL_CLAIM = `The final master is 2:31.04 at 1920×1080 and 30 fps (${VIDEO_FRAMES} frames), with 56 exact English caption cues ending at 2:29.238, normalized 48 kHz synthetic narration, and SHA-256 \`${VIDEO_HASH}\`.`;
+const DEVPOST_MEDIA_STATUS_CLAIM = "Status: final version 23 media is locally audited; public YouTube replacement, Devpost synchronization, rules acceptance, and final submission remain pending.";
 const YOUTUBE_RUNTIME_CLAIM = `The current recovery and receipt links point to the corrected decision-attribution proof generated by version 7 runtime \`${PROOF_RUNTIME_COMMIT}\`; accepted production Sites version 23 runtime \`${CURRENT_RUNTIME_COMMIT}\` currently serves that persisted receipt 1.0 proof without claiming to have generated it.`;
-const PLACEHOLDER_YOUTUBE_URL = "https://youtu.be/z1FJLdJS93o";
-const PUBLIC_YOUTUBE_URL = PLACEHOLDER_YOUTUBE_URL;
-const YOUTUBE_PLACEHOLDER = "[ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]";
+const HISTORICAL_YOUTUBE_URL = "https://youtu.be/z1FJLdJS93o";
+const HISTORICAL_PUBLICATION_CLAIM = `The earlier public video at ${HISTORICAL_YOUTUBE_URL} is retained only as historical publication provenance until the audited final video is published and verified.`;
+const YOUTUBE_PLACEHOLDER = "[ADD FINAL PUBLIC YOUTUBE URL — UNDER 3 MINUTES]";
+// Set this once, and only once, after signed-out verification of the final upload.
+const FINAL_YOUTUBE_URL = "";
+const FINAL_YOUTUBE_REFERENCE = FINAL_YOUTUBE_URL || YOUTUBE_PLACEHOLDER;
 const YOUTUBE_URL_PATTERN = /https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[A-Za-z0-9_-]+/;
 const CHECKLIST = {
-  youtubeUpload: "After application and presentation lock, regenerate and upload the final version 23 video, captions, and thumbnail as one audited set.",
+  youtubeUpload: "Upload the locally audited final version 23 video, captions, and thumbnail as one sealed set.",
   youtubeVerify: "Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.",
   devpostText: "Replace the saved Devpost About and judge instructions with the version 23 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `100 passing tests`, the current runtime, and both presentation recoveries.",
   devpostMedia: "Upload the final version 23 Devpost thumbnail and gallery media, then verify the public preview.",
@@ -335,7 +344,7 @@ function vttTimestampMs(value: string): number {
   return ((hours * 60 + minutes) * 60 + seconds) * 1000 + milliseconds;
 }
 
-export function validateWebVtt(raw: string, expectedCount = 49, maximumEndMs = Math.round(VIDEO_DURATION_SECONDS * 1000)): VttCue[] {
+export function validateWebVtt(raw: string, expectedCount = 56, maximumEndMs = Math.round(VIDEO_DURATION_SECONDS * 1000)): VttCue[] {
   if (raw.includes("\uFFFD")) fail("WebVTT contains replacement characters");
   const lines = raw.replace(/\r\n/g, "\n").split("\n");
   if (lines[0] !== "WEBVTT") fail("captions must begin with WEBVTT");
@@ -405,7 +414,8 @@ export function assertOrdered(haystack: string, needles: readonly string[], labe
 export function classifyYouTubeReference(submission: string): "pending" | "present" {
   const placeholders = submission.match(/\[(?:ADD|TODO|TBD)[^\]]*\]/g) ?? [];
   const hasAllowedPlaceholder = placeholders.length === 1 && placeholders[0] === YOUTUBE_PLACEHOLDER;
-  const hasYouTubeUrl = YOUTUBE_URL_PATTERN.test(submission);
+  const finalReferenceSurface = submission.replaceAll(HISTORICAL_YOUTUBE_URL, "");
+  const hasYouTubeUrl = YOUTUBE_URL_PATTERN.test(finalReferenceSurface);
   if (placeholders.some((placeholder) => placeholder !== YOUTUBE_PLACEHOLDER) || placeholders.length > 1) {
     fail(`submission contains unsupported placeholders: ${placeholders.join(", ")}`);
   }
@@ -444,10 +454,7 @@ export function classifyFinalPresentationMedia(submission: string): "pending" | 
   }
 
   const completionRequested = youtubeState === "present" && uploadState === "complete" && verifyState === "complete";
-  const placeholderEvidence = submission.includes(PLACEHOLDER_MEDIA_CLAIM)
-    || submission.includes(DEVPOST_MEDIA_STATUS_CLAIM)
-    || submission.includes(PLACEHOLDER_YOUTUBE_URL)
-    || VIDEO_HASH === PLACEHOLDER_VIDEO_HASH
+  const placeholderEvidence = VIDEO_HASH === PLACEHOLDER_VIDEO_HASH
     || DEVPOST_MANIFEST_HASH === PLACEHOLDER_DEVPOST_MANIFEST_HASH;
   if (completionRequested && placeholderEvidence) {
     fail("final presentation media cannot pass while known placeholder claims, URL, or artifact fingerprints remain");
@@ -558,8 +565,9 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
       HISTORICAL_V16_MATRIX_CLAIM,
       CURRENT_MATRIX_CLAIM,
       EXAMPLE_SCOPE_CLAIM,
-      PLACEHOLDER_MEDIA_CLAIM,
-      VIDEO_LAST_CLAIM,
+      FINAL_MEDIA_CLAIM,
+      FINAL_MEDIA_SEAL_CLAIM,
+      HISTORICAL_PUBLICATION_CLAIM,
       DEVPOST_MEDIA_STATUS_CLAIM,
       ...PATHFINDER_PROOF_PHRASES,
     ],
@@ -569,7 +577,7 @@ export function assertSubmissionRuntimeProvenance(submission: string): void {
 }
 
 export function assertYouTubeRuntimeProvenance(metadata: string): void {
-  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, EXAMPLE_SCOPE_CLAIM, PLACEHOLDER_MEDIA_CLAIM, VIDEO_LAST_CLAIM], "YouTube runtime provenance");
+  requirePhrases(metadata, [YOUTUBE_RUNTIME_CLAIM, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, EXAMPLE_SCOPE_CLAIM, FINAL_MEDIA_CLAIM, FINAL_MEDIA_SEAL_CLAIM, HISTORICAL_PUBLICATION_CLAIM], "YouTube runtime provenance");
   assertExclusiveRuntimeClaims(metadata, "YouTube runtime provenance");
 }
 
@@ -598,7 +606,7 @@ export function assertDevpostFieldCopy(fieldCopy: string): { storyLength: number
     ...PATHFINDER_PROOF_PHRASES.filter((phrase) => phrase !== "12/12 validations"),
     "12 of 12 validations",
     VIDEO_CAPTURE_RECOVERY_URL,
-    "video-capture provenance, not the current decision-attribution judging proof",
+    "historical capture provenance, not either current presentation proof",
     VIDEO_CAPTURE_FAIL_CLOSED_CLAIM,
     "may fail honestly",
     EXAMPLE_SCOPE_CLAIM,
@@ -742,10 +750,13 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   const assetPath = (name: string) => path.join(root, "submission-assets", name);
   const document = (name: string) => readFile(path.join(root, name), "utf8");
 
-  await addCheck(checks, "Media integrity", "Placeholder video master", async () => {
-    const [video, sidecar] = await Promise.all([
+  await addCheck(checks, "Media integrity", "Final video master", async () => {
+    const [video, sidecar, captureBytes, narrationAuditBytes, compositionBytes] = await Promise.all([
       readRegularFile(assetPath(VIDEO_NAME), { exactBytes: VIDEO_BYTES }),
       readRegularFile(assetPath("alexandria-here-build-week-demo.sha256"), { maxBytes: 1024 }),
+      readRegularFile(assetPath("capture-manifest-v23.json"), { maxBytes: 1_000_000 }),
+      readRegularFile(assetPath("narration-audit-v23.json"), { maxBytes: 1_000_000 }),
+      readRegularFile(assetPath("final-composition-plan-v23.json"), { maxBytes: 1_000_000 }),
     ]);
     const manifest = parseHashManifest(sidecar, [VIDEO_NAME]);
     verifyPinnedHash(video, VIDEO_HASH, "video master");
@@ -754,7 +765,50 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     if (Math.abs(duration - VIDEO_DURATION_SECONDS) > 0.01 || duration >= 180) {
       fail(`video duration is ${duration.toFixed(3)} seconds; expected ${VIDEO_DURATION_SECONDS} and less than 180`);
     }
-    return `${VIDEO_HASH}; ${duration.toFixed(3)} seconds; less than 3:00`;
+    const provenanceBytes = {
+      "capture-manifest-v23.json": captureBytes,
+      "narration-audit-v23.json": narrationAuditBytes,
+      "final-composition-plan-v23.json": compositionBytes,
+    } as const;
+    for (const [name, hash] of Object.entries(FINAL_MEDIA_PROVENANCE_HASHES)) {
+      verifyPinnedHash(provenanceBytes[name as keyof typeof provenanceBytes], hash, name);
+    }
+
+    const composition = JSON.parse(compositionBytes.toString("utf8")) as {
+      status?: unknown;
+      stage?: unknown;
+      output?: unknown;
+      inputs?: Array<{ path?: unknown }>;
+      ffmpeg?: unknown;
+      clock?: { video_frames?: unknown; film_seconds?: unknown };
+      captions?: { cue_count?: unknown; last_cue_seconds?: unknown };
+      rendered?: {
+        path?: unknown;
+        bytes?: unknown;
+        sha256?: unknown;
+        full_decode?: unknown;
+        embedded_captions?: { path?: unknown; transcript_parity?: unknown };
+      };
+    };
+    if (composition.status !== "complete" || composition.stage !== "final-media-v23") fail("composition status or portable stage identity drifted");
+    if (composition.output !== "alexandria-here-final-demo-v23.mp4") fail("composition output identity drifted");
+    if (composition.clock?.video_frames !== VIDEO_FRAMES || composition.clock?.film_seconds !== VIDEO_DURATION_SECONDS) fail("composition clock drifted");
+    if (composition.captions?.cue_count !== 56 || composition.captions?.last_cue_seconds !== 149.238) fail("composition caption evidence drifted");
+    if (!Array.isArray(composition.inputs) || composition.inputs.length !== 18) fail("composition input inventory drifted");
+    const portableNames = [composition.stage, composition.output, composition.ffmpeg, composition.rendered?.path, composition.rendered?.embedded_captions?.path, ...composition.inputs.map((input) => input.path)];
+    if (portableNames.some((value) => typeof value !== "string" || /[\\/]/.test(value) || /^[A-Za-z]:/.test(value))) fail("composition provenance exposes a workstation path");
+    if (composition.rendered?.bytes !== VIDEO_BYTES || String(composition.rendered?.sha256).toUpperCase() !== VIDEO_HASH || composition.rendered?.full_decode !== "pass") fail("composition master evidence drifted");
+    if (composition.rendered?.embedded_captions?.path !== "final-captions-embedded-v23.vtt" || composition.rendered?.embedded_captions?.transcript_parity !== "pass") fail("embedded caption evidence drifted");
+
+    const capture = JSON.parse(captureBytes.toString("utf8")) as { runtime?: { version?: unknown; commit?: unknown }; liveProofs?: Array<{ id?: unknown }> };
+    if (capture.runtime?.version !== 23 || capture.runtime?.commit !== CURRENT_RUNTIME_COMMIT) fail("capture runtime provenance drifted");
+    if (capture.liveProofs?.[0]?.id !== RECOVERY_ID || capture.liveProofs?.[1]?.id !== PATHFINDER_RECOVERY_ID) fail("capture proof identities drifted");
+
+    const narrationAudit = JSON.parse(narrationAuditBytes.toString("utf8")) as { status?: unknown; disclosure?: unknown; loudness?: { integrated_lufs?: unknown; true_peak_dbtp?: unknown } };
+    if (narrationAudit.status !== "PASS" || narrationAudit.disclosure !== "Synthetic narration generated with Microsoft Edge TTS.") fail("narration audit provenance drifted");
+    if (narrationAudit.loudness?.integrated_lufs !== -16.01 || narrationAudit.loudness?.true_peak_dbtp !== -1.5) fail("narration loudness evidence drifted");
+
+    return `${VIDEO_HASH}; ${VIDEO_FRAMES} frames at 30 fps; ${duration.toFixed(3)} seconds; exact portable capture, narration, and composition provenance`;
   });
 
   await addCheck(checks, "Media integrity", "English captions", async () => {
@@ -767,28 +821,28 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     const cues = validateWebVtt(bytes.toString("utf8"));
     const firstStartMs = cues[0]?.startMs ?? -1;
     const lastEndMs = cues.at(-1)?.endMs ?? -1;
-    if (firstStartMs !== 258) fail(`first caption starts at ${firstStartMs} ms; expected 258`);
-    if (lastEndMs !== 154_837) fail(`last caption ends at ${lastEndMs} ms; expected 154837`);
+    if (firstStartMs !== 83) fail(`first caption starts at ${firstStartMs} ms; expected 83`);
+    if (lastEndMs !== 149_238) fail(`last caption ends at ${lastEndMs} ms; expected 149238`);
     const cueText = cues.map((cue) => cue.text).join(" ");
     const scriptNarration = demoScript
       .split(/\r?\n/)
       .filter((line) => line.startsWith("> "))
       .map((line) => line.slice(2))
       .join(" ");
-    requirePhrases(demoScript, [VIDEO_CAPTURE_RECOVERY_URL, "ordinary production row; do not replace"], "demo script capture provenance");
+    requirePhrases(demoScript, [RECOVERY_URL, PATHFINDER_RECOVERY_URL, "synthetic narration only", "no generated historical imagery or evidence"], "demo script capture provenance");
     assertSameWords(cueText, narration, "captions and narration transcript");
     assertSameWords(cueText, scriptNarration, "captions and demo script narration");
     return `${cues.length} exact cues from ${firstStartMs} to ${lastEndMs} ms; transcript and script match`;
   });
 
-  await addCheck(checks, "Media integrity", "Placeholder YouTube thumbnail", async () => {
+  await addCheck(checks, "Media integrity", "Final YouTube thumbnail", async () => {
     const bytes = await readRegularFile(assetPath(YOUTUBE_THUMBNAIL_NAME), { exactBytes: YOUTUBE_THUMBNAIL_BYTES });
     verifyPinnedHash(bytes, YOUTUBE_THUMBNAIL_HASH, "YouTube thumbnail");
     validatePng(bytes, 1280, 720);
     return `${YOUTUBE_THUMBNAIL_NAME}; 1280x720 RGB PNG; ${bytes.length} bytes`;
   });
 
-  await addCheck(checks, "Media integrity", "Placeholder Devpost media set", async () => {
+  await addCheck(checks, "Media integrity", "Final Devpost media set", async () => {
     const manifestBytes = await readRegularFile(assetPath("devpost-media.sha256"), { maxBytes: 10_000 });
     verifyPinnedHash(manifestBytes, DEVPOST_MANIFEST_HASH, "Devpost manifest");
     const manifest = parseHashManifest(manifestBytes, DEVPOST_NAMES);
@@ -812,14 +866,14 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
     return `${DEVPOST_NAMES.length} exact 1500x1000 RGB PNGs; cover plus ${GALLERY_NAMES.length} ordered gallery cards`;
   });
 
-  await addCheck(checks, "Submission contracts", "Placeholder YouTube copy package", async () => {
+  await addCheck(checks, "Submission contracts", "Final YouTube copy package", async () => {
     const metadata = await document("YOUTUBE_METADATA.md");
     assertYouTubeRuntimeProvenance(metadata);
     const title = extractMarkdownSection(metadata, "## Title", "## Description").trim();
     const description = extractMarkdownSection(metadata, "## Description", "## Recommended upload settings");
     if (title !== YOUTUBE_TITLE) fail(`YouTube title differs from the sealed ${YOUTUBE_TITLE.length}-character title`);
     if (!description || description.length > 5000) fail(`YouTube description length is ${description.length}; expected 1-5000 characters`);
-    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "claims neither ownership nor historical completeness", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing", EXAMPLE_SCOPE_CLAIM], "YouTube description");
+    requirePhrases(description, [PRODUCTION_URL, RECOVERY_URL, RECEIPT_URL, PATHFINDER_RECOVERY_URL, PATHFINDER_RECEIPT_URL, REPOSITORY_URL, "Codex", "GPT-5.6", "synthetic narration", "no generated historical imagery or evidence", "claims neither ownership nor historical completeness", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing", EXAMPLE_SCOPE_CLAIM], "YouTube description");
     const chapters = [...description.matchAll(/^(\d{2}):(\d{2}) (.+)$/gm)].map((match) => Number(match[1]) * 60 + Number(match[2]));
     if (JSON.stringify(chapters) !== JSON.stringify(YOUTUBE_CHAPTERS)) {
       fail(`YouTube chapter boundaries are ${chapters.join(", ")}; expected ${YOUTUBE_CHAPTERS.join(", ")}`);
@@ -831,7 +885,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
   await addCheck(checks, "Submission contracts", "Devpost handoff", async () => {
     const handoff = await document("FINAL_SUBMISSION_HANDOFF.md");
     const releaseOperations = await document("RELEASE_OPERATIONS.md");
-    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${PUBLIC_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:35.26", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, PATHFINDER_RECOVERY_URL, PATHFINDER_RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM, PLACEHOLDER_MEDIA_CLAIM, VIDEO_LAST_CLAIM, "Final media and Devpost synchronization remain pending"], "final handoff");
+    requirePhrases(handoff, [VIDEO_NAME, VIDEO_HASH, YOUTUBE_THUMBNAIL_NAME, CAPTIONS_NAME, DEVPOST_NAMES[0], "devpost-media.sha256", "DEVPOST_FIELD_COPY.md", "Authenticated synchronization on July 19, 2026", "Devpost Preview was then verified", "99 passing tests", RECOVERY_ID, "4/5 steps done", "project thumbnail is the exact audited `08-devpost-cover.png`", "image gallery contains exactly six audited cards in numbered order", "gallery tabs `1 of 6` through `6 of 6`", `video-demo field contains ${HISTORICAL_YOUTUBE_URL}`, "official-rules checkbox is unchecked", "less than 3:00", "2:31.04", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "https://openai.devpost.com/rules", "https://openai.devpost.com/details/faqs", PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, PATHFINDER_RECOVERY_URL, PATHFINDER_RECEIPT_URL, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, HISTORICAL_YOUTUBE_URL, FINAL_YOUTUBE_REFERENCE, SESSION_ID, "up to 15 images", "5 MB", "Jaia's authority", "phone verification", "official-rules acceptance", "final submission", EXAMPLE_SCOPE_CLAIM, FINAL_MEDIA_CLAIM, FINAL_MEDIA_SEAL_CLAIM, HISTORICAL_PUBLICATION_CLAIM, "Public media synchronization remains pending"], "final handoff");
     assertJudgingAvailability(handoff, releaseOperations);
     assertCanonicalTiming(handoff, "final handoff");
     const galleryLine = handoff.split(/\r?\n/).find((line) => line.startsWith("- Gallery, in upload order:"));
@@ -861,10 +915,10 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       document("FAILURE_RELIABILITY_MATRIX.md"),
     ]);
     assertReleaseDocumentRuntimeProvenance({ failureMatrix, readme, judgeEvidence, releaseOperations, submission, youtubeMetadata });
-    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, ...PATHFINDER_PROOF_PHRASES, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, HISTORICAL_V8_FAIL_CLOSED_CLAIM, HISTORICAL_911_ID, HISTORICAL_911_FAIL_CLOSED_CLAIM, PUBLIC_YOUTUBE_URL, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
+    requirePhrases(submission, [PRODUCTION_URL, REPOSITORY_URL, RECOVERY_URL, RECEIPT_URL, ...PATHFINDER_PROOF_PHRASES, VIDEO_CAPTURE_RECOVERY_URL, VIDEO_CAPTURE_FAIL_CLOSED_CLAIM, HISTORICAL_V8_FAIL_CLOSED_CLAIM, HISTORICAL_911_ID, HISTORICAL_911_FAIL_CLOSED_CLAIM, HISTORICAL_YOUTUBE_URL, FINAL_YOUTUBE_REFERENCE, SESSION_ID, "5 returned preserved pages plus 2 witnessed Missing states from 8 capture records", "347 rendered blocks", "946 content-addressed extracted evidence blocks", "36 inferred edges", "8 known absences", "10 of 10 deterministic", "planner: \"gpt-5.6\"", "model `gpt-5.6-sol`", "deterministic `era_selection`", "GPT-5.6 `page_order` and `primary_witness` decisions", "fourteen static/local release-contract checks", "eight-boundary compiled failure matrix", "bare, query-bearing, and archived `.onion` HTTP(S) locators", "query-cleared sibling path across HTTP and HTTPS variants", "8 manifest pages: 6 returned and 2 represented honestly as missing", "154 preserved evidence blocks", "24 witnessed internal-reference edges", "July 21, 2026 at 5:00 PM PDT (Pacific Time)", "Papyrus Principle", "bounded same-site archive records", "unwitnessed material remains missing"], "submission narrative");
     assertCanonicalTiming(submission, "submission narrative");
     const youtubeState = classifyYouTubeReference(submission);
-    return `v23 release documents, historical v20/v21/v22 lineage, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "sole-placeholder" : "placeholder YouTube URL"} claims are present`;
+    return `v23 release documents, dual-example proof, receipt, model, metric, Session ID, deadline, and ${youtubeState === "pending" ? "final-URL pending marker" : "final public YouTube URL"} claims are present`;
   });
 
   await addCheck(checks, "Submission contracts", "Portable checkout and command contract", async () => {
@@ -872,11 +926,14 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       document(".gitattributes"),
       document("package.json").then((raw) => JSON.parse(raw) as { scripts?: Record<string, string> }),
     ]);
-    requirePhrases(attributes, ["*.png binary", "*.mp4 binary", "*.vtt text eol=lf", "*.sha256 text eol=lf"], ".gitattributes");
+    requirePhrases(attributes, ["*.png binary", "*.mp4 binary", "*.vtt text eol=lf", "*.sha256 text eol=lf", "submission-assets/*.json text eol=lf", "submission-assets/narration.txt text eol=lf"], ".gitattributes");
     if (packageJson.scripts?.["qa:submission"] !== "tsx scripts/submission-readiness.ts") {
       fail("package.json does not expose the exact non-mutating submission preflight");
     }
-    return `binary media and LF text seals survive fresh checkouts; qa:submission is declared`;
+    if (packageJson.scripts?.["qa:media"] !== "tsx scripts/audit-final-media-v23.ts") {
+      fail("package.json does not expose the exact non-mutating final-media audit");
+    }
+    return `binary media and LF text seals survive fresh checkouts; qa:media and qa:submission are declared`;
   });
 
   let submissionText = "";
@@ -894,7 +951,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       name: "Final presentation media replacement",
       state: mediaState === "pending" ? "PENDING" : "PASS",
       detail: mediaState === "pending"
-        ? "the current URL/artifacts are placeholder provenance; regenerate, integrity-pin, publish, and verify the final video/captions/thumbnail before replacing the Devpost embed"
+        ? "the final local artifacts are sealed; publish and signed-out verify the new video, captions, and thumbnail before replacing the Devpost embed"
         : "the final non-placeholder URL, artifact fingerprints, public metadata, captions, and embed checks are explicitly recorded",
     });
   } catch (error) {
@@ -911,7 +968,7 @@ export async function runSubmissionReadiness(root = DEFAULT_ROOT): Promise<Submi
       state: synchronizationState === "pending" ? "PENDING" : "PASS",
       detail: synchronizationState === "pending"
         ? textState === "complete" && mediaState === "pending"
-          ? "the historical text save is recorded; replace the placeholder thumbnail/gallery with the final v23 set and verify Preview"
+          ? "the historical text save is recorded; upload the final v23 thumbnail/gallery and verify Preview"
           : "save and Preview-verify the v23 text fields, then upload the final thumbnail/gallery and replace the video embed"
         : "submission checklist explicitly records the final v23 text, media, video, and Preview checks",
     });
@@ -952,7 +1009,7 @@ export function printSubmissionReadiness(checks: SubmissionCheck[]): void {
 function printUploadSelections(root: string): void {
   const asset = (name: string) => path.resolve(root, "submission-assets", name);
   const line = (label: string, name: string) => console.log(`${label.padEnd(20)}${asset(name)}`);
-  console.log("\nPlaceholder artifact paths (not final upload selections)");
+  console.log("\nFinal artifact paths (upload only after every local media gate passes)");
   line("YouTube video", VIDEO_NAME);
   line("YouTube thumbnail", YOUTUBE_THUMBNAIL_NAME);
   line("YouTube captions", CAPTIONS_NAME);

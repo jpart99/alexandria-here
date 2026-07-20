@@ -1,6 +1,10 @@
-# Placeholder YouTube publication metadata
+# Final YouTube publication metadata
 
-The current public YouTube video and Devpost media are placeholder presentation media, not the final version 23 submission set. Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked.
+The final dual-example version 23 media package is locally audited and integrity-pinned; public YouTube publication and Devpost synchronization remain pending.
+
+The final master is 2:31.04 at 1920×1080 and 30 fps (4531 frames), with 56 exact English caption cues ending at 2:29.238, normalized 48 kHz synthetic narration, and SHA-256 `ED270F6902CFA3AB96C0081E204A62670161E2E392DD470388306C9D57B3CA37`.
+
+The earlier public video at https://youtu.be/z1FJLdJS93o is retained only as historical publication provenance until the audited final video is published and verified.
 
 ## Title
 
@@ -8,56 +12,54 @@ Alexandria Here — A Witnessed Restoration Engine for the Lost Web | OpenAI Bui
 
 ## Description
 
-Alexandria Here returns a lost website as a coherent, browsable place—without pretending the gaps were never there.
+Imagine if knowledge believed lost with the Library of Alexandria could be recovered—fragment by fragment, witness by witness.
 
-Alexandria calls this the Papyrus Principle: when the page is gone, its neighbors become witnesses. In the current release, those neighbors are bounded same-site archive records and their surviving internal references: direct captures may supply exact body blocks, while linked evidence may support only structure or known absence; unwitnessed material remains missing.
+Alexandria Here is a shipped, public witnessed restoration engine for the lost web. Give it one public address. It inventories bounded same-site archive records, identifies a coherent surviving era, and returns only what surviving evidence can support. Every displayed historical block keeps its source, capture date, and content hash; unwitnessed material remains missing.
 
-Live product: https://alexandria-here.cinemaexile.chatgpt.site
+Try Alexandria: https://alexandria-here.cinemaexile.chatgpt.site
 
-Witnessed GPT-5.6 recovery: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
+iExile returned site: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c
 
-Mechanical receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt
+iExile receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/18026989-33be-4011-86ee-19e1754cb22c/receipt
 
-Sealed-video capture provenance (earlier ordinary production row shown on screen): https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327
+Mars Pathfinder returned site: https://alexandria-here.cinemaexile.chatgpt.site/r/c6adb317-ee2f-4530-9298-e9eb5fe6efd2
 
-The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable. Use the witnessed GPT-5.6 recovery above for current judging proof.
+Mars Pathfinder receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/c6adb317-ee2f-4530-9298-e9eb5fe6efd2/receipt
 
 Source: https://github.com/jpart99/alexandria-here
 
-Built for OpenAI Build Week in the Education track. Codex accelerated architecture, archive retrieval, security, testing, deployment, and browser audits. In model-backed recoveries, GPT-5.6 acts as a constrained Chronologist: it orders the returned preserved pages and selects one primary witness for each from a bounded evidence packet. Deterministic code fixes the temporal window and verifies every rendered block against recorded evidence; the deterministic planner remains an honest fallback when the model is unavailable.
+GPT-5.6 is the Chronologist, not the historian. Deterministic code selects the evidence window; GPT-5.6 orders preserved pages and selects one supplied primary witness per returned page. A deterministic Witness validator rejects unknown identifiers, unsupported citations, changed hashes, and invalid page/body states. The model never writes historical content.
 
-Alexandria is content-neutral memory infrastructure. It does not decide which ideas deserve preservation, and it has no topic or viewpoint moderation layer. Network controls protect systems, not sensibilities; evidence validation protects provenance, not people from ideas. Preservation is not endorsement.
+Codex served as build integrator across architecture, archive retrieval, hostile-HTML handling, temporal reasoning, security, tests, deployment, and browser audit. The result is a real public product whose recoveries may also fail honestly when connected evidence is insufficient.
 
-The demo includes a real production interaction sequence from the earlier ordinary row linked above: browsing the returned iExile site, toggling Show the Seams, exposing provenance markers, and opening the Witness ledger. The current recovery and receipt links point to the corrected decision-attribution proof generated by version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`; accepted production Sites version 23 runtime `65b39285520cf871df1081d6899b083af3edbd83` currently serves that persisted receipt 1.0 proof without claiming to have generated it.
+Alexandria calls its evidence rule the Papyrus Principle: when a page is gone, its surviving neighbors can witness structure or absence, but they cannot authorize invented content.
 
-Narration disclosure: this demo uses synthetic narration generated from the published transcript. The first-person founder statement reflects Jaia Papitz's documented role; no historical image, archive witness, recovery result, or receipt content was generated for the video.
-
-The featured recovery returns iExile, a literary community founded by Jaia Papitz in 2007, from public archive evidence. Alexandria claims neither ownership nor historical completeness. Public archival material remains subject to its source rights and archive access terms.
+Narration disclosure: this demo uses synthetic narration. It contains no generated historical imagery or evidence. Alexandria claims neither ownership nor historical completeness; public archival material remains subject to source rights and archive access terms.
 
 iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.
 
-Every returned block keeps its witness.
-
-00:00 A witnessed restoration engine
-00:19 A returned site
-00:42 Show the Seams and Witnesses
-01:05 Temporal Evidence Graph and Ghost Map
-01:26 Mechanical Recovery Receipt
-01:57 Codex and GPT-5.6
-02:27 The lost web, present again
-
-#OpenAIBuildWeek #DigitalPreservation #AI
+00:00 The lost web
+00:11 What Alexandria returns
+00:30 iExile restored
+00:48 Recovery Atlas
+01:10 Mars Pathfinder
+01:36 GPT-5.6 Chronologist
+02:02 Codex and verification
+02:20 Nothing without a witness
 
 ## Recommended upload settings
 
 - Visibility: Public
-- Audience: No, it is not made for kids
+- Audience: Not made for kids
 - Allow embedding: On
-- Age restriction: None
 - Altered/synthetic content disclosure: Yes — synthetic narration only; no generated historical imagery or evidence
 - Category: Science & Technology
 - Language: English
-- Thumbnail: `submission-assets/07-youtube-thumbnail.png`
-- Captions: upload `submission-assets/alexandria-here-build-week-demo.en.vtt`; it contains 49 non-overlapping cues aligned to the exact narration and ends before the 2:35.26 master.
+- Thumbnail: `07-youtube-thumbnail.png`
+- Captions: upload `alexandria-here-build-week-demo.en.vtt`; it contains 56 non-overlapping cues and ends before the 2:31.04 master.
 
-Build Week's contest requirements are tracked separately in `FINAL_SUBMISSION_HANDOFF.md`: a public YouTube video under 3:00 and English audio/voiceover explaining the product, Codex use, and GPT-5.6 integration. Embedding remains enabled above as an operational recommendation for Devpost playback.
+## Provenance note
+
+The current recovery and receipt links point to the corrected decision-attribution proof generated by version 7 runtime `042215042dd46ded14b501f961f4d9e7debb8178`; accepted production Sites version 23 runtime `65b39285520cf871df1081d6899b083af3edbd83` currently serves that persisted receipt 1.0 proof without claiming to have generated it.
+
+The earlier recording used ordinary production row https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327. The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable. That row and https://youtu.be/z1FJLdJS93o remain historical publication provenance only; neither is presented as current judge proof.

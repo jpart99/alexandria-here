@@ -7,155 +7,191 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "submission-assets"
+OUT = ROOT / "submission-assets"
+SOURCES = OUT / "source-captures-v23"
 BG = "#0b1118"
-PANEL = "#111b25"
+PANEL = "#121a22"
 INK = "#f2ede3"
 MUTED = "#91a2b2"
 BLUE = "#75b9ef"
 GOLD = "#d2ae59"
 LINE = "#2b3743"
 
+SOURCE_HASHES = {
+    "01-iexile-returned-v23.png": "441C03C0D6CBBFDF3BE69419041A383820AD98ACECD7E440960D9EE2CF5BBA94",
+    "02-iexile-seams-v23.png": "563A84937A65E6AA396C306153A010A425066E8CA02E1005671531924D1E00DC",
+    "03-pathfinder-returned-v23.png": "B708A5723D1207F797C71473ABA61350F5D44CBE21CC3CD590AB28BCD8D77F93",
+    "05-pathfinder-missing-seams-v23.png": "E662A065A44F3D15BF17A8E186C470D8F9EB5F33B0D23EC8CEBE080F8379B8C6",
+    "06-pathfinder-ghost-map-v23.png": "D034B046A8D82C7D68DE1D772CED7F16746BA638302F1A421467BE4C205467AD",
+    "07-pathfinder-timeline-2001-v23.png": "605730A793E6B2CAF517B6CA7C7E590DCEFE5E3A33153BFBAE4FFA23F03BD119",
+    "08-pathfinder-witnesses-24-v23.png": "DE82225D0BEAC989F1CD01B28FF706DB3696A814703B1A69F9EDCB5D7CC9EE47",
+    "10-pathfinder-receipt-v23.png": "53DC84252ED1E41C61B87BA20ADDD29360AE42A58C86693DCC942B2741EE730E",
+}
 
-def font(size: int, bold: bool = False, italic: bool = False) -> ImageFont.FreeTypeFont:
-    if bold:
+OUTPUT_HASHES = {
+    "07-youtube-thumbnail.png": "9D3BA06F82E7C7187BCCCD52D68AFD25D79F0EBF3060DED3DE306F0BF4AAF725",
+    "08-devpost-cover.png": "CDEBA1AC93656D178B53A3D416283C75201D0E6B39667A4D18E943364B3E25D3",
+    "09-devpost-gallery-iexile-returned.png": "4A5298D5C34714E33AF9C2127357CF488A1EB95B2E6430379A84B5D14BDD451F",
+    "10-devpost-gallery-iexile-seams.png": "8FCB09512022734A21ED3C19FA53BD7E04007A372C025000728A7141516D4A68",
+    "11-devpost-gallery-pathfinder-returned.png": "D84996DC402F9F80119972B7E2754E3BE7C0761A51D36923EE40A01F5415ED02",
+    "12-devpost-gallery-pathfinder-timeline.png": "A87C1388FFA9CE1685C4C1268342FE224021EF09EFA0D0BD0549CBEA022E00C9",
+    "13-devpost-gallery-pathfinder-absence.png": "3A25ACD400C4E7201EEB466F799A1AB9EA6886B90E0882FB1851252F6F3FB760",
+    "14-devpost-gallery-witness-receipt.png": "4748BEF2294C2167E12E4983345B0E6C448BCCA0FB86AEE8A21B7E3299D42800",
+}
+
+DEVPOST_NAMES = tuple(name for name in OUTPUT_HASHES if name != "07-youtube-thumbnail.png")
+
+
+def verify_hashes(root: Path, expected: dict[str, str], label: str) -> None:
+    for name, expected_hash in expected.items():
+        target = root / name
+        if not target.is_file():
+            raise FileNotFoundError(f"Missing {label}: {target}")
+        actual_hash = sha256(target.read_bytes()).hexdigest().upper()
+        if actual_hash != expected_hash:
+            raise RuntimeError(
+                f"{label.capitalize()} hash mismatch for {name}: "
+                f"expected {expected_hash}, got {actual_hash}"
+            )
+
+
+def font(size: int, *, serif: bool = False, bold: bool = False, italic: bool = False) -> ImageFont.FreeTypeFont:
+    if serif:
+        names = ["georgiab.ttf" if bold else "georgiai.ttf" if italic else "georgia.ttf"]
+    elif bold:
         names = ["seguisb.ttf", "arialbd.ttf"]
     elif italic:
         names = ["segoeuii.ttf", "ariali.ttf"]
     else:
         names = ["segoeui.ttf", "arial.ttf"]
     for name in names:
-        path = Path("C:/Windows/Fonts") / name
-        if path.exists():
-            return ImageFont.truetype(str(path), size)
+        candidate = Path("C:/Windows/Fonts") / name
+        if candidate.exists():
+            return ImageFont.truetype(str(candidate), size)
     return ImageFont.load_default()
 
 
-def contain(image: Image.Image, size: tuple[int, int]) -> Image.Image:
-    copy = image.copy()
-    copy.thumbnail(size, Image.Resampling.LANCZOS)
-    return copy
+def fit(image: Image.Image, size: tuple[int, int]) -> Image.Image:
+    result = image.copy()
+    result.thumbnail(size, Image.Resampling.LANCZOS)
+    return result
 
 
-def crop_fill(image: Image.Image, size: tuple[int, int], anchor_y: float = 0.0, anchor_x: float = 0.5) -> Image.Image:
-    target_w, target_h = size
-    scale = max(target_w / image.width, target_h / image.height)
-    resized = image.resize((round(image.width * scale), round(image.height * scale)), Image.Resampling.LANCZOS)
-    left = round(max(0, resized.width - target_w) * anchor_x)
-    top = round(max(0, resized.height - target_h) * anchor_y)
-    return resized.crop((left, top, left + target_w, top + target_h))
-
-
-def paste_rounded(
+def rounded_frame(
     canvas: Image.Image,
-    image: Image.Image,
+    source: Path,
     box: tuple[int, int, int, int],
+    *,
+    anchor_y: float = 0.0,
     radius: int = 20,
-    anchor_x: float = 0.5,
+    contain: bool = False,
 ) -> None:
+    image = Image.open(source).convert("RGB")
     x0, y0, x1, y1 = box
-    target = crop_fill(image, (x1 - x0, y1 - y0), 0.0, anchor_x)
-    mask = Image.new("L", target.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, target.width, target.height), radius=radius, fill=255)
-    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    target_w, target_h = x1 - x0, y1 - y0
+    scale = (min if contain else max)(target_w / image.width, target_h / image.height)
+    resized = image.resize((round(image.width * scale), round(image.height * scale)), Image.Resampling.LANCZOS)
+    if contain:
+        matte = Image.new("RGB", (target_w, target_h), PANEL)
+        matte.paste(resized, ((target_w - resized.width) // 2, (target_h - resized.height) // 2))
+        image = matte
+    else:
+        left = max(0, (resized.width - target_w) // 2)
+        top = round(max(0, resized.height - target_h) * anchor_y)
+        image = resized.crop((left, top, left + target_w, top + target_h))
+
     shadow_mask = Image.new("L", canvas.size, 0)
-    ImageDraw.Draw(shadow_mask).rounded_rectangle((x0 + 14, y0 + 18, x1 + 14, y1 + 18), radius=radius, fill=175)
-    shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(20))
+    ImageDraw.Draw(shadow_mask).rounded_rectangle((x0 + 12, y0 + 14, x1 + 12, y1 + 14), radius=radius, fill=160)
+    shadow_mask = shadow_mask.filter(ImageFilter.GaussianBlur(18))
+    shadow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     shadow.paste((0, 0, 0, 190), (0, 0), shadow_mask)
     canvas.alpha_composite(shadow)
-    canvas.paste(target, (x0, y0), mask)
+
+    mask = Image.new("L", image.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, image.width, image.height), radius=radius, fill=255)
+    canvas.paste(image, (x0, y0), mask)
     ImageDraw.Draw(canvas).rounded_rectangle(box, radius=radius, outline=LINE, width=3)
 
 
-def badge(draw: ImageDraw.ImageDraw, xy: tuple[int, int], text: str, fill: str = BLUE) -> int:
-    x, y = xy
-    label_font = font(20, True)
-    width = round(draw.textlength(text, font=label_font)) + 34
-    draw.rounded_rectangle((x, y, x + width, y + 42), radius=21, fill=PANEL, outline=LINE, width=2)
-    draw.ellipse((x + 14, y + 16, x + 22, y + 24), fill=fill)
-    draw.text((x + 28, y + 9), text, font=label_font, fill=INK)
+def mark(draw: ImageDraw.ImageDraw, x: int, y: int, size: int = 50) -> None:
+    draw.rectangle((x, y, x + size, y + size), outline=GOLD, width=2)
+    draw.text((x + size / 2, y + size / 2), "AH", font=font(round(size * 0.36), serif=True), fill=GOLD, anchor="mm")
+
+
+def chip(draw: ImageDraw.ImageDraw, x: int, y: int, label: str, *, accent: str = BLUE) -> int:
+    face = font(17, bold=True)
+    width = round(draw.textlength(label, font=face)) + 44
+    draw.rounded_rectangle((x, y, x + width, y + 40), radius=20, fill="#0b1118dd", outline=accent, width=2)
+    draw.ellipse((x + 14, y + 15, x + 24, y + 25), fill=accent)
+    draw.text((x + 31, y + 9), label, font=face, fill=INK)
     return width
+
+
+def header(draw: ImageDraw.ImageDraw, index: int | None = None) -> None:
+    mark(draw, 62, 44)
+    draw.text((132, 57), "ALEXANDRIA HERE", font=font(22, bold=True), fill=INK)
+    if index is not None:
+        draw.text((1438, 61), f"{index:02d} / 06", font=font(18, bold=True), fill=MUTED, anchor="ra")
+
+
+def save(canvas: Image.Image, name: str) -> None:
+    target = OUT / name
+    canvas.convert("RGB").save(target, format="PNG", optimize=True)
 
 
 def youtube_thumbnail() -> None:
     canvas = Image.new("RGBA", (1280, 720), BG)
     draw = ImageDraw.Draw(canvas)
-    draw.rectangle((0, 0, 18, 720), fill=GOLD)
-    draw.rectangle((58, 46, 108, 96), outline=GOLD, width=2)
-    draw.text((83, 71), "AH", font=font(19, True), fill=GOLD, anchor="mm")
-    draw.text((126, 59), "ALEXANDRIA HERE", font=font(24, True), fill=INK)
-    draw.text((60, 142), "A WITNESSED RESTORATION ENGINE", font=font(18, True), fill=BLUE)
-    draw.text((58, 187), "A LOST SITE,", font=font(68, True), fill=INK)
-    draw.text((58, 264), "RETURNED.", font=font(68, True), fill=INK)
-    draw.text((60, 370), "Nothing here is claimed", font=font(30, italic=True), fill=MUTED)
-    draw.text((60, 410), "without a witness.", font=font(30, italic=True), fill=MUTED)
-    draw.ellipse((60, 505, 72, 517), fill=GOLD)
-    draw.text((88, 495), "SHOW THE SEAMS · TEMPORAL GRAPH · RECEIPT", font=font(18, True), fill=INK)
-    draw.text((60, 612), "The model proposes evidence choices. Deterministic validation decides what may render.", font=font(16), fill=MUTED)
-    draw.line((60, 652, 600, 652), fill=LINE, width=2)
-    draw.text((60, 669), "OPENAI BUILD WEEK · EDUCATION", font=font(16, True), fill=GOLD)
-
-    witnesses = Image.open(ASSETS / "04-witnesses-focused.png").convert("RGB")
-    receipt = Image.open(ASSETS / "06-receipt-focused.png").convert("RGB")
-    paste_rounded(canvas, witnesses, (620, 72, 1230, 500), 22, anchor_x=0.0)
-    paste_rounded(canvas, receipt, (790, 430, 1225, 680), 18)
-    draw.rounded_rectangle((637, 88, 838, 126), radius=19, fill="#0b1118dd", outline=BLUE, width=2)
-    draw.text((655, 96), "WITNESS LEDGER", font=font(17, True), fill=INK)
-    draw.rounded_rectangle((807, 458, 1014, 496), radius=19, fill="#0b1118dd", outline=GOLD, width=2)
-    draw.text((825, 466), "RECOVERY RECEIPT", font=font(17, True), fill=INK)
-    canvas.convert("RGB").save(ASSETS / "07-youtube-thumbnail.png", quality=95)
+    draw.rectangle((0, 0, 16, 720), fill=GOLD)
+    mark(draw, 48, 38, 48)
+    draw.text((114, 49), "ALEXANDRIA HERE", font=font(22, bold=True), fill=INK)
+    draw.text((48, 122), "THE LOST WEB,", font=font(59, serif=True), fill=INK)
+    draw.text((48, 185), "RETURNED WITH WITNESSES.", font=font(50, serif=True), fill=INK)
+    draw.text((50, 257), "Two real recoveries. One evidence-only engine.", font=font(24, italic=True), fill=MUTED)
+    rounded_frame(canvas, SOURCES / "01-iexile-returned-v23.png", (48, 318, 618, 618), anchor_y=0.05, radius=18)
+    rounded_frame(canvas, SOURCES / "03-pathfinder-returned-v23.png", (662, 318, 1232, 618), anchor_y=0.05, radius=18)
+    chip(draw, 68, 336, "iEXILE · 2009", accent=BLUE)
+    chip(draw, 682, 336, "MARS PATHFINDER · 1999", accent=GOLD)
+    draw.text((48, 662), "GPT-5.6 CHRONOLOGIST", font=font(17, bold=True), fill=BLUE)
+    draw.text((316, 662), "·", font=font(17, bold=True), fill=MUTED)
+    draw.text((340, 662), "DETERMINISTIC VERIFICATION", font=font(17, bold=True), fill=GOLD)
+    draw.text((1232, 662), "OPENAI BUILD WEEK", font=font(17, bold=True), fill=INK, anchor="ra")
+    save(canvas, "07-youtube-thumbnail.png")
 
 
-def devpost_cover() -> None:
-    # Devpost recommends a 3:2 project thumbnail. Keep every embedded product
-    # frame at its native 1521:680 aspect ratio so no evidence UI is cropped.
+def cover() -> None:
     canvas = Image.new("RGBA", (1500, 1000), BG)
     draw = ImageDraw.Draw(canvas)
     draw.rectangle((0, 0, 20, 1000), fill=GOLD)
-    draw.rectangle((76, 70, 138, 132), outline=GOLD, width=2)
-    draw.text((107, 101), "AH", font=font(23, True), fill=GOLD, anchor="mm")
-    draw.text((164, 78), "ALEXANDRIA HERE", font=font(24, True), fill=INK)
-    draw.text((78, 178), "A LOST SITE,", font=font(76, True), fill=INK)
-    draw.text((78, 264), "RETURNED.", font=font(76, True), fill=INK)
-    draw.text((78, 382), "Nothing here is claimed", font=font(34, italic=True), fill=MUTED)
-    draw.text((78, 430), "without a witness.", font=font(34, italic=True), fill=MUTED)
-    draw.ellipse((78, 520, 92, 534), fill=GOLD)
-    draw.text((111, 510), "A WITNESSED RESTORATION ENGINE", font=font(21, True), fill=BLUE)
-    draw.text((78, 585), "Coherent returned site", font=font(23), fill=INK)
-    draw.text((78, 626), "Block-level provenance", font=font(23), fill=INK)
-    draw.text((78, 667), "Mechanical recovery receipt", font=font(23), fill=INK)
-    draw.line((78, 754, 548, 754), fill=LINE, width=2)
-    draw.text((78, 784), "Nothing here is claimed", font=font(22, True), fill=INK)
-    draw.text((78, 817), "without a witness.", font=font(22, True), fill=INK)
-    draw.text((78, 925), "OPENAI BUILD WEEK · EDUCATION", font=font(18, True), fill=GOLD)
-
-    witnesses = Image.open(ASSETS / "04-witnesses-focused.png").convert("RGB")
-    receipt = Image.open(ASSETS / "06-receipt-focused.png").convert("RGB")
-    ghost = Image.open(ASSETS / "05-what-survived-focused.png").convert("RGB")
-    paste_rounded(canvas, witnesses, (620, 70, 1440, 437), 24)
-    paste_rounded(canvas, ghost, (620, 493, 1010, 667), 18)
-    paste_rounded(canvas, receipt, (1030, 493, 1440, 676), 18)
-    draw.rounded_rectangle((644, 94, 822, 136), radius=21, fill="#0b1118dd", outline=GOLD, width=2)
-    draw.text((665, 103), "WITNESS LEDGER", font=font(18, True), fill=INK)
-    draw.rounded_rectangle((644, 516, 828, 554), radius=19, fill="#0b1118dd", outline=BLUE, width=2)
-    draw.text((663, 524), "WHAT SURVIVED", font=font(16, True), fill=INK)
-    draw.rounded_rectangle((1054, 516, 1256, 554), radius=19, fill="#0b1118dd", outline=GOLD, width=2)
-    draw.text((1073, 524), "RECOVERY RECEIPT", font=font(16, True), fill=INK)
-
-    draw.rounded_rectangle((620, 720, 1440, 920), radius=24, fill=PANEL, outline=LINE, width=2)
-    draw.text((650, 748), "FEATURED WITNESSED RECOVERY", font=font(17, True), fill=GOLD)
-    draw.text((650, 786), "GPT-5.6 proposes evidence choices.", font=font(26, True), fill=INK)
-    draw.text((650, 826), "Deterministic validation decides what may render.", font=font(21), fill=MUTED)
-    first_badge_width = badge(draw, (650, 865), "GPT-5.6 CHRONOLOGIST", BLUE)
-    badge(draw, (650 + first_badge_width + 18, 865), "10/10 VALIDATIONS", GOLD)
-    canvas.convert("RGB").save(ASSETS / "08-devpost-cover.png", quality=95)
+    header(draw)
+    draw.text((62, 166), "The lost web,", font=font(78, serif=True), fill=INK)
+    draw.text((62, 246), "present again.", font=font(78, serif=True, italic=True), fill=INK)
+    draw.text((64, 360), "A witnessed restoration engine", font=font(22, bold=True), fill=BLUE)
+    draw.text((64, 402), "returns only what surviving public", font=font(24), fill=MUTED)
+    draw.text((64, 436), "evidence can support—and exposes", font=font(24), fill=MUTED)
+    draw.text((64, 470), "where that evidence ends.", font=font(24), fill=MUTED)
+    rounded_frame(canvas, SOURCES / "01-iexile-returned-v23.png", (620, 72, 1440, 492), anchor_y=0.02, radius=22)
+    rounded_frame(canvas, SOURCES / "03-pathfinder-returned-v23.png", (620, 530, 1440, 950), anchor_y=0.02, radius=22)
+    chip(draw, 644, 95, "HUMAN & CULTURAL MEMORY · iEXILE", accent=BLUE)
+    chip(draw, 644, 553, "SCIENTIFIC MEMORY · MARS PATHFINDER", accent=GOLD)
+    draw.rounded_rectangle((62, 550, 554, 830), radius=20, fill=PANEL, outline=LINE, width=2)
+    draw.text((92, 584), "THE CHRONOLOGIST", font=font(18, bold=True), fill=BLUE)
+    draw.text((92, 628), "GPT-5.6 orders only supplied", font=font(24, bold=True), fill=INK)
+    draw.text((92, 663), "pages and selects supplied", font=font(24, bold=True), fill=INK)
+    draw.text((92, 698), "primary witnesses.", font=font(24, bold=True), fill=INK)
+    draw.line((92, 742, 518, 742), fill=LINE, width=2)
+    draw.text((92, 765), "Deterministic validation decides", font=font(19), fill=MUTED)
+    draw.text((92, 798), "what may render.", font=font(19), fill=MUTED)
+    draw.text((64, 906), "NOTHING HERE IS CLAIMED WITHOUT A WITNESS.", font=font(18, bold=True), fill=GOLD)
+    draw.text((64, 942), "OPENAI BUILD WEEK · EDUCATION", font=font(17, bold=True), fill=INK)
+    save(canvas, "08-devpost-cover.png")
 
 
-def devpost_gallery_card(
+def gallery_card(
     *,
-    output_name: str,
-    source_name: str,
     index: int,
+    output: str,
+    sources: list[tuple[str, tuple[int, int, int, int], float, bool]],
     label: str,
     title: str,
     subtitle: str,
@@ -164,120 +200,38 @@ def devpost_gallery_card(
     canvas = Image.new("RGBA", (1500, 1000), BG)
     draw = ImageDraw.Draw(canvas)
     draw.rectangle((0, 0, 20, 1000), fill=GOLD)
-    draw.rectangle((60, 45, 110, 95), outline=GOLD, width=2)
-    draw.text((85, 70), "AH", font=font(19, True), fill=GOLD, anchor="mm")
-    draw.text((132, 57), "ALEXANDRIA HERE", font=font(23, True), fill=INK)
-    draw.text((1420, 59), f"{index:02d} / 06", font=font(18, True), fill=MUTED, anchor="ra")
-
-    source = Image.open(ASSETS / source_name).convert("RGB")
-    # Fit the complete verified product frame inside the available stage. The
-    # returned-site capture is 16:10 while the five Atlas captures are 1521:680;
-    # centering a ratio-matched box keeps both classes entirely uncropped.
-    stage_x0, stage_y0, stage_x1, stage_y1 = (60, 125, 1440, 742)
-    stage_width = stage_x1 - stage_x0
-    stage_height = stage_y1 - stage_y0
-    source_ratio = source.width / source.height
-    stage_ratio = stage_width / stage_height
-    if source_ratio < stage_ratio:
-        frame_width = round(stage_height * source_ratio)
-        frame_x0 = stage_x0 + (stage_width - frame_width) // 2
-        frame_box = (frame_x0, stage_y0, frame_x0 + frame_width, stage_y1)
-    else:
-        frame_height = round(stage_width / source_ratio)
-        frame_y0 = stage_y0 + (stage_height - frame_height) // 2
-        frame_box = (stage_x0, frame_y0, stage_x1, frame_y0 + frame_height)
-    paste_rounded(canvas, source, frame_box, 24)
-    badge(draw, (400, 49), label, accent)
-
-    draw.text((60, 792), title, font=font(42, True), fill=INK)
-    draw.text((60, 855), subtitle, font=font(24), fill=MUTED)
-    draw.line((60, 930, 1440, 930), fill=LINE, width=2)
-    draw.text(
-        (60, 951),
-        "NOTHING HERE IS CLAIMED WITHOUT A WITNESS.",
-        font=font(17, True),
-        fill=GOLD,
-    )
-    canvas.convert("RGB").save(ASSETS / output_name, quality=95)
+    header(draw, index)
+    chip(draw, 400, 49, label, accent=accent)
+    for source, box, anchor_y, contain in sources:
+        rounded_frame(canvas, SOURCES / source, box, anchor_y=anchor_y, radius=22, contain=contain)
+    draw.text((62, 792), title, font=font(46, serif=True), fill=INK)
+    draw.text((62, 857), subtitle, font=font(24), fill=MUTED)
+    draw.line((62, 930, 1440, 930), fill=LINE, width=2)
+    draw.text((62, 953), "ALEXANDRIA DOES NOT GENERATE THE PAST. IT RECONCILES SURVIVING WITNESSES.", font=font(16, bold=True), fill=GOLD)
+    save(canvas, output)
 
 
-def devpost_gallery() -> None:
-    cards = [
-        {
-            "output_name": "09-devpost-gallery-returned-site.png",
-            "source_name": "01-returned-site.png",
-            "label": "RETURNED SITE",
-            "title": "A coherent place, returned.",
-            "subtitle": "Five visible pages from eight capture records, through the same public pipeline.",
-            "accent": BLUE,
-        },
-        {
-            "output_name": "10-devpost-gallery-show-the-seams.png",
-            "source_name": "02-show-the-seams.png",
-            "label": "SHOW THE SEAMS",
-            "title": "Every claim can show its seams.",
-            "subtitle": "Each returned historical block resolves to archived evidence and a content hash.",
-            "accent": GOLD,
-        },
-        {
-            "output_name": "11-devpost-gallery-timeline.png",
-            "source_name": "03-timeline-focused.png",
-            "label": "TIMELINE",
-            "title": "Fragments reconciled into an era.",
-            "subtitle": "Capture dates, URL variants, conflicts, and source relationships stay explicit.",
-            "accent": BLUE,
-        },
-        {
-            "output_name": "12-devpost-gallery-what-survived.png",
-            "source_name": "05-what-survived-focused.png",
-            "label": "WHAT SURVIVED",
-            "title": "Absence remains visible.",
-            "subtitle": "Preserved pages, reconstructed relationships, and eight known absences.",
-            "accent": GOLD,
-        },
-        {
-            "output_name": "13-devpost-gallery-witnesses.png",
-            "source_name": "04-witnesses-focused.png",
-            "label": "WITNESS LEDGER",
-            "title": "Every source stays inspectable.",
-            "subtitle": "The featured recovery retains 946 content-addressed source blocks.",
-            "accent": BLUE,
-        },
-        {
-            "output_name": "14-devpost-gallery-receipt.png",
-            "source_name": "06-receipt-focused.png",
-            "label": "RECOVERY RECEIPT",
-            "title": "A content-addressed recovery receipt.",
-            "subtitle": "GPT-5.6, 347 rendered blocks, and 10 of 10 deterministic validations.",
-            "accent": GOLD,
-        },
-    ]
-    for index, card in enumerate(cards, start=1):
-        devpost_gallery_card(index=index, **card)
+def gallery() -> None:
+    single = (62, 126, 1438, 744)
+    gallery_card(index=1, output="09-devpost-gallery-iexile-returned.png", sources=[("01-iexile-returned-v23.png", single, 0.0, False)], label="iEXILE · RETURNED SITE", title="A community place, returned.", subtitle="Five Preserved pages and two witnessed Missing states from public archive evidence.", accent=BLUE)
+    gallery_card(index=2, output="10-devpost-gallery-iexile-seams.png", sources=[("02-iexile-seams-v23.png", single, 0.0, False)], label="SHOW THE SEAMS", title="Every returned block keeps its witness.", subtitle="Source, capture date, lineage, and SHA-256 remain inspectable.", accent=GOLD)
+    gallery_card(index=3, output="11-devpost-gallery-pathfinder-returned.png", sources=[("03-pathfinder-returned-v23.png", single, 0.0, False)], label="MARS PATHFINDER · RETURNED SITE", title="The same engine crosses domains.", subtitle="A second ordinary recovery: eight captures, seven Preserved pages, one Missing state.", accent=BLUE)
+    gallery_card(index=4, output="12-devpost-gallery-pathfinder-timeline.png", sources=[("07-pathfinder-timeline-2001-v23.png", single, 0.0, False)], label="TEMPORAL EVIDENCE GRAPH", title="Fragments reconciled into supported eras.", subtitle="Alternate windows inspect persisted evidence without creating or switching the recovery.", accent=GOLD)
+    gallery_card(index=5, output="13-devpost-gallery-pathfinder-absence.png", sources=[("05-pathfinder-missing-seams-v23.png", (62, 126, 736, 744), 0.0, True), ("06-pathfinder-ghost-map-v23.png", (764, 126, 1438, 744), 0.0, True)], label="WHAT ALEXANDRIA REFUSED TO CLAIM", title="Absence remains part of the record.", subtitle="A Missing page retains its cited references; the Ghost Map reveals the surviving shape.", accent=BLUE)
+    gallery_card(index=6, output="14-devpost-gallery-witness-receipt.png", sources=[("08-pathfinder-witnesses-24-v23.png", (62, 126, 736, 744), 0.0, True), ("10-pathfinder-receipt-v23.png", (764, 126, 1438, 744), 0.0, True)], label="WITNESSES + RECOVERY RECEIPT", title="A challengeable restoration, not an assertion.", subtitle="GPT-5.6 proposes evidence choices. Deterministic validation decides what may render.", accent=GOLD)
 
 
-def write_devpost_manifest() -> None:
-    names = [
-        "08-devpost-cover.png",
-        "09-devpost-gallery-returned-site.png",
-        "10-devpost-gallery-show-the-seams.png",
-        "11-devpost-gallery-timeline.png",
-        "12-devpost-gallery-what-survived.png",
-        "13-devpost-gallery-witnesses.png",
-        "14-devpost-gallery-receipt.png",
-    ]
-    lines = [
-        f"{sha256((ASSETS / name).read_bytes()).hexdigest().upper()}  {name}"
-        for name in names
-    ]
-    # Write explicit LF bytes so the checksum manifest is identical on Windows,
-    # in Git, and when fetched from the public repository.
-    (ASSETS / "devpost-media.sha256").write_bytes(("\n".join(lines) + "\n").encode("ascii"))
+def manifest() -> None:
+    lines = [f"{OUTPUT_HASHES[name]}  {name}" for name in DEVPOST_NAMES]
+    (OUT / "devpost-media.sha256").write_bytes(("\n".join(lines) + "\n").encode("ascii"))
 
 
 if __name__ == "__main__":
+    OUT.mkdir(parents=True, exist_ok=True)
+    verify_hashes(SOURCES, SOURCE_HASHES, "source capture")
     youtube_thumbnail()
-    devpost_cover()
-    devpost_gallery()
-    write_devpost_manifest()
-    print("Rendered YouTube thumbnail, Devpost cover, six gallery cards, and checksums")
+    cover()
+    gallery()
+    verify_hashes(OUT, OUTPUT_HASHES, "publication image")
+    manifest()
+    print(f"Rendered final v23 YouTube thumbnail and Devpost publication images to {OUT}")

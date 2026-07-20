@@ -62,11 +62,11 @@ Ordinary production recovery [`c6adb317-ee2f-4530-9298-e9eb5fe6efd2`](https://al
 
 ## Submission artifact witnesses
 
-- Operator-side video master (not independently downloadable from this index): `submission-assets/alexandria-here-build-week-demo.mp4` — SHA-256 `B2EA9AFC1967B0BA6CC0B06BFC2E628ABB09BD237D0145D5F9A84C4BB04583BA`; [checksum sidecar](https://github.com/jpart99/alexandria-here/blob/042215042dd46ded14b501f961f4d9e7debb8178/submission-assets/alexandria-here-build-week-demo.sha256).
-- Devpost media manifest: [`submission-assets/devpost-media.sha256`](https://github.com/jpart99/alexandria-here/blob/8636a1d1c0f8e71c44b9d140c8d5065f26360b58/submission-assets/devpost-media.sha256) — manifest SHA-256 `8E2B40BD2FCC8D7274B994AF7C9C7FDDFBF92F468D2D3E6E4779C9801CC8A044`.
-- Read-only preflight: [`npm run qa:submission`](package.json) checks the [pinned placeholder-media hashes and split v23-serving/v7-proof provenance plus the v8 historical compatibility probe](scripts/submission-readiness.ts), captions, roles, required submission claims, deadline, and the boundary around the remaining external actions.
+- Sealed final version 23 video master: `submission-assets/alexandria-here-build-week-demo.mp4` — 15,456,707 bytes, 2:31.04, 1920×1080, dual iExile/Mars Pathfinder production recoveries, 56 exact English caption cues, and SHA-256 `ED270F6902CFA3AB96C0081E204A62670161E2E392DD470388306C9D57B3CA37`; see the [checksum sidecar](submission-assets/alexandria-here-build-week-demo.sha256).
+- Final presentation art: [1280×720 YouTube thumbnail](submission-assets/07-youtube-thumbnail.png), [1500×1000 Devpost cover](submission-assets/08-devpost-cover.png), and six ordered 1500×1000 gallery cards; the exact files are pinned by [`submission-assets/devpost-media.sha256`](submission-assets/devpost-media.sha256), whose SHA-256 is `4528B18BB67F10288E63C91ADD25E1DBFF4F483199D2304C29B92E483914F008`.
+- Read-only preflights: [`npm run qa:media`](package.json) audits the sealed master, captions, provenance records, and final art; [`npm run qa:submission`](package.json) checks the complete package, split v23-serving/v7-proof provenance plus the v8 historical compatibility probe, required submission claims, deadline, and the boundary around the remaining external actions.
 
-The current public YouTube video and Devpost media are placeholder presentation media, not the final version 23 submission set. Final video, captions, thumbnails, gallery, hashes, YouTube metadata, and Devpost synchronization must be regenerated together only after the application and presentation sequence are locked.
+The final version 23 files are sealed locally, but their public YouTube and Devpost replacements remain pending. The currently published [YouTube video](https://youtu.be/z1FJLdJS93o) remains a historical placeholder and is not the final master. Publication must use the exact sealed files and then pass signed-out playback and Devpost-preview verification.
 
 Matching hashes prove artifact byte identity, not that Devpost or YouTube has received, published, or accepted those files.
 

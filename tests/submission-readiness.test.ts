@@ -99,7 +99,7 @@ function contrastRatio(foreground: string, background: string): number {
     / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
 }
 
-test("the placeholder submission package passes locally and keeps final media fail-closed", async () => {
+test("the final local submission package passes while external publication remains fail-closed", async () => {
   const checks = await runSubmissionReadiness(root);
   assert.deepEqual(checks.filter((check) => check.state === "FAIL"), []);
   assert.deepEqual(
@@ -108,7 +108,7 @@ test("the placeholder submission package passes locally and keeps final media fa
   );
   assert.equal(
     checks.find((check) => check.name === "Final presentation media replacement")?.detail,
-    "the current URL/artifacts are placeholder provenance; regenerate, integrity-pin, publish, and verify the final video/captions/thumbnail before replacing the Devpost embed",
+    "the final local artifacts are sealed; publish and signed-out verify the new video, captions, and thumbnail before replacing the Devpost embed",
   );
   assert.equal(submissionExitCode(checks), 0);
   assert.equal(submissionExitCode(checks, true), 1);
@@ -116,7 +116,7 @@ test("the placeholder submission package passes locally and keeps final media fa
   assert.doesNotThrow(() => assertSubmissionRuntimeProvenance(submission));
   assert.throws(
     () => assertSubmissionRuntimeProvenance(submission.replace(
-      "Status: the current public video and Devpost media are placeholder presentation media; final version 23 media and Devpost synchronization remain pending, followed by rules acceptance and final submission.",
+      "Status: final version 23 media is locally audited; public YouTube replacement, Devpost synchronization, rules acceptance, and final submission remain pending.",
       "Status: final submission remains pending.",
     )),
     /submission runtime provenance/,
@@ -859,9 +859,9 @@ test("PNG validation rejects a role-preserving geometry mutation", async () => {
   assert.throws(() => validatePng(withAlpha, 1280, 720), /color type 6/);
 });
 
-test("the MP4 parser reads the sealed master duration without external binaries", async () => {
+test("the MP4 parser reads the final sealed master duration without external binaries", async () => {
   const master = await readFile(path.join(assets, "alexandria-here-build-week-demo.mp4"));
-  assert.ok(Math.abs(mp4DurationSeconds(master) - 155.258) < 0.001);
+  assert.ok(Math.abs(mp4DurationSeconds(master) - 151.04) < 0.001);
   assert.throws(() => mp4DurationSeconds(master.subarray(8)), /ftyp|MP4 box/);
 });
 
@@ -871,10 +871,11 @@ test("narration comparison tolerates punctuation but not changed words", () => {
 });
 
 test("YouTube reference state permits exactly one pending marker or one published URL", () => {
-  assert.equal(classifyYouTubeReference("Demo: [ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES]"), "pending");
+  assert.equal(classifyYouTubeReference("Demo: [ADD FINAL PUBLIC YOUTUBE URL — UNDER 3 MINUTES]"), "pending");
   assert.equal(classifyYouTubeReference("Demo: https://youtu.be/abc_123"), "present");
+  assert.equal(classifyYouTubeReference("Historical: https://youtu.be/z1FJLdJS93o\nFinal: [ADD FINAL PUBLIC YOUTUBE URL — UNDER 3 MINUTES]"), "pending");
   assert.throws(() => classifyYouTubeReference("Demo: [TODO VIDEO]"), /unsupported placeholders/);
-  assert.throws(() => classifyYouTubeReference("Demo: [ADD PUBLIC YOUTUBE URL — UNDER 3 MINUTES] https://youtu.be/abc_123"), /both/);
+  assert.throws(() => classifyYouTubeReference("Demo: [ADD FINAL PUBLIC YOUTUBE URL — UNDER 3 MINUTES] https://youtu.be/abc_123"), /both/);
 });
 
 test("authority checklist items are exact, unique, and tri-state", () => {
@@ -907,16 +908,20 @@ test("final mode cannot bypass either Devpost text or media synchronization", ()
   }], true), 1);
 });
 
-test("known placeholder media cannot become final through checklist flips", async () => {
+test("the historical publication URL cannot satisfy the final publication gate", async () => {
   const submission = await readFile(path.join(root, "SUBMISSION.md"), "utf8");
   const completed = submission
-    .replace("- [ ] After application and presentation lock, regenerate and upload the final version 23 video, captions, and thumbnail as one audited set.", "- [x] After application and presentation lock, regenerate and upload the final version 23 video, captions, and thumbnail as one audited set.")
+    .replace("- [ ] Upload the locally audited final version 23 video, captions, and thumbnail as one sealed set.", "- [x] Upload the locally audited final version 23 video, captions, and thumbnail as one sealed set.")
     .replace("- [ ] Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.", "- [x] Verify the final public YouTube page exposes 1080p, audio, captions, and embedding, then replace the Devpost video URL and verify its embedded player.")
     .replace("- [ ] Replace the saved Devpost About and judge instructions with the version 23 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `100 passing tests`, the current runtime, and both presentation recoveries.", "- [x] Replace the saved Devpost About and judge instructions with the version 23 `DEVPOST_FIELD_COPY.md`, save, then verify Preview shows `100 passing tests`, the current runtime, and both presentation recoveries.")
     .replace("- [ ] Upload the final version 23 Devpost thumbnail and gallery media, then verify the public preview.", "- [x] Upload the final version 23 Devpost thumbnail and gallery media, then verify the public preview.");
 
-  assert.throws(() => classifyFinalPresentationMedia(completed), /known placeholder claims, URL, or artifact fingerprints/);
-  assert.throws(() => classifyFinalDevpostSynchronization(completed), /known placeholder claims, URL, or artifact fingerprints|final presentation media gate/);
+  assert.throws(() => classifyFinalPresentationMedia(completed), /URL is still pending/);
+  assert.throws(() => classifyFinalDevpostSynchronization(completed), /URL is still pending|final presentation media gate/);
+
+  const published = completed.replace("[ADD FINAL PUBLIC YOUTUBE URL — UNDER 3 MINUTES]", "https://youtu.be/final_v23");
+  assert.equal(classifyFinalPresentationMedia(published), "complete");
+  assert.equal(classifyFinalDevpostSynchronization(published), "complete");
 });
 
 test("canonical timing rejects alternate runtime and deadline claims", () => {

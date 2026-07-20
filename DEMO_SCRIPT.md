@@ -1,70 +1,36 @@
-# Alexandria Here — Build Week demo script
+# Final Build Week demo script
 
-Status: historical 2:35 placeholder script and publication provenance. Do not record or republish it as the final version 23 submission. The final script is generated only after the application and iExile/Mars Pathfinder presentation sequence are locked.
+Status: final locally audited version 23 narration and visual sequence. Master SHA-256: `ED270F6902CFA3AB96C0081E204A62670161E2E392DD470388306C9D57B3CA37`. Runtime: 2:31.04 at 1920×1080, 30 fps, 4,531 frames. The film uses synthetic narration only; it contains no generated historical imagery or evidence.
 
-Sealed video-capture recovery (ordinary production row; do not replace): `https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327`
+## Exact narration
 
-## 0:00–0:19 — The promise
+> Imagine if knowledge believed lost with the Library of Alexandria could be recovered—fragment by fragment, witness by witness. The web loses places more quietly, every day.
+> Alexandria Here is a witnessed restoration engine for the lost web. Give it one public address. It inventories bounded Wayback evidence, finds a coherent surviving era, and returns a browsable place—without pretending the gaps were never there.
+> This is iExile, founded by Jaia Papitz in 2007: a literary community returned from eight public captures spanning August through November 2009. Browse it normally. Then Show the Seams reveals the source, date, and content hash behind every returned block. Missing pages stay missing, with the surviving links that witness their absence.
+> The Atlas makes the restoration challengeable. Timeline shows evidence windows. Witnesses exposes primary and alternate sources in groups of twenty-four. What Survived maps preserved rooms, inferred connections, and known absences. The receipt records 347 rendered blocks, 946 source hashes, and ten of ten passing validations.
+> Alexandria is not an iExile demo. The same public pipeline returned this historic Mars Pathfinder mission site from eight captures across February through April 1999: seven preserved pages, one missing state, and twelve of twelve validations. Its 2001 window is inspected inside the same persisted recovery—no new archive query, no switched result. A missing path remains visible through cited surviving witnesses.
+> GPT-5.6 is the Chronologist, not the historian. Deterministic code selects the evidence window. GPT-5.6 orders the preserved pages and chooses one supplied primary witness for each. Deterministic validation then rejects every unknown identifier, unsupported citation, or altered hash. The model interprets evidence structure. It never writes historical content.
+> Codex integrated the architecture, archive retrieval, hostile-HTML handling, temporal reasoning, security, tests, deployment, and browser audits. The result is a shipped public product, not a staged fixture. A recovery can also fail honestly when connected evidence is insufficient.
+> Alexandria does not generate the past. It reconciles surviving witnesses. The lost web, present again—without pretending the gaps were never there.
 
-**Screen:** Hold on the production landing page, then cut into the persisted witnessed recovery.
+## Audited visual sequence
 
-**Narration:**
+- `0:00–0:11` — Production invocation and the Library of Alexandria premise.
+- `0:11–0:30` — The returned iExile site from production recovery [`18026989-33be-4011-86ee-19e1754cb22c`](https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-4011-86ee-19e1754cb22c).
+- `0:30–0:41` — Real iExile browsing and Show the Seams interaction, head-trimmed only to remove the recorder's blank navigation frame.
+- `0:41–1:10` — iExile seams and all four Atlas evidence views: Timeline, Witnesses, What Survived, and Receipt.
+- `1:10–1:15` — Mars Pathfinder reveal from production recovery [`c6adb317-ee2f-4530-9298-e9eb5fe6efd2`](https://alexandria-here.cinemaexile.chatgpt.site/r/c6adb317-ee2f-4530-9298-e9eb5fe6efd2).
+- `1:15–2:02` — Real persisted Pathfinder interaction through the Returned Site and Atlas, with no new recovery request.
+- `2:02–2:20` — Cited title seam, known absence, Ghost Map, supported 2001 edition, Witnesses, and mechanical Receipt.
+- `2:20–2:31` — Closing invocation and evidence-only promise.
 
-> The web forgets by accident. Alexandria Here is a witnessed restoration engine for the lost web. It does not generate the past; it reconciles surviving witnesses. This is iExile, the literary community I founded in 2007, returned from public archive evidence.
+## Audit facts
 
-## 0:19–0:42 — The returned place
+- Narration: Microsoft Edge TTS `en-US-EmmaMultilingualNeural`, rate `+5%`; synthetic narration is disclosed.
+- Audio: mono 48 kHz, normalized to −16.01 LUFS with −1.50 dBTP true peak.
+- Captions: 56 non-overlapping English WebVTT cues, first cue at 0:00.083, last cue at 2:29.238; transcript parity passed.
+- Capture: public production version 23, no `/api/recover` POST, no recovery created, no browser console errors, and both expected recovery IDs retained.
+- Composition: 4,531 frames, hard cuts, full decode passed, embedded-caption transcript parity passed.
+- Historical-media rule: every shown historical block, image, absence, and receipt field comes from persisted production evidence. No generated historical imagery or evidence appears in the film.
 
-**Screen:** Begin the real production interaction capture. Browse the Returned Site, open one internal page, and return home while the Atlas rail remains visible.
-
-**Narration:**
-
-> Give Alexandria one public URL. When connected evidence is sufficient, it opens directly into a coherent returned site—not a screenshot gallery. This edition passed through the same bounded live-recovery pipeline available to every visitor. It returns five visible pages from eight capture records spanning August through November 2009.
-
-## 0:42–1:05 — Show the seams
-
-**Screen:** Continue the real production interaction capture. Move the visible pointer to **Show the Seams**, toggle it, scroll through provenance markers, then open **Witnesses**.
-
-**Narration:**
-
-> Its centerpiece is challengeability. Show the Seams exposes block-level provenance. Every rendered historical block resolves to archived evidence and a content hash. Alexandria may reconstruct placement, but it cannot display unsupported historical content. If a page is known only through surviving links, the absence remains visible.
-
-## 1:05–1:26 — Time and absence
-
-**Screen:** Open **Timeline**, then **What Survived**.
-
-**Narration:**
-
-> The Temporal Evidence Graph reconciles capture dates, URL variants, conflicts, and source relationships into one supported edition. The Ghost Map reveals the shape of survival: returned pages, inferred connections, and eight known absences—paths witnessed by the archive, but not faithfully recoverable.
-
-## 1:26–1:57 — Receipt and reliability
-
-**Screen:** Open **Receipt**. Hold on the planner, model, validation count, hashes, warnings, and receipt download.
-
-**Narration:**
-
-> Every recovery ends with a mechanical receipt. This one discloses planner GPT-5.6, model GPT-5.6-sol, 946 source hashes, 347 rendered blocks, and ten of ten passing validations. The model proposes consequential evidence choices; deterministic code derives the cited structure and decides what may be rendered. Failure stays visible. Silence is never filled with fiction.
-
-## 1:57–2:27 — Codex and GPT-5.6
-
-**Screen:** Hold on the composed **Built with Codex. Reconciled by GPT-5.6.** frame, then return to the recovered site.
-
-**Narration:**
-
-> Codex served as the build integrator across architecture, archive retrieval, hostile-HTML handling, temporal reasoning, security, tests, deployment, and browser audits. Inside the shipped product, GPT-5.6 is the Chronologist. It receives a bounded evidence packet and returns only a strict schema: visible-page order and primary witness IDs. It is consequential, but never allowed to write history.
-
-## 2:27–2:35 — Close
-
-**Screen:** Return to the site with the Atlas rail visible; fade on the product line.
-
-**Narration:**
-
-> Alexandria Here returns a place—with witnesses. The lost web, present again, without pretending the gaps were never there.
-
-## Placeholder recording record
-
-- Keep the finished video strictly under 3:00; this audited master is 2:35.26.
-- Record the public production URL at 1080p, 100% browser zoom, with notifications hidden.
-- Do not use copyrighted music or third-party logos as decorative assets.
-- Keep product UI text legible; pause on the GPT-5.6 receipt and its 10/10 validations.
-- The narration audibly explains the working product, Codex's build role, and GPT-5.6's runtime role.
-- Preserve the existing public placeholder until the final version 23 replacement package is audited; do not regenerate it piecemeal.
+Run `npm run qa:media` to verify the sealed staging package, then `npm run qa:submission` after the canonical `submission-assets/` replacement is complete.

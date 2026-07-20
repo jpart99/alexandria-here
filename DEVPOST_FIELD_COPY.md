@@ -94,7 +94,7 @@ Open iExile: https://alexandria-here.cinemaexile.chatgpt.site/r/18026989-33be-40
 
 Open Pathfinder: https://alexandria-here.cinemaexile.chatgpt.site/r/c6adb317-ee2f-4530-9298-e9eb5fe6efd2. Receipt: https://alexandria-here.cinemaexile.chatgpt.site/api/recover/c6adb317-ee2f-4530-9298-e9eb5fe6efd2/receipt. It is a historic Mars Pathfinder mission site returned from surviving public witnesses: 8 captures, 7 Preserved pages plus 1 Missing state, 249 rendered / 250 preserved blocks, 3 inferred edges, 8 known absences, planner `gpt-5.6`, model `gpt-5.6-sol`, manifest hash `03f1c3db3e60688b95faf3b25589cb6610b2697369f9c7ee39fc41ec9a6215ab`, and 12 of 12 validations.
 
-Placeholder video row: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327. It is video-capture provenance, not the current decision-attribution judging proof. The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.
+Earlier recording row: https://alexandria-here.cinemaexile.chatgpt.site/r/8ea53a47-437b-4afe-ad2c-29c81637a327. It is historical capture provenance, not either current presentation proof. The historical video-capture row now fails closed under the current evidence-replay validator; its machine receipt is unavailable.
 
 You may also enter any vanished public address. Every run uses the same archive-only bounded pipeline and may fail honestly when connected evidence is insufficient. iExile is one witnessed production proof, not Alexandria's product boundary. Alexandria's product is the lost public web wherever surviving witnesses exist.
 
