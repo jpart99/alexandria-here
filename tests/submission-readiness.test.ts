@@ -421,6 +421,7 @@ test("the final local submission package passes while external publication remai
   assert.match(css, /\.returned-shell\s*\{[^{}]*background:\s*#fafaf8[^{}]*color-scheme:\s*light/u);
   assert.match(css, /\.returned-shell \.returned-masthead h1\s*\{[^{}]*var\(--font-geist-sans\)/u);
   assert.match(css, /\.returned-shell \.paper-surface\s*\{[^{}]*box-shadow:\s*none/u);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.returned-shell \.returned-masthead h1\s*\{[^{}]*font-size:\s*30px/u);
   assert.doesNotMatch(css, /font(?:-size|):[^;{}]*(?:^|\s)(?:8|9)px/u);
   assert.match(restoredSiteSource, /className="recovery-ribbon-toggle"[\s\S]*?aria-expanded=\{ribbonOpen\}[\s\S]*?result\.receipt\.temporalSelection/u);
   assert.match(restoredSiteSource, /Normalized reading view\.[\s\S]*?Historical text and images are exact archived evidence/u);

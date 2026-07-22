@@ -501,7 +501,7 @@ a { color: inherit; }
 @media (max-width: 560px) {
   .returned-shell .seams-button { min-width: 74px; font-size: 12px; }
   .returned-shell .seams-button::after { content: none; }
-  .returned-shell .returned-masthead h1 { font-size: 36px; line-height: 1.04; }
+  .returned-shell .returned-masthead h1 { font-size: 30px; line-height: 1.06; }
 }
 
 @media (prefers-reduced-motion: reduce) {
