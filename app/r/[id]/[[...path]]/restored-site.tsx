@@ -294,9 +294,9 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
             aria-controls="recovery-ribbon-body"
             onClick={() => setRibbonOpen((open) => !open)}
           >
-            <strong>Recovered edition</strong>
+            <strong>{result.outcome === "restored" ? "Recovered edition" : "Evidence record"}</strong>
             <span>{result.captures.length} captures</span>
-            <span>{result.manifest.pages.filter((candidate) => candidate.status !== "missing").length} returned pages</span>
+            <span>{result.manifest.pages.filter((candidate) => candidate.status !== "missing").length} {result.outcome === "restored" ? "returned pages" : "page witnesses"}</span>
             <span>{result.receipt.counts.knownAbsences} known absences</span>
             <span className="recovery-ribbon-action">{ribbonOpen ? "Close evidence ribbon" : "Open evidence ribbon"}</span>
           </button>
