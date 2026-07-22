@@ -404,6 +404,7 @@ test("the final local submission package passes while external publication remai
   assert.doesNotMatch(homeSource, /When the page is gone, its neighbors become witnesses\./u);
   assert.doesNotMatch(homeSource, /className="landing-aside"/u);
   assert.match(homeSource, /returns only what surviving public evidence can support/u);
+  assert.match(homeSource, /does not decide which history deserves recovery\. Preservation is not endorsement\./u);
   assert.doesNotMatch(homeSource, /knowledge thought lost when the Library of Alexandria burned/u);
   assert.ok(
     homeSource.indexOf("<RecoveryForm />") < homeSource.indexOf('id="evidence-contract-title"'),

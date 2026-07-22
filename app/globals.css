@@ -115,6 +115,7 @@ a { color: inherit; }
 .evidence-states .reconstructed dt::before { background: transparent; }
 .evidence-states .missing dt::before { border: 1px dashed #8b8b85; }
 .evidence-states dd { margin: 0; color: #77756f; font-size: 13px; text-align: right; }
+.content-neutral-note { max-width: 680px; margin: 28px 0 0; color: #77756f; font-size: 13px; line-height: 1.6; }
 .landing-shell .recovery-progress { color: #181817; }
 .landing-shell .progress-track span { background: #d8d6d0; }
 .landing-shell .progress-track span.reached { background: #1a5fd0; }

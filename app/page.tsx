@@ -59,6 +59,9 @@ export default function Home() {
             <div className="reconstructed"><dt>Reconstructed from sources</dt><dd>Witnessed structure only</dd></div>
             <div className="missing"><dt>Missing</dt><dd>Absence shown honestly</dd></div>
           </dl>
+          <p className="content-neutral-note">
+            Alexandria does not decide which history deserves recovery. Preservation is not endorsement.
+          </p>
         </div>
       </section>
     </main>
