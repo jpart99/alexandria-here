@@ -180,6 +180,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
   const selectedTemporalCandidate = temporalCandidates.find((candidate) => candidate.selected) || temporalCandidates[0];
   const [witness, setWitness] = useState(false);
   const [view, setView] = useState<View>("site");
+  const [ribbonOpen, setRibbonOpen] = useState(false);
   const [visibleWitnessCount, setVisibleWitnessCount] = useState(WITNESS_LEDGER_BATCH);
   const [inspectedCandidateId, setInspectedCandidateId] = useState(selectedTemporalCandidate?.id || "");
   const recoveredTitle = displayRecoveredTitle(result);
@@ -283,6 +284,30 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
         <p className="eyebrow">{result.outcome === "restored" ? "Witnessed restoration" : "Insufficient connected evidence"}</p>
         <h1>{recoveredTitle}</h1>
         <p className="era-label">{result.manifest.selectedEraLabel}</p>
+        <div className="recovery-ribbon">
+          <button
+            type="button"
+            className="recovery-ribbon-toggle"
+            aria-expanded={ribbonOpen}
+            aria-controls="recovery-ribbon-body"
+            onClick={() => setRibbonOpen((open) => !open)}
+          >
+            <strong>Recovered edition</strong>
+            <span>{result.captures.length} captures</span>
+            <span>{result.manifest.pages.filter((candidate) => candidate.status !== "missing").length} returned pages</span>
+            <span>{result.receipt.counts.knownAbsences} known absences</span>
+            <span className="recovery-ribbon-action">{ribbonOpen ? "Close evidence ribbon" : "Open evidence ribbon"}</span>
+          </button>
+          <div id="recovery-ribbon-body" className="recovery-ribbon-body" hidden={!ribbonOpen}>
+            <dl>
+              <div><dt>Selected window</dt><dd><time dateTime={result.manifest.selectedWindowStart}>{formatWitnessDate(result.manifest.selectedWindowStart)}</time> – <time dateTime={result.manifest.selectedWindowEnd}>{formatWitnessDate(result.manifest.selectedWindowEnd)}</time></dd></div>
+              <div><dt>Evidence score</dt><dd>{result.receipt.temporalSelection.score.toFixed(2)}</dd></div>
+              <div><dt>Conflicts</dt><dd>{result.receipt.temporalSelection.conflictCount}</dd></div>
+              <div><dt>Planner</dt><dd>{result.receipt.planner === "gpt-5.6" ? "GPT-5.6 + deterministic validation" : "Deterministic fallback"}</dd></div>
+            </dl>
+            <p>{result.receipt.temporalSelection.reason}</p>
+          </div>
+        </div>
         <div className="view-tabs" role="tablist" aria-label="Restoration views" onKeyDown={moveTabFocus}>
           {views.map((item) => (
             <button
@@ -376,6 +401,7 @@ export function RestoredSite({ result, page }: { result: RecoveryResult; page: R
                 <div className="recovered-copy">
                   {pageBlocks.map((block) => <EvidenceBlockView key={block.id} block={block} witness={witness} />)}
                 </div>
+                <p className="reading-disclosure"><strong>Normalized reading view.</strong> Historical text and images are exact archived evidence; typography and layout are Alexandria&apos;s presentation.</p>
               </>
             ) : null}
           </article>

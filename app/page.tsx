@@ -24,48 +24,36 @@ export default function Home() {
     : null;
   return (
     <main className="landing-shell">
+      <header className="landing-header">
+        <Link className="landing-brand" href="/">Alexandria Here</Link>
+        <nav aria-label="Landing navigation">
+          {referencePath ? <Link href={referencePath}>Example recovery</Link> : null}
+          <Link href="#evidence-contract-title">How it works</Link>
+        </nav>
+      </header>
       <section className="landing-hero" aria-labelledby="hero-title">
         <div className="landing-frame">
-          <div className="brand-mark" aria-hidden="true">AH</div>
           <div className="landing-copy-block">
-            <p className="eyebrow">A witnessed restoration engine</p>
-            <h1 id="hero-title">Alexandria Here</h1>
+            <h1 id="hero-title">Return a vanished address.</h1>
             <p className="tagline">The lost web, present again.</p>
-            <p className="hero-copy">
-              Enter a vanished address. Alexandria returns only what surviving public evidence can support—and exposes where that evidence ends.
-            </p>
             <RecoveryForm />
             {referencePath ? (
               <Link className="reference-recovery-link" href={referencePath}>
                 View a witnessed recovery <span aria-hidden="true">→</span>
               </Link>
             ) : null}
-            <div className="trust-line">
-              <span className="witness-dot" />
-              Every returned block keeps its witness.
-            </div>
           </div>
         </div>
       </section>
 
       <section className="landing-evidence" aria-labelledby="evidence-contract-title">
         <div className="evidence-intro">
-          <p className="aside-number">01 · Evidence contract</p>
           <h2 id="evidence-contract-title">Not a screenshot.<br />A returned place.</h2>
+          <p>
+            Alexandria returns only what surviving public evidence can support. It reconciles those witnesses into a coherent, navigable edition; every unsupported gap stays visible.
+          </p>
         </div>
         <div className="evidence-contract">
-          <blockquote className="alexandria-imagination">
-            <p>
-              Imagine if the knowledge thought lost when the Library of Alexandria burned could be placed back at your fingertips.
-            </p>
-            <footer>
-              Alexandria Here applies that ambition to the lost web—reconciling surviving witnesses without inventing what the fire took.
-            </footer>
-          </blockquote>
-          <p className="content-neutral-label">Content-neutral · No subject-matter gatekeeping</p>
-          <p className="evidence-doctrine">
-            Alexandria does not decide which history deserves recovery. It preserves expression without rating it and returns only what surviving evidence can support.
-          </p>
           <dl className="evidence-states">
             <div className="preserved"><dt>Preserved</dt><dd>Exact archived block</dd></div>
             <div className="reconstructed"><dt>Reconstructed from sources</dt><dd>Witnessed structure only</dd></div>
