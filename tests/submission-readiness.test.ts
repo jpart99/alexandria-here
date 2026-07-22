@@ -424,6 +424,7 @@ test("the final local submission package passes while external publication remai
   assert.doesNotMatch(css, /font(?:-size|):[^;{}]*(?:^|\s)(?:8|9)px/u);
   assert.match(restoredSiteSource, /className="recovery-ribbon-toggle"[\s\S]*?aria-expanded=\{ribbonOpen\}[\s\S]*?result\.receipt\.temporalSelection/u);
   assert.match(restoredSiteSource, /Normalized reading view\.[\s\S]*?Historical text and images are exact archived evidence/u);
+  assert.match(restoredSiteSource, /new Intl\.DateTimeFormat\("en-US",[\s\S]*?timeZone:\s*"UTC"[\s\S]*?timeZoneName:\s*"short"/u);
   assert.doesNotMatch(restoredSiteSource, /role="radio"|aria-checked/u);
   assert.equal(
     [...restoredSiteSource.matchAll(/When the page is gone, its neighbors become witnesses\./gu)].length,
